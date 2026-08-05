@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>teslam.io — 테슬람 성지 · 달린 만큼 쌓인다</title>
+<meta name="description" content="한국 테슬라 오너 커뮤니티. 오도미터로 검증된 주행이 DRV로 쌓입니다. Genesis 500 모집 중.">
+<style>
+/* ============================================================
+   teslam.io — direction #4 : 커뮤니티 피드
+   palette: ink #0d1117 / paper #f4f2ed / signal #00c2a8 / amber #ffb020
+   ============================================================ */
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+
+:root{
+  --ink:#0d1117;
+  --ink-2:#161c26;
+  --ink-3:#1e2733;
+  --line:#293141;
+  --line-soft:#1c2430;
+  --paper:#f4f2ed;
+  --dim:#8b97a8;
+  --dim-2:#69748a;
+  --signal:#00c2a8;
+  --signal-dim:#00806f;
+  --amber:#ffb020;
+  --hot:#ff5c39;
+  --radius:10px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+}
+
+html,body{max-width:100%;overflow-x:hidden}
+
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--paper);
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.62;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* subtle scanline / grid texture — pure CSS, no image */
+body::before{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(1200px 700px at 78% -12%, rgba(0,194,168,.11), transparent 62%),
+    radial-gradient(900px 600px at 8% 4%, rgba(255,176,32,.06), transparent 60%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px);
+}
+
+a{color:inherit;text-decoration:none}
+ul,ol{margin:0;padding:0;list-style:none}
+h1,h2,h3,h4{margin:0;line-height:1.28;letter-spacing:-.02em;font-weight:800}
+p{margin:0}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+:focus-visible{
+  outline:2.5px solid var(--amber);
+  outline-offset:3px;
+  border-radius:4px;
+}
+
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+.wrap{width:100%;max-width:1260px;margin:0 auto;padding:0 16px;position:relative;z-index:1}
+
+/* ── skip link ─────────────────────────────── */
+.skip{
+  position:absolute;left:-9999px;top:0;z-index:99;
+  background:var(--amber);color:#0d1117;padding:10px 16px;font-weight:800;border-radius:0 0 8px 0;
+}
+.skip:focus{left:0}
+
+/* ── top bar ───────────────────────────────── */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  background:rgba(13,17,23,.86);
+  backdrop-filter:blur(14px) saturate(150%);
+  -webkit-backdrop-filter:blur(14px) saturate(150%);
+  border-bottom:1px solid var(--line-soft);
+}
+.topbar-in{display:flex;align-items:center;gap:14px;height:58px}
+
+.brand{display:flex;align-items:center;gap:9px;flex:0 0 auto;font-weight:900;letter-spacing:-.04em;font-size:19px}
+.brand .glyph{
+  width:26px;height:26px;flex:0 0 auto;display:grid;place-items:center;
+  border-radius:7px;background:linear-gradient(150deg,var(--signal),#046b5e);
+  box-shadow:0 0 0 1px rgba(0,194,168,.34), 0 6px 18px -8px rgba(0,194,168,.7);
+}
+.brand .glyph svg{display:block}
+.brand em{font-style:normal;color:var(--signal)}
+
+.navlinks{display:flex;gap:2px;margin-left:6px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none}
+.navlinks::-webkit-scrollbar{display:none}
+.navlinks a{
+  padding:7px 11px;border-radius:7px;font-size:13.5px;font-weight:700;color:var(--dim);
+  white-space:nowrap;transition:background .15s,color .15s;
+}
+.navlinks a:hover{background:var(--ink-3);color:var(--paper)}
+.navlinks a[aria-current]{color:var(--paper);background:var(--ink-3)}
+.navlinks a .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--hot);vertical-align:2px;margin-left:5px}
+
+.livecount{
+  display:none;align-items:center;gap:7px;font-size:12.5px;color:var(--dim);
+  padding:6px 11px;border:1px solid var(--line);border-radius:99px;white-space:nowrap;
+}
+@media (min-width:760px){.livecount{display:inline-flex}}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 0 rgba(0,194,168,.6);animation:pulse 2.4s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,194,168,.55)}70%{box-shadow:0 0 0 8px rgba(0,194,168,0)}100%{box-shadow:0 0 0 0 rgba(0,194,168,0)}}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:9px 15px;border-radius:8px;font-weight:800;font-size:13.5px;white-space:nowrap;
+  transition:transform .12s ease, box-shadow .18s ease, background .15s;
+}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--amber);color:#17120a;box-shadow:0 8px 22px -12px rgba(255,176,32,.9)}
+.btn-primary:hover{background:#ffc24d}
+.btn-ghost{border:1px solid var(--line);color:var(--paper)}
+.btn-ghost:hover{background:var(--ink-3);border-color:#3a4557}
+
+/* ── genesis ticker strip ──────────────────── */
+.strip{
+  border-bottom:1px solid var(--line-soft);
+  background:linear-gradient(90deg, rgba(255,176,32,.14), rgba(0,194,168,.10) 55%, transparent);
+  overflow:hidden;
+}
+.strip-in{display:flex;align-items:center;gap:12px;height:40px;font-size:12.5px}
+.strip .tag{
+  flex:0 0 auto;font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.09em;
+  color:var(--amber);border:1px solid rgba(255,176,32,.4);padding:2px 8px;border-radius:5px;
+}
+.marquee{flex:1 1 auto;min-width:0;overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 92%,transparent)}
+.marquee ul{display:flex;gap:30px;width:max-content;animation:slide 42s linear infinite}
+.marquee li{color:var(--dim);white-space:nowrap}
+.marquee b{color:var(--paper);font-weight:700}
+.marquee .k{font-family:var(--mono);color:var(--signal)}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── page grid ─────────────────────────────── */
+/* minmax(0,1fr) not 1fr: `1fr` == minmax(auto,1fr), whose auto minimum is the
+   item's min-content — the leaderboard's min-width:520px table would then force
+   the track wider than the viewport and get clipped by overflow-x:hidden. */
+.page{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;padding:20px 0 0}
+.page > *{min-width:0}
+.rail-left{display:none}
+.rail-right{display:flex;flex-direction:column;gap:14px;min-width:0}
+
+@media (min-width:900px){
+  .page{grid-template-columns:minmax(0,1fr) 300px;gap:22px}
+}
+@media (min-width:1180px){
+  .page{grid-template-columns:172px minmax(0,1fr) 306px;gap:22px}
+  .rail-left{display:block}
+}
+
+/* ── left rail ─────────────────────────────── */
+.rail-left nav{position:sticky;top:74px}
+.railtitle{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--dim-2);
+  text-transform:uppercase;padding:0 10px 8px;
+}
+.rail-left a{
+  display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;
+  font-size:13.5px;color:var(--dim);font-weight:600;transition:.15s;
+}
+.rail-left a:hover{background:var(--ink-2);color:var(--paper)}
+.rail-left a .n{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim-2)}
+.rail-left a .sq{width:7px;height:7px;border-radius:2px;background:var(--line);flex:0 0 auto}
+.rail-left a:nth-child(2) .sq{background:var(--signal)}
+.rail-left a:nth-child(3) .sq{background:var(--amber)}
+.rail-left a:nth-child(4) .sq{background:var(--hot)}
+.rail-left a:nth-child(5) .sq{background:#4c9aff}
+.rail-left hr{border:0;border-top:1px solid var(--line-soft);margin:14px 6px}
+
+/* ── hero card (compact, feed-native) ──────── */
+.hero{
+  position:relative;overflow:hidden;
+  border:1px solid var(--line);border-radius:14px;
+  background:
+    linear-gradient(180deg, rgba(0,194,168,.10), rgba(13,17,23,0) 46%),
+    var(--ink-2);
+  padding:22px 18px 20px;
+}
+.hero::after{
+  content:"";position:absolute;right:-70px;top:-70px;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,194,168,.16),transparent 66%);pointer-events:none;
+}
+.hero .kicker{
+  display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.1em;color:var(--signal);border:1px solid rgba(0,194,168,.34);
+  padding:3px 9px;border-radius:99px;margin-bottom:13px;
+}
+.hero h1{font-size:clamp(25px,6.6vw,40px);letter-spacing:-.045em;line-height:1.16}
+.hero h1 .hl{
+  color:var(--amber);
+  background:linear-gradient(transparent 62%, rgba(255,176,32,.22) 62%);
+}
+.hero p.sub{margin-top:11px;color:#b9c3d1;font-size:15px;max-width:44em}
+.hero .cta{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px;position:relative;z-index:2}
+.hero .fine{margin-top:11px;font-size:12px;color:var(--dim-2)}
+
+/* genesis progress */
+.gbar{margin-top:16px;position:relative;z-index:2}
+.gbar .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim);margin-bottom:6px}
+.gbar .lab b{font-family:var(--mono);color:var(--amber);font-size:14px}
+.track{height:8px;border-radius:99px;background:#0a0e14;border:1px solid var(--line);overflow:hidden}
+.fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--signal),var(--amber));transition:width 1.6s cubic-bezier(.2,.8,.2,1)}
+
+/* ── card shell ────────────────────────────── */
+.card{
+  border:1px solid var(--line-soft);border-radius:12px;background:var(--ink-2);overflow:hidden;
+}
+.card > header{
+  display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:1px solid var(--line-soft);
+  background:linear-gradient(180deg,rgba(255,255,255,.028),transparent);
+}
+.card > header h2,.card > header h3{font-size:13.5px;letter-spacing:-.01em}
+.card > header .more{margin-left:auto;font-size:11.5px;color:var(--dim-2);font-weight:700}
+.card > header .more:hover{color:var(--signal)}
+.card .body{padding:13px 14px}
+
+/* ── tabs ──────────────────────────────────── */
+.feedhead{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  margin-top:20px;padding-bottom:11px;border-bottom:1px solid var(--line-soft);
+}
+.tab{
+  padding:7px 13px;border-radius:99px;font-size:13.5px;font-weight:800;color:var(--dim);
+  border:1px solid transparent;transition:.15s;
+}
+.tab:hover{color:var(--paper);background:var(--ink-2)}
+.tab[aria-selected="true"]{background:var(--paper);color:#0d1117;border-color:var(--paper)}
+.tab .fire{filter:saturate(1.2)}
+.feedhead .meta{margin-left:auto;font-size:11.5px;color:var(--dim-2);font-family:var(--mono)}
+
+/* ── post list ─────────────────────────────── */
+.posts{margin-top:4px;border-bottom:1px solid var(--line-soft)}
+.post{
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr);
+  gap:12px;padding:13px 8px;border-bottom:1px solid var(--line-soft);
+  transition:background .14s;
+}
+.post:hover{background:rgba(255,255,255,.024)}
+.post:last-child{border-bottom:0}
+
+.vote{
+  display:flex;flex-direction:column;align-items:center;gap:1px;padding-top:2px;
+}
+.vote button{
+  width:26px;height:22px;display:grid;place-items:center;border-radius:6px;color:var(--dim-2);transition:.14s;
+}
+.vote button:hover{background:var(--ink-3);color:var(--signal)}
+.vote button[aria-pressed="true"]{color:var(--signal)}
+.vote .score{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--paper);line-height:1.1}
+.vote.up .score{color:var(--signal)}
+
+.post .head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px;color:var(--dim-2);margin-bottom:3px}
+.cat{
+  font-weight:800;font-size:11px;padding:1.5px 7px;border-radius:5px;letter-spacing:-.01em;
+  border:1px solid currentColor;
+}
+.c-fsd{color:#4c9aff}
+.c-sw{color:var(--signal)}
+.c-chg{color:var(--amber)}
+.c-cert{color:#ff8fb1}
+.c-tip{color:#a9b6c8}
+.c-quest{color:var(--hot)}
+
+.post h3{font-size:15.5px;font-weight:700;letter-spacing:-.02em;line-height:1.45}
+.post h3 a:hover{color:var(--amber);text-decoration:underline;text-underline-offset:3px}
+.post h3 .cmt{font-family:var(--mono);font-size:12.5px;color:var(--hot);font-weight:700;margin-left:5px;vertical-align:1px}
+.post h3 .new{
+  font-family:var(--mono);font-size:9.5px;color:#0d1117;background:var(--hot);
+  padding:1px 4px;border-radius:3px;vertical-align:3px;margin-left:5px;font-weight:800;
+}
+.post .foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:5px;font-size:11.5px;color:var(--dim-2)}
+.post .foot .who{color:var(--dim);font-weight:700}
+.post .foot .tier{
+  font-family:var(--mono);font-size:9.5px;padding:1px 5px;border-radius:4px;
+  border:1px solid rgba(255,176,32,.36);color:var(--amber);
+}
+.post .foot .tier.g{border-color:rgba(0,194,168,.4);color:var(--signal)}
+.post .foot .sep{opacity:.4}
+.post .thumbs{display:flex;gap:5px;margin-top:8px}
+
+/* pinned megathread */
+.post.pin{
+  background:linear-gradient(90deg, rgba(255,176,32,.09), rgba(255,176,32,.01) 45%, transparent);
+  border-left:2px solid var(--amber);border-bottom:1px solid var(--line-soft);
+  padding-left:10px;border-radius:2px;
+}
+.post.pin h3{color:#ffd98a}
+
+/* mini css "photo" thumbs for 인증샷 */
+.shot{
+  width:52px;height:36px;border-radius:5px;border:1px solid var(--line);position:relative;overflow:hidden;flex:0 0 auto;
+  background:linear-gradient(170deg,#1d2836,#0b0f15);
+}
+.shot::before{
+  content:"";position:absolute;left:8%;right:8%;bottom:26%;height:34%;border-radius:14px 16px 5px 5px/18px 20px 5px 5px;
+  background:linear-gradient(180deg,var(--sc1,#3b4a5e),var(--sc2,#1b232f));
+}
+.shot::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:26%;
+  background:linear-gradient(180deg,rgba(0,194,168,.28),transparent);
+}
+.shot.s2{--sc1:#5d3a3a;--sc2:#2a1a1a}
+.shot.s3{--sc1:#3a4d3f;--sc2:#16211a}
+.shot.s4{--sc1:#4a4560;--sc2:#1d1b26}
+
+/* ── stat scoreboard strip ─────────────────── */
+.scoreboard{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);border-radius:12px;overflow:hidden;margin-top:20px;
+}
+@media (min-width:620px){.scoreboard{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.scoreboard div{background:var(--ink-2);padding:13px 14px}
+.scoreboard .v{font-family:var(--mono);font-size:23px;font-weight:700;letter-spacing:-.03em;color:var(--paper);line-height:1.1}
+.scoreboard .v.sig{color:var(--signal)}
+.scoreboard .v.amb{color:var(--amber)}
+.scoreboard .l{font-size:11.5px;color:var(--dim-2);margin-top:3px}
+
+/* ── leaderboard table ─────────────────────── */
+.scroller{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:13.5px}
+thead th{
+  text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--dim-2);
+  font-weight:600;padding:0 10px 8px;text-transform:uppercase;white-space:nowrap;
+}
+tbody td{padding:9px 10px;border-top:1px solid var(--line-soft);white-space:nowrap}
+tbody tr:hover{background:rgba(255,255,255,.024)}
+td.rank{font-family:var(--mono);font-weight:700;color:var(--dim-2);width:40px}
+tr:nth-child(1) td.rank{color:var(--amber)}
+tr:nth-child(2) td.rank{color:#cfd8e3}
+tr:nth-child(3) td.rank{color:#c08a52}
+td.who{font-weight:700}
+td.who small{display:block;font-weight:500;color:var(--dim-2);font-size:11px;letter-spacing:-.01em}
+td.num{font-family:var(--mono);text-align:right}
+td.num.sig{color:var(--signal)}
+td.num.amb{color:var(--amber)}
+.delta{font-family:var(--mono);font-size:11px;color:var(--signal)}
+.delta.dn{color:#ff7a5c}
+
+/* ── right rail widgets ────────────────────── */
+.rail-right .sticky{position:static}
+@media (min-width:900px){
+  .rail-right .sticky{position:sticky;top:74px;display:flex;flex-direction:column;gap:14px}
+}
+
+.wallet{
+  border:1px solid rgba(0,194,168,.28);border-radius:12px;overflow:hidden;
+  background:linear-gradient(165deg, rgba(0,194,168,.13), var(--ink-2) 52%);
+}
+.wallet .top{padding:13px 14px 11px;border-bottom:1px dashed var(--line)}
+.wallet .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--dim-2);text-transform:uppercase}
+.wallet .big{font-family:var(--mono);font-size:31px;font-weight:700;letter-spacing:-.035em;color:var(--signal);line-height:1.14;margin-top:2px}
+.wallet .big span{font-size:14px;color:var(--dim);letter-spacing:0;margin-left:4px}
+.wallet .worth{font-size:12px;color:var(--dim);margin-top:2px}
+.wallet ul{padding:11px 14px 13px;display:flex;flex-direction:column;gap:8px}
+.wallet li{display:flex;align-items:baseline;gap:8px;font-size:12.5px;color:var(--dim)}
+.wallet li b{margin-left:auto;font-family:var(--mono);color:var(--paper);font-weight:700}
+.wallet .capbar{margin:0 14px 13px}
+.wallet .capbar .t{display:flex;justify-content:space-between;font-size:11px;color:var(--dim-2);margin-bottom:5px}
+.wallet .capbar .track{height:6px}
+.wallet .capbar .fill{background:linear-gradient(90deg,var(--signal),#7ce8d6)}
+
+.quest li{
+  display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--line-soft);
+}
+.quest li:last-child{border-bottom:0;padding-bottom:0}
+.quest .icon{
+  width:26px;height:26px;flex:0 0 auto;border-radius:7px;display:grid;place-items:center;
+  background:var(--ink-3);border:1px solid var(--line);font-size:13px;
+}
+.quest .t{font-size:13px;font-weight:700;line-height:1.4}
+.quest .r{font-family:var(--mono);font-size:11px;color:var(--amber);margin-top:1px}
+.quest .r.done{color:var(--signal)}
+
+.hotlist li{display:flex;gap:9px;padding:8px 0;border-bottom:1px dashed var(--line-soft);align-items:flex-start}
+.hotlist li:last-child{border-bottom:0;padding-bottom:0}
+.hotlist .i{font-family:var(--mono);font-size:12px;color:var(--dim-2);width:14px;flex:0 0 auto;padding-top:1px}
+.hotlist li:nth-child(1) .i,.hotlist li:nth-child(2) .i,.hotlist li:nth-child(3) .i{color:var(--hot)}
+.hotlist .t{font-size:13px;font-weight:600;line-height:1.45}
+.hotlist .t:hover{color:var(--amber)}
+.hotlist .m{font-size:11px;color:var(--dim-2);font-family:var(--mono);margin-top:1px}
+
+.online .row{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.chip{
+  font-size:11.5px;padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--dim);white-space:nowrap;
+}
+.chip.on{border-color:rgba(0,194,168,.34);color:var(--signal)}
+
+/* genesis rail card */
+.gcard{
+  border:1px solid rgba(255,176,32,.34);border-radius:12px;padding:15px 14px;
+  background:linear-gradient(165deg,rgba(255,176,32,.14),var(--ink-2) 55%);
+}
+.gcard h3{font-size:15px}
+.gcard p{font-size:12.5px;color:#c2ccda;margin-top:6px}
+.gcard ul{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.gcard li{font-size:12.5px;color:var(--dim);display:flex;gap:7px}
+.gcard li b{color:var(--paper);font-weight:700}
+.gcard li::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--amber);flex:0 0 auto;margin-top:8px}
+.gcard .btn{width:100%;margin-top:12px}
+.gcard .seats{font-family:var(--mono);font-size:11.5px;color:var(--amber);margin-top:8px;text-align:center}
+
+/* ── how it works (compact 3 step) ─────────── */
+.how{margin-top:22px}
+.steps{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line-soft)}
+@media (min-width:700px){.steps{grid-template-columns:repeat(3,1fr)}}
+.steps > div{background:var(--ink-2);padding:15px 15px 16px}
+.steps .n{font-family:var(--mono);font-size:11px;color:var(--signal);letter-spacing:.1em}
+.steps h4{font-size:14.5px;margin-top:6px}
+.steps p{font-size:12.5px;color:var(--dim);margin-top:5px}
+.steps .sig{color:var(--signal);font-family:var(--mono)}
+
+/* signal viz : 60s tick */
+.tickviz{display:flex;align-items:flex-end;gap:3px;height:34px;margin-top:11px}
+.tickviz i{
+  flex:1;background:linear-gradient(180deg,var(--signal),rgba(0,194,168,.16));border-radius:2px 2px 0 0;
+  animation:tick 3.2s ease-in-out infinite;
+}
+@keyframes tick{0%,100%{opacity:.28;transform:scaleY(.42)}50%{opacity:1;transform:scaleY(1)}}
+.tickviz i{transform-origin:bottom}
+
+/* odometer strip */
+.odo{display:flex;gap:3px;margin-top:11px}
+.odo b{
+  font-family:var(--mono);font-size:16px;font-weight:700;color:var(--paper);
+  background:#0a0e14;border:1px solid var(--line);border-radius:4px;padding:3px 6px;
+}
+.odo b.k{color:var(--amber);border-color:rgba(255,176,32,.4)}
+
+/* ── car silhouette (pure svg) ─────────────── */
+.garage{
+  margin-top:22px;border:1px solid var(--line-soft);border-radius:12px;background:var(--ink-2);
+  padding:18px 16px;position:relative;overflow:hidden;
+}
+.garage .road{
+  position:absolute;left:0;right:0;bottom:0;height:3px;
+  background:repeating-linear-gradient(90deg,var(--line) 0 26px, transparent 26px 48px);
+}
+.garage-grid{display:grid;grid-template-columns:1fr;gap:16px;align-items:center}
+@media (min-width:760px){.garage-grid{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}}
+.carwrap{position:relative}
+.carwrap svg{width:100%;height:auto;display:block;max-width:430px;margin:0 auto}
+.carwrap .glow{
+  position:absolute;left:8%;right:8%;bottom:6%;height:22px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(0,194,168,.32),transparent 70%);filter:blur(6px);
+}
+.carwrap .speedlines i{
+  position:absolute;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--signal));
+  animation:whoosh 1.9s linear infinite;
+}
+@keyframes whoosh{0%{transform:translateX(30px);opacity:0}25%{opacity:.85}100%{transform:translateX(-120px);opacity:0}}
+
+.garage h2{font-size:19px}
+.garage p{font-size:13.5px;color:var(--dim);margin-top:8px}
+.garage .plates{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.plate{
+  font-family:var(--mono);font-size:11px;color:var(--dim);border:1px solid var(--line);
+  border-radius:6px;padding:3px 8px;
+}
+.plate b{color:var(--paper)}
+
+/* ── join / CTA band ───────────────────────── */
+.join{
+  margin-top:26px;border:1px solid rgba(255,176,32,.3);border-radius:14px;overflow:hidden;
+  background:
+    radial-gradient(600px 300px at 80% 0%, rgba(255,176,32,.16), transparent 68%),
+    linear-gradient(180deg,var(--ink-2),#131a24);
+  padding:24px 18px;
+}
+.join .kick{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--amber)}
+.join h2{font-size:clamp(21px,4.6vw,30px);margin-top:8px;letter-spacing:-.04em}
+.join p{color:#bcc6d4;font-size:14px;margin-top:9px;max-width:52ch}
+.join .cta{display:flex;flex-wrap:wrap;gap:9px;margin-top:16px}
+/* flex-wrap (not auto-fill grid): auto-fill + max-width would resolve its
+   repeat count against the max-width and create a ~657px hard minimum. */
+.seatgrid{
+  display:flex;flex-wrap:wrap;gap:3px;margin-top:18px;max-width:660px;
+}
+.seatgrid i{width:9px;height:9px;flex:0 0 auto;border-radius:2px;background:var(--line);display:block}
+.seatgrid i.f{background:linear-gradient(150deg,var(--amber),#ff8f1f)}
+.seatgrid i.me{background:var(--signal);box-shadow:0 0 0 1px rgba(0,194,168,.6)}
+.join .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--dim-2);margin-top:10px;font-family:var(--mono)}
+.join .legend span{display:inline-flex;align-items:center;gap:6px}
+.join .legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+/* ── footer ────────────────────────────────── */
+footer{margin-top:34px;border-top:1px solid var(--line-soft);padding:22px 0 34px;font-size:12.5px;color:var(--dim-2)}
+.fgrid{display:grid;grid-template-columns:1fr;gap:18px}
+@media (min-width:700px){.fgrid{grid-template-columns:1.4fr 1fr 1fr 1fr}}
+footer h4{font-size:12px;font-family:var(--mono);letter-spacing:.1em;color:var(--dim);text-transform:uppercase;margin-bottom:9px}
+footer li{padding:3px 0}
+footer li a:hover{color:var(--signal)}
+.legal{margin-top:22px;padding-top:16px;border-top:1px solid var(--line-soft);font-size:11.5px;line-height:1.7;color:#5d6879}
+.legal strong{color:var(--dim);font-weight:600}
+
+/* ── reduced motion ────────────────────────── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;scroll-behavior:auto !important;
+  }
+  .marquee ul{animation:none;transform:none}
+  .tickviz i{opacity:.8;transform:none}
+  .fill{transition:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#feed">본문 피드로 건너뛰기</a>
+
+<!-- ══════════ TOP BAR ══════════ -->
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="#" aria-label="teslam.io 홈">
+      <span class="glyph" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#04191a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2 4 14h7l-1 8 9-12h-7z"/>
+        </svg>
+      </span>
+      teslam<em>.io</em>
+    </a>
+
+    <nav class="navlinks" aria-label="게시판">
+      <a href="#feed" aria-current="page">전체</a>
+      <a href="#feed">인증샷<span class="dot" aria-hidden="true"></span></a>
+      <a href="#feed">소프트웨어</a>
+      <a href="#feed">FSD</a>
+      <a href="#feed">충전</a>
+      <a href="#board">랭킹</a>
+      <a href="#genesis">Genesis 500</a>
+    </nav>
+
+    <span class="livecount" id="livecount">
+      <span class="pulse" aria-hidden="true"></span>
+      접속 <b class="mono" id="onlineNum">1,284</b>명
+    </span>
+    <a class="btn btn-primary" href="#genesis">Genesis 신청</a>
+  </div>
+</header>
+
+<!-- ══════════ TICKER ══════════ -->
+<div class="strip" aria-label="실시간 활동">
+  <div class="wrap strip-in">
+    <span class="tag">LIVE</span>
+    <div class="marquee" aria-hidden="true">
+      <ul id="tickerTrack">
+        <li><b>도곡동판교러</b> 오늘 <span class="k">62.4km</span> 인증 · Genesis #041 확보</li>
+        <li><b>초록불차선</b> 효율 <span class="k">7.4km/kWh</span> 주간 1위 등극</li>
+        <li><b>모델와이롱</b> V4 슈퍼차저 체크인 · <span class="k">+120 DRV</span></li>
+        <li><b>플레이드빌런</b> 2025.44.25 후기 글 <span class="k">+312</span> 추천</li>
+        <li><b>부산광안리질주</b> 누적 <span class="k">18,402km</span> 돌파</li>
+        <li><b>테슬람1호기</b> DRV 1,000 → 슈퍼차저 크레딧 교환 완료</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="page">
+
+  <!-- ══════════ LEFT RAIL ══════════ -->
+  <aside class="rail-left">
+    <nav aria-label="사이드 게시판 목록">
+      <p class="railtitle">게시판</p>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>전체글<span class="n">9.2k</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>소프트웨어<span class="n">1.4k</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>인증샷<span class="n">3.1k</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>FSD 후기<span class="n">842</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>충전·전기<span class="n">1.1k</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>타이어·휠<span class="n">613</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>보험·사고<span class="n">397</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>중고·시세<span class="n">288</span></a>
+      <hr>
+      <p class="railtitle">지역방</p>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>수도권<span class="n">2.6k</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>부·울·경<span class="n">741</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>대전·충청<span class="n">452</span></a>
+      <a href="#feed"><span class="sq" aria-hidden="true"></span>제주<span class="n">198</span></a>
+      <hr>
+      <p class="railtitle">랭킹</p>
+      <a href="#board"><span class="sq" aria-hidden="true"></span>주간 효율</a>
+      <a href="#board"><span class="sq" aria-hidden="true"></span>주간 주행</a>
+      <a href="#board"><span class="sq" aria-hidden="true"></span>명예의 전당</a>
+    </nav>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <main id="feed">
+
+    <!-- HERO -->
+    <section class="hero" aria-labelledby="h1">
+      <span class="kicker"><span class="pulse" aria-hidden="true"></span>한국 테슬라 오너 성지 · 2026</span>
+      <h1 id="h1">여기가 <span class="hl">테슬람 성지</span>다.<br>달린 거리는 거짓말을 안 한다.</h1>
+      <p class="sub">테슬라 계정 한 번만 연결하면 끝. 주행 중 60초마다 올라오는 <b>오도미터</b>가 당신의 km를 대신 증명하고, 그대로 <b>DRV</b>로 쌓입니다. GPS 조작? 오도미터 앞에서는 안 통합니다.</p>
+
+      <div class="cta">
+        <a class="btn btn-primary" href="#genesis">Genesis 500 합류하기 →</a>
+        <a class="btn btn-ghost" href="#how">어떻게 쌓이나요?</a>
+      </div>
+
+      <div class="gbar">
+        <div class="lab"><span>Genesis 500 · 1기 정원</span><span><b id="seatNum">347</b> / 500</span></div>
+        <div class="track"><div class="fill" id="seatFill" role="progressbar" aria-valuemin="0" aria-valuemax="500" aria-valuenow="347" aria-label="Genesis 500 모집 현황"></div></div>
+      </div>
+      <p class="fine">개발자 계정 필요 없음 · API 요금은 teslam.io가 부담 · 가입비 0원</p>
+    </section>
+
+    <!-- SCOREBOARD -->
+    <section class="scoreboard" aria-label="커뮤니티 현황 스코어보드">
+      <div><p class="v mono">9,241</p><p class="l">등록 오너</p></div>
+      <div><p class="v mono sig">2,884,712</p><p class="l">이번 달 검증 주행(km)</p></div>
+      <div><p class="v mono amb">347</p><p class="l">Genesis 남은 자리 153</p></div>
+      <div><p class="v mono">7.41</p><p class="l">이번 주 최고 효율(km/kWh)</p></div>
+    </section>
+
+    <!-- FEED TABS -->
+    <div class="feedhead" role="tablist" aria-label="피드 정렬">
+      <button class="tab" role="tab" aria-selected="true" id="tab-hot" data-tab="hot"><span class="fire" aria-hidden="true">🔥</span> 인기</button>
+      <button class="tab" role="tab" aria-selected="false" id="tab-new" data-tab="new">최신</button>
+      <button class="tab" role="tab" aria-selected="false" id="tab-cert" data-tab="cert">인증샷</button>
+      <button class="tab" role="tab" aria-selected="false" id="tab-quest" data-tab="quest">퀘스트</button>
+      <span class="meta" id="feedMeta">최근 1시간 · 새 글 42</span>
+    </div>
+
+    <!-- POSTS: HOT -->
+    <ol class="posts" id="panel-hot" role="tabpanel" aria-labelledby="tab-hot">
+
+      <li class="post pin">
+        <div class="vote up">
+          <button type="button" aria-pressed="true" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <span class="score">2.1k</span>
+          <button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+        <div>
+          <p class="head"><span class="cat c-sw">공지·통합</span> <span>📌 상단 고정</span></p>
+          <h3><a href="#feed">【2026.20.7 통합 스레드】 한국 순차 배포 시작 — 변경점·버그·롤백 여부 여기 모읍니다<span class="cmt">[1,447]</span></a></h3>
+          <p class="foot">
+            <span class="who">운영/테슬람반장</span><span class="tier">STAFF</span><span class="sep">·</span>
+            <span>최근 댓글 34초 전</span><span class="sep">·</span><span>조회 88,203</span><span class="sep">·</span><span>스크랩 1,902</span>
+          </p>
+        </div>
+      </li>
+
+      <li class="post">
+        <div class="vote up">
+          <button type="button" aria-pressed="true" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <span class="score">981</span>
+          <button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+        <div>
+          <p class="head"><span class="cat c-fsd">FSD</span></p>
+          <h3><a href="#feed">FSD v14 한국 도심 400km 타본 솔직 후기 — 회전교차로는 아직, 근데 끼어들기는 나보다 잘함<span class="cmt">[312]</span></a></h3>
+          <p class="foot"><span class="who">양재IC사냥꾼</span><span class="tier g">GENESIS #007</span><span class="sep">·</span><span>Model 3 Long Range</span><span class="sep">·</span><span>2시간 전</span><span class="sep">·</span><span>조회 21,447</span></p>
+        </div>
+      </li>
+
+      <li class="post">
+        <div class="vote">
+          <button type="button" aria-pressed="false" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <span class="score">764</span>
+          <button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+        <div>
+          <p class="head"><span class="cat c-cert">인증샷</span></p>
+          <h3><a href="#feed">한계 도전 성공. 서울→강릉 편도 무충전 7.6km/kWh 찍고 왔습니다 (에어컨 껐다는 소리는 하지 마세요, 켰음)<span class="cmt">[188]</span></a></h3>
+          <div class="thumbs" aria-hidden="true"><span class="shot"></span><span class="shot s3"></span><span class="shot s2"></span></div>
+          <p class="foot"><span class="who">초록불차선</span><span class="tier">DIAMOND</span><span class="sep">·</span><span>Model Y RWD</span><span class="sep">·</span><span>4시간 전</span><span class="sep">·</span><span>조회 33,910</span></p>
+        </div>
+      </li>
+
+      <li class="post">
+        <div class="vote">
+          <button type="button" aria-pressed="false" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <span class="score">612</span>
+          <button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+        <div>
+          <p class="head"><span class="cat c-chg">충전</span></p>
+          <h3><a href="#feed">기흥 V4 슈퍼차저 8베이 오픈 확인 사살. 250kW 안 찍히는 사람은 이거 확인해보세요<span class="cmt">[97]</span></a></h3>
+          <p class="foot"><span class="who">모델와이롱</span><span class="tier g">GENESIS #023</span><span class="sep">·</span><span>경기 용인</span><span class="sep">·</span><span>5시간 전</span><span class="sep">·</span><span>조회 14,022</span></p>
+        </div>
+      </li>
+
+      <li class="post">
+        <div class="vote">
+          <button type="button" aria-pressed="false" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <span class="score">508</span>
+          <button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+        <div>
+          <p class="head"><span class="cat c-tip">꿀팁</span></p>
+          <h3><a href="#feed">숨은 기능 정리 3탄 — 서비스 메뉴 안 들어가고 히든 세팅 6개 켜는 법 (스크롤휠 조합)<span class="cmt">[241]</span></a></h3>
+          <p class="foot"><span class="who">펌웨어파먹기</span><span class="tier">GOLD</span><span class="sep">·</span><span>Model S Plaid</span><span class="sep">·</span><span>7시간 전</span><span class="sep">·</span><span>조회 26,180</span></p>
+        </div>
+      </li>
+
+      <li class="post">
+        <div class="vote">
+          <button type="button" aria-pressed="false" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <span class="score">433</span>
+          <button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+        <div>
+          <p class="head"><span class="cat c-tip">타이어</span></p>
+          <h3><a href="#feed">순정 미쉐린 3.8만km 교체 시점 실측 데이터 (앞뒤 편마모 사진 포함) — 로테이션 주기 다시 계산했습니다<span class="cmt">[126]</span></a></h3>
+          <div class="thumbs" aria-hidden="true"><span class="shot s4"></span><span class="shot s2"></span></div>
+          <p class="foot"><span class="who">공기압노예</span><span class="tier">SILVER</span><span class="sep">·</span><span>Model 3 Performance</span><span class="sep">·</span><span>9시간 전</span><span class="sep">·</span><span>조회 11,349</span></p>
+        </div>
+      </li>
+
+      <li class="post">
+        <div class="vote">
+          <button type="button" aria-pressed="false" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <span class="score">389</span>
+          <button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+        <div>
+          <p class="head"><span class="cat c-quest">퀘스트</span></p>
+          <h3><a href="#feed">이번 주 「7.0 넘기기」 퀘스트 클리어한 사람 손 — 저는 7.12로 턱걸이 성공 ㅋㅋ<span class="cmt">[204]</span></a></h3>
+          <p class="foot"><span class="who">도곡동판교러</span><span class="tier g">GENESIS #041</span><span class="sep">·</span><span>10시간 전</span><span class="sep">·</span><span>조회 9,860</span></p>
+        </div>
+      </li>
+
+      <li class="post">
+        <div class="vote">
+          <button type="button" aria-pressed="false" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <span class="score">351</span>
+          <button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+        <div>
+          <p class="head"><span class="cat c-tip">보험</span></p>
+          <h3><a href="#feed">전기차 자차 갱신 3사 견적 비교표 만들었습니다. 배터리 특약 유무가 생각보다 큽니다<span class="cmt">[143]</span></a></h3>
+          <p class="foot"><span class="who">보험료방어전</span><span class="tier">GOLD</span><span class="sep">·</span><span>Model X</span><span class="sep">·</span><span>12시간 전</span><span class="sep">·</span><span>조회 18,714</span></p>
+        </div>
+      </li>
+
+      <li class="post">
+        <div class="vote">
+          <button type="button" aria-pressed="false" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          <span class="score">297</span>
+          <button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button>
+        </div>
+        <div>
+          <p class="head"><span class="cat c-cert">인증샷</span></p>
+          <h3><a href="#feed">제주 한 바퀴 돌고 왔습니다. 성산 일출 + 흰색 모델Y 조합은 반칙이네요<span class="cmt">[88]</span></a></h3>
+          <div class="thumbs" aria-hidden="true"><span class="shot s3"></span><span class="shot"></span><span class="shot s4"></span><span class="shot s2"></span></div>
+          <p class="foot"><span class="who">제주도민되고싶다</span><span class="tier">BRONZE</span><span class="sep">·</span><span>제주</span><span class="sep">·</span><span>14시간 전</span><span class="sep">·</span><span>조회 7,205</span></p>
+        </div>
+      </li>
+    </ol>
+
+    <!-- POSTS: NEW (JS toggled) -->
+    <ol class="posts" id="panel-new" role="tabpanel" aria-labelledby="tab-new" hidden>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">12</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-sw">소프트웨어</span></p>
+          <h3><a href="#feed">지금 막 2026.20.7 떴습니다. 다운로드 1.9GB<span class="cmt">[27]</span><span class="new">NEW</span></a></h3>
+          <p class="foot"><span class="who">업데이트알림봇</span><span class="sep">·</span><span>2분 전</span><span class="sep">·</span><span>조회 812</span></p>
+        </div>
+      </li>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">8</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-chg">충전</span></p>
+          <h3><a href="#feed">새벽 3시 하남 슈퍼차저 만석이라는 게 말이 됩니까<span class="cmt">[41]</span><span class="new">NEW</span></a></h3>
+          <p class="foot"><span class="who">새벽충전러</span><span class="tier">SILVER</span><span class="sep">·</span><span>9분 전</span><span class="sep">·</span><span>조회 1,203</span></p>
+        </div>
+      </li>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">31</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-fsd">FSD</span></p>
+          <h3><a href="#feed">올림픽대로 합류 구간에서 FSD가 갑자기 예의 바르게 변한 거 저만 느낌?<span class="cmt">[63]</span><span class="new">NEW</span></a></h3>
+          <p class="foot"><span class="who">한강뷰출근</span><span class="tier g">GENESIS #112</span><span class="sep">·</span><span>18분 전</span><span class="sep">·</span><span>조회 2,940</span></p>
+        </div>
+      </li>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">4</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-tip">질문</span></p>
+          <h3><a href="#feed">출고 3일차인데 유리막 코팅 지금 하는 게 맞나요<span class="cmt">[19]</span><span class="new">NEW</span></a></h3>
+          <p class="foot"><span class="who">신입테슬람</span><span class="sep">·</span><span>26분 전</span><span class="sep">·</span><span>조회 604</span></p>
+        </div>
+      </li>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">57</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-cert">인증샷</span></p>
+          <h3><a href="#feed">오늘 오도 100,000km 찍었습니다. 5년 무사고 감사합니다<span class="cmt">[112]</span><span class="new">NEW</span></a></h3>
+          <div class="thumbs" aria-hidden="true"><span class="shot s2"></span><span class="shot"></span></div>
+          <p class="foot"><span class="who">십만키로장인</span><span class="tier">DIAMOND</span><span class="sep">·</span><span>41분 전</span><span class="sep">·</span><span>조회 5,118</span></p>
+        </div>
+      </li>
+    </ol>
+
+    <!-- POSTS: CERT -->
+    <ol class="posts" id="panel-cert" role="tabpanel" aria-labelledby="tab-cert" hidden>
+      <li class="post">
+        <div class="vote up"><button type="button" aria-pressed="true" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">764</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-cert">인증샷</span></p>
+          <h3><a href="#feed">서울→강릉 무충전 7.6km/kWh 인증. 오도 사진 같이 올립니다<span class="cmt">[188]</span></a></h3>
+          <div class="thumbs" aria-hidden="true"><span class="shot"></span><span class="shot s3"></span><span class="shot s2"></span></div>
+          <p class="foot"><span class="who">초록불차선</span><span class="tier">DIAMOND</span><span class="sep">·</span><span>4시간 전</span></p>
+        </div>
+      </li>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">521</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-cert">인증샷</span></p>
+          <h3><a href="#feed">새벽 남산 텅빈 도로 + 미드나잇 실버. 이 맛에 탑니다<span class="cmt">[74]</span></a></h3>
+          <div class="thumbs" aria-hidden="true"><span class="shot s4"></span><span class="shot"></span><span class="shot s3"></span></div>
+          <p class="foot"><span class="who">남산루프러</span><span class="tier g">GENESIS #058</span><span class="sep">·</span><span>어제</span></p>
+        </div>
+      </li>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">418</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-cert">인증샷</span></p>
+          <h3><a href="#feed">부산 광안대교 야간 주행. 사진 실력은 없지만 차가 다 해줍니다<span class="cmt">[52]</span></a></h3>
+          <div class="thumbs" aria-hidden="true"><span class="shot s2"></span><span class="shot s4"></span></div>
+          <p class="foot"><span class="who">부산광안리질주</span><span class="tier">GOLD</span><span class="sep">·</span><span>어제</span></p>
+        </div>
+      </li>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">366</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-cert">인증샷</span></p>
+          <h3><a href="#feed">차고 정리했습니다. 월봇 옆에 트래커 붙이니까 뽕이 차네요<span class="cmt">[61]</span></a></h3>
+          <div class="thumbs" aria-hidden="true"><span class="shot s3"></span><span class="shot"></span></div>
+          <p class="foot"><span class="who">차고정리광</span><span class="tier">SILVER</span><span class="sep">·</span><span>2일 전</span></p>
+        </div>
+      </li>
+    </ol>
+
+    <!-- POSTS: QUEST -->
+    <ol class="posts" id="panel-quest" role="tabpanel" aria-labelledby="tab-quest" hidden>
+      <li class="post">
+        <div class="vote up"><button type="button" aria-pressed="true" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">389</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-quest">이번 주 퀘스트</span></p>
+          <h3><a href="#feed">「주간 효율 7.0 km/kWh 돌파」 — 현재 클리어 412명 / 도전 2,881명<span class="cmt">[204]</span></a></h3>
+          <p class="foot"><span class="who">퀘스트보드</span><span class="sep">·</span><span>마감 D-3</span><span class="sep">·</span><span>보상 +250 DRV</span></p>
+        </div>
+      </li>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">276</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-quest">이번 주 퀘스트</span></p>
+          <h3><a href="#feed">「V4 슈퍼차저 체크인」 — 전국 14개소 중 아무 곳이나 1회<span class="cmt">[133]</span></a></h3>
+          <p class="foot"><span class="who">퀘스트보드</span><span class="sep">·</span><span>마감 D-3</span><span class="sep">·</span><span>보상 +120 DRV</span></p>
+        </div>
+      </li>
+      <li class="post">
+        <div class="vote"><button type="button" aria-label="추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button><span class="score">198</span><button type="button" aria-label="비추천"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></button></div>
+        <div>
+          <p class="head"><span class="cat c-quest">시즌</span></p>
+          <h3><a href="#feed">「7일 연속 주행 인증」 스트릭 챌린지 — 끊기면 처음부터입니다 (냉정)<span class="cmt">[88]</span></a></h3>
+          <p class="foot"><span class="who">퀘스트보드</span><span class="sep">·</span><span>상시</span><span class="sep">·</span><span>보상 배지 + 300 DRV</span></p>
+        </div>
+      </li>
+    </ol>
+
+    <!-- LEADERBOARD -->
+    <section class="card" id="board" style="margin-top:20px" aria-labelledby="boardh">
+      <header>
+        <h2 id="boardh">🏁 이번 주 주행 랭킹</h2>
+        <span class="more">월요일 05:00 초기화</span>
+      </header>
+      <div class="body">
+        <div class="scroller">
+          <table>
+            <caption class="sr">이번 주 오도미터 검증 주행 랭킹 상위 6명</caption>
+            <thead>
+              <tr>
+                <th scope="col">#</th><th scope="col">닉네임</th><th scope="col">차량</th>
+                <th scope="col" style="text-align:right">검증 주행</th>
+                <th scope="col" style="text-align:right">효율</th>
+                <th scope="col" style="text-align:right">DRV</th>
+                <th scope="col" style="text-align:right">변동</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="rank">1</td><td class="who">도곡동판교러<small>서울 강남 · GENESIS #041</small></td><td>Model 3 LR</td><td class="num">341.8 km</td><td class="num sig">7.28</td><td class="num amb">3,418</td><td class="num delta">▲6</td></tr>
+              <tr><td class="rank">2</td><td class="who">초록불차선<small>강원 원주 · DIAMOND</small></td><td>Model Y RWD</td><td class="num">328.4 km</td><td class="num sig">7.41</td><td class="num amb">3,284</td><td class="num delta">▲1</td></tr>
+              <tr><td class="rank">3</td><td class="who">부산광안리질주<small>부산 수영 · GOLD</small></td><td>Model 3 Perf</td><td class="num">311.0 km</td><td class="num sig">6.02</td><td class="num amb">3,110</td><td class="num delta dn">▼2</td></tr>
+              <tr><td class="rank">4</td><td class="who">플레이드빌런<small>경기 성남 · GENESIS #009</small></td><td>Model S Plaid</td><td class="num">297.6 km</td><td class="num sig">5.11</td><td class="num amb">2,976</td><td class="num delta">▲12</td></tr>
+              <tr><td class="rank">5</td><td class="who">양재IC사냥꾼<small>서울 서초 · GENESIS #007</small></td><td>Model 3 LR</td><td class="num">284.2 km</td><td class="num sig">6.88</td><td class="num amb">2,842</td><td class="num delta dn">▼1</td></tr>
+              <tr><td class="rank">6</td><td class="who">제주도민되고싶다<small>제주 서귀포 · BRONZE</small></td><td>Model Y LR</td><td class="num">263.9 km</td><td class="num sig">6.74</td><td class="num amb">2,639</td><td class="num delta">▲4</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p style="font-size:11.5px;color:var(--dim-2);margin-top:10px">전부 오도미터 기준. 캡처도, 자기 신고도 안 받습니다. 하루 500 DRV(50km)까지 인정.</p>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="card how" id="how" aria-labelledby="howh">
+      <header><h2 id="howh">⚙️ 어떻게 km가 DRV가 되나</h2><span class="more">3단계 끝</span></header>
+      <div class="steps">
+        <div>
+          <p class="n">STEP 01</p>
+          <h4>계정 한 번 연결</h4>
+          <p>테슬라 공식 OAuth로 1회 승인. 개발자 계정도, API 요금도 필요 없습니다 — 비용은 teslam.io가 냅니다.</p>
+          <div class="odo" aria-hidden="true"><b>O</b><b>A</b><b>u</b><b>t</b><b>h</b><b class="k">✓</b></div>
+        </div>
+        <div>
+          <p class="n">STEP 02</p>
+          <h4>달리면 60초마다 신호</h4>
+          <p>주행 중에만 위도·경도·속도·<span class="sig">오도미터</span> 4개가 올라옵니다. 주차 중엔 아무것도 안 보냅니다.</p>
+          <div class="tickviz" aria-hidden="true">
+            <i style="animation-delay:0s"></i><i style="animation-delay:.16s"></i><i style="animation-delay:.32s"></i><i style="animation-delay:.48s"></i>
+            <i style="animation-delay:.64s"></i><i style="animation-delay:.8s"></i><i style="animation-delay:.96s"></i><i style="animation-delay:1.12s"></i>
+            <i style="animation-delay:1.28s"></i><i style="animation-delay:1.44s"></i><i style="animation-delay:1.6s"></i><i style="animation-delay:1.76s"></i>
+          </div>
+        </div>
+        <div>
+          <p class="n">STEP 03</p>
+          <h4>1km = 10 DRV</h4>
+          <p>오도미터는 되돌릴 수 없으니 조작이 안 됩니다. 하루 상한 500 DRV. <span class="sig">1,000 DRV ≈ 5,000원어치</span> 슈퍼차저 크레딧·기프티콘·세차 쿠폰.</p>
+          <div class="odo" aria-hidden="true"><b>0</b><b>1</b><b>7</b><b>4</b><b>2</b><b class="k">6</b></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GARAGE / CAR SVG -->
+    <section class="garage" aria-labelledby="garageh">
+      <div class="road" aria-hidden="true"></div>
+      <div class="garage-grid">
+        <div class="carwrap">
+          <div class="speedlines" aria-hidden="true">
+            <i style="width:60px;top:34%;right:6%;animation-delay:0s"></i>
+            <i style="width:44px;top:48%;right:2%;animation-delay:.5s"></i>
+            <i style="width:72px;top:60%;right:10%;animation-delay:1s"></i>
+          </div>
+          <svg viewBox="0 0 420 150" role="img" aria-label="주행 중인 테슬라 실루엣 일러스트">
+            <defs>
+              <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#3a4657"/>
+                <stop offset=".55" stop-color="#212a37"/>
+                <stop offset="1" stop-color="#141b25"/>
+              </linearGradient>
+              <linearGradient id="glassg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="rgba(0,194,168,.5)"/>
+                <stop offset="1" stop-color="rgba(0,194,168,.08)"/>
+              </linearGradient>
+            </defs>
+            <!-- body -->
+            <path d="M22 108 C18 88 30 80 52 76 L96 72 C118 50 152 40 200 40 C250 40 286 50 312 72 L360 79 C390 84 400 92 398 108 L398 114 C398 118 394 120 390 120 L30 120 C25 120 22 117 22 113 Z"
+                  fill="url(#bg2)"/>
+            <!-- glasshouse -->
+            <path d="M108 71 C130 52 160 45 200 45 C242 45 274 53 298 71 Z" fill="url(#glassg)"/>
+            <!-- window split -->
+            <path d="M200 45 L200 71" stroke="#0d1117" stroke-width="2.4" opacity=".7"/>
+            <!-- beltline highlight -->
+            <path d="M40 92 L378 92" stroke="rgba(0,194,168,.35)" stroke-width="1.6"/>
+            <!-- headlight -->
+            <path d="M382 88 L398 90 L398 99 L380 97 Z" fill="#ffb020" opacity=".95"/>
+            <!-- taillight bar -->
+            <rect x="22" y="88" width="16" height="6" rx="3" fill="#ff5c39" opacity=".9"/>
+            <!-- wheels -->
+            <g>
+              <circle cx="108" cy="118" r="26" fill="#0b0f15" stroke="#39445a" stroke-width="3"/>
+              <circle cx="108" cy="118" r="11" fill="none" stroke="#00c2a8" stroke-width="3"/>
+              <circle cx="312" cy="118" r="26" fill="#0b0f15" stroke="#39445a" stroke-width="3"/>
+              <circle cx="312" cy="118" r="11" fill="none" stroke="#00c2a8" stroke-width="3"/>
+            </g>
+            <!-- ground shadow -->
+            <ellipse cx="210" cy="143" rx="180" ry="6" fill="rgba(0,194,168,.14)"/>
+          </svg>
+          <div class="glow" aria-hidden="true"></div>
+        </div>
+        <div>
+          <h2 id="garageh">차고 자랑은 여기서 하는 겁니다</h2>
+          <p>내 차 트림, 색상, 휠, 누적 오도미터가 프로필에 그대로 박힙니다. 자랑하려고 캡처 편집할 필요 없습니다 — 숫자는 이미 검증돼 있으니까.</p>
+          <div class="plates">
+            <span class="plate">MODEL 3 <b>LR AWD</b></span>
+            <span class="plate">누적 <b>84,120 km</b></span>
+            <span class="plate">평균 <b>6.9 km/kWh</b></span>
+            <span class="plate">스트릭 <b>27일</b></span>
+            <span class="plate">배지 <b>11</b></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GENESIS CTA -->
+    <section class="join" id="genesis" aria-labelledby="genh">
+      <p class="kick">GENESIS 500 · 선착순 500명</p>
+      <h2 id="genh">1기 자리는 500개, 다시 안 열립니다.</h2>
+      <p>Genesis 500은 teslam.io의 첫 번째 기수입니다. <b>보상 1.5배</b>, 프로필에 영구히 남는 <b>「Genesis 1기」 마크</b>, 그리고 토크노믹스를 확정하는 <b>투표권</b>. 나중에 들어온 사람은 살 수 없는 것들입니다.</p>
+
+      <div class="cta">
+        <a class="btn btn-primary" href="#genesis">테슬라 계정 연결하고 자리 잡기 →</a>
+        <a class="btn btn-ghost" href="#feed">일단 눈팅부터</a>
+      </div>
+
+      <div class="seatgrid" id="seatGrid" aria-hidden="true"></div>
+      <p class="legend">
+        <span><i class="f" style="background:linear-gradient(150deg,#ffb020,#ff8f1f)"></i> 확정 347</span>
+        <span><i style="background:#293141"></i> 남은 자리 153</span>
+        <span><i style="background:#00c2a8"></i> 당신 자리</span>
+      </p>
+      <p style="font-size:12px;color:var(--dim-2);margin-top:12px">TSLM(총발행 1억 고정)은 DRV를 락업하거나 좋은 기술 글을 쓰면 받습니다. 투표권과 광고 게재권이 붙습니다.</p>
+    </section>
+
+  </main>
+
+  <!-- ══════════ RIGHT RAIL ══════════ -->
+  <aside class="rail-right" aria-label="사이드바">
+    <div class="sticky">
+
+      <!-- wallet widget -->
+      <section class="wallet" aria-labelledby="walleth">
+        <div class="top">
+          <p class="lab" id="walleth">내 DRV 잔고</p>
+          <p class="big mono"><span id="drvNum">12,840</span><span>DRV</span></p>
+          <p class="worth">≈ 6,420원어치 · 슈퍼차저 크레딧 교환 가능</p>
+        </div>
+        <div class="capbar">
+          <div class="t"><span>오늘 적립 상한</span><span class="mono" id="capTxt">380 / 500</span></div>
+          <div class="track"><div class="fill" id="capFill" role="progressbar" aria-valuemin="0" aria-valuemax="500" aria-valuenow="380" aria-label="오늘 적립 상한"></div></div>
+        </div>
+        <ul>
+          <li>오늘 검증 주행 <b>38.0 km</b></li>
+          <li>이번 주 누적 <b>2,410 DRV</b></li>
+          <li>락업한 TSLM <b>18.4</b></li>
+        </ul>
+      </section>
+
+      <!-- genesis card -->
+      <section class="gcard" aria-labelledby="gch">
+        <h3 id="gch">⚡ Genesis 500 모집 중</h3>
+        <p>1기에만 주는 것들:</p>
+        <ul>
+          <li><b>1.5배</b> 적립 배수, 영구 적용</li>
+          <li><b>Genesis 1기</b> 프로필 마크</li>
+          <li>토크노믹스 <b>투표권</b></li>
+        </ul>
+        <a class="btn btn-primary" href="#genesis">지금 자리 잡기</a>
+        <p class="seats">남은 자리 <b id="seatLeft">153</b>석</p>
+      </section>
+
+      <!-- weekly hot -->
+      <section class="card" aria-labelledby="hoth">
+        <header><h3 id="hoth">🔥 이번 주 인기 글</h3><a class="more" href="#feed">더보기</a></header>
+        <div class="body">
+          <ol class="hotlist">
+            <li><span class="i">1</span><div><a class="t" href="#feed">FSD v14 400km 후기 — 회전교차로는 아직</a><p class="m">981 · 댓글 312</p></div></li>
+            <li><span class="i">2</span><div><a class="t" href="#feed">서울→강릉 무충전 7.6km/kWh 인증</a><p class="m">764 · 댓글 188</p></div></li>
+            <li><span class="i">3</span><div><a class="t" href="#feed">숨은 기능 3탄: 히든 세팅 6개</a><p class="m">508 · 댓글 241</p></div></li>
+            <li><span class="i">4</span><div><a class="t" href="#feed">기흥 V4 8베이 250kW 안 나올 때</a><p class="m">612 · 댓글 97</p></div></li>
+            <li><span class="i">5</span><div><a class="t" href="#feed">전기차 자차 3사 견적 비교표</a><p class="m">351 · 댓글 143</p></div></li>
+            <li><span class="i">6</span><div><a class="t" href="#feed">미쉐린 3.8만km 편마모 실측</a><p class="m">433 · 댓글 126</p></div></li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- quests -->
+      <section class="card" aria-labelledby="qh">
+        <header><h3 id="qh">🎯 이번 주 퀘스트</h3><span class="more">D-3</span></header>
+        <div class="body">
+          <ul class="quest">
+            <li><span class="icon" aria-hidden="true">⚡</span><div><p class="t">주간 효율 7.0 km/kWh 돌파</p><p class="r">+250 DRV · 도전 중 (현재 6.94)</p></div></li>
+            <li><span class="icon" aria-hidden="true">🔌</span><div><p class="t">V4 슈퍼차저 체크인 1회</p><p class="r done">+120 DRV · 클리어 ✓</p></div></li>
+            <li><span class="icon" aria-hidden="true">📷</span><div><p class="t">인증샷 게시판에 1글 쓰기</p><p class="r">+80 DRV · 미완료</p></div></li>
+            <li><span class="icon" aria-hidden="true">🔥</span><div><p class="t">7일 연속 주행 스트릭</p><p class="r">배지 + 300 DRV · 5/7일</p></div></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- online now -->
+      <section class="card online" aria-labelledby="onh">
+        <header><h3 id="onh"><span class="pulse" style="display:inline-block;margin-right:5px" aria-hidden="true"></span>지금 접속 중</h3><span class="more mono" id="onlineNum2">1,284</span></header>
+        <div class="body">
+          <p style="font-size:12.5px;color:var(--dim-2)">지금 달리는 중인 오너 <b class="mono" style="color:var(--signal)" id="drivingNum">213</b>대</p>
+          <div class="row">
+            <span class="chip on">도곡동판교러</span>
+            <span class="chip on">초록불차선</span>
+            <span class="chip">펌웨어파먹기</span>
+            <span class="chip on">플레이드빌런</span>
+            <span class="chip">공기압노예</span>
+            <span class="chip on">양재IC사냥꾼</span>
+            <span class="chip">십만키로장인</span>
+            <span class="chip on">부산광안리질주</span>
+            <span class="chip">보험료방어전</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </aside>
+
+</div><!-- /page -->
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+  <div class="fgrid">
+    <div>
+      <a class="brand" href="#" style="font-size:17px">
+        <span class="glyph" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#04191a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+        </span>
+        teslam<em>.io</em>
+      </a>
+      <p style="margin-top:10px;max-width:34ch">달린 만큼 쌓이는 한국 테슬라 오너 커뮤니티. 오도미터로 검증하고, DRV로 돌려드립니다.</p>
+    </div>
+    <div>
+      <h4>커뮤니티</h4>
+      <ul>
+        <li><a href="#feed">전체글</a></li>
+        <li><a href="#feed">인증샷</a></li>
+        <li><a href="#board">주간 랭킹</a></li>
+        <li><a href="#feed">퀘스트 보드</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>토큰</h4>
+      <ul>
+        <li><a href="#how">DRV 적립 규칙</a></li>
+        <li><a href="#genesis">TSLM 거버넌스</a></li>
+        <li><a href="#genesis">Genesis 500</a></li>
+        <li><a href="#how">교환처 목록</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>운영</h4>
+      <ul>
+        <li><a href="#feed">이용약관</a></li>
+        <li><a href="#feed">개인정보 처리방침</a></li>
+        <li><a href="#feed">데이터 연결 범위</a></li>
+        <li><a href="#feed">문의</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="legal">
+    <strong>teslam.io는 Tesla, Inc.와 제휴하거나 후원받는 관계가 아닌 독립 커뮤니티 프로젝트입니다.</strong><br>
+    Tesla, Model S/3/X/Y, Supercharger는 Tesla, Inc.의 상표입니다. 게시된 닉네임·주행 기록·게시글은 서비스 소개를 위한 예시입니다.
+    주행 데이터는 오너가 직접 연결을 승인한 경우에만, 주행 중 60초 주기로 수집됩니다.
+  </p>
+</footer>
+
+</div><!-- /wrap -->
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---- ticker: duplicate items for seamless loop ---- */
+  var track = document.getElementById("tickerTrack");
+  if (track && !reduce) {
+    track.innerHTML += track.innerHTML;
+  }
+
+  /* ---- progress bars ---- */
+  function setBar(id, pct){
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (reduce) { el.style.transition = "none"; el.style.width = pct + "%"; return; }
+    requestAnimationFrame(function(){
+      setTimeout(function(){ el.style.width = pct + "%"; }, 160);
+    });
+  }
+  setBar("seatFill", 347/500*100);
+  setBar("capFill", 380/500*100);
+
+  /* ---- genesis seat grid (500 seats) ---- */
+  var grid = document.getElementById("seatGrid");
+  if (grid) {
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < 500; i++){
+      var s = document.createElement("i");
+      if (i < 347) s.className = "f";
+      else if (i === 347) s.className = "me";
+      frag.appendChild(s);
+    }
+    grid.appendChild(frag);
+  }
+
+  /* ---- tabs ---- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".tab"));
+  var panels = { hot:"panel-hot", "new":"panel-new", cert:"panel-cert", quest:"panel-quest" };
+  var metaTxt = { hot:"최근 1시간 · 새 글 42", "new":"방금 · 실시간 정렬", cert:"인증샷 3,102개", quest:"진행 중 4개 · 마감 D-3" };
+
+  function activate(key){
+    tabs.forEach(function(t){
+      var on = t.getAttribute("data-tab") === key;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    Object.keys(panels).forEach(function(k){
+      var p = document.getElementById(panels[k]);
+      if (p) p.hidden = (k !== key);
+    });
+    var m = document.getElementById("feedMeta");
+    if (m) m.textContent = metaTxt[key] || "";
+  }
+  tabs.forEach(function(t){
+    t.addEventListener("click", function(){ activate(t.getAttribute("data-tab")); });
+    t.addEventListener("keydown", function(e){
+      var i = tabs.indexOf(t), n = null;
+      if (e.key === "ArrowRight") n = tabs[(i+1) % tabs.length];
+      if (e.key === "ArrowLeft")  n = tabs[(i-1+tabs.length) % tabs.length];
+      if (n){ e.preventDefault(); n.focus(); activate(n.getAttribute("data-tab")); }
+    });
+  });
+
+  /* ---- vote buttons (visual only) ---- */
+  document.querySelectorAll(".vote").forEach(function(v){
+    var up = v.querySelector("button"),
+        score = v.querySelector(".score"),
+        base = score ? score.textContent : "0";
+    if (!up || !score) return;
+    up.addEventListener("click", function(){
+      var on = up.getAttribute("aria-pressed") === "true";
+      up.setAttribute("aria-pressed", on ? "false" : "true");
+      v.classList.toggle("up", !on);
+      if (base.indexOf("k") === -1){
+        var n = parseInt(base.replace(/,/g,""), 10) || 0;
+        score.textContent = (on ? n : n + 1).toLocaleString("ko-KR");
+      }
+    });
+  });
+
+  /* ---- gentle live counters ---- */
+  if (!reduce){
+    var online = 1284, driving = 213, drv = 12840;
+    setInterval(function(){
+      online  += Math.round((Math.random()-0.42) * 7);
+      driving += Math.round((Math.random()-0.5) * 4);
+      if (online < 1150) online = 1150;
+      if (online > 1480) online = 1480;
+      if (driving < 170) driving = 170;
+      if (driving > 260) driving = 260;
+      var a = document.getElementById("onlineNum"),
+          b = document.getElementById("onlineNum2"),
+          c = document.getElementById("drivingNum");
+      if (a) a.textContent = online.toLocaleString("ko-KR");
+      if (b) b.textContent = online.toLocaleString("ko-KR");
+      if (c) c.textContent = driving.toLocaleString("ko-KR");
+    }, 3400);
+
+    setInterval(function(){
+      drv += 10;
+      var d = document.getElementById("drvNum");
+      if (d) d.textContent = drv.toLocaleString("ko-KR");
+    }, 6000);
+  }
+
+})();
+</script>
+</body>
+</html>

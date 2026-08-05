@@ -10,7 +10,10 @@ import { SITE } from "@/lib/site";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
-      { userAgent: "*", allow: "/" },
+      // `/alt*` holds design directions under review. They are public so they
+      // can be looked at and argued over, but they are drafts — indexing them
+      // would put half-finished pages under this brand's name in search.
+      { userAgent: "*", allow: "/", disallow: ["/alt", "/alt$", "/alt*"] },
       {
         userAgent: [
           "GPTBot",

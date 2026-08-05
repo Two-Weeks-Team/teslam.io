@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>teslam.io — 내 차고 | 테슬라 오너 명패</title>
+<meta name="description" content="테슬라 계정 한 번 연결하면 오도미터가 그대로 기록됩니다. 주행거리는 DRV가 되고, 내 차고엔 명패 한 장이 걸립니다. Genesis 500 모집 중.">
+<style>
+/* ─────────────────────────────────────────────
+   teslam.io — 내 차고 (my-garage)
+   palette: 그을린 그래파이트 · 샴페인 포일 · 엠버
+   ───────────────────────────────────────────── */
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+
+:root{
+  --void:#0b0a08;
+  --coal:#131110;
+  --panel:#1b1815;
+  --panel-2:#232019;
+  --line:#332e26;
+  --line-soft:#282419;
+
+  --foil:#e8d5a4;
+  --foil-hi:#fff5d9;
+  --foil-deep:#a4854a;
+  --foil-shadow:#6b5730;
+
+  --ember:#ff7a45;
+  --ember-soft:#ffa877;
+  --jade:#4fd1a5;
+
+  --ink:#f6efe2;
+  --ink-2:#cdc3b1;
+  --muted:#988f7e;
+
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+
+  --r-lg:22px;
+  --r-md:14px;
+  --r-sm:9px;
+  --pad:clamp(18px,4vw,40px);
+}
+
+body{
+  margin:0;
+  font-family:var(--sans);
+  background:var(--void);
+  color:var(--ink);
+  word-break:keep-all;
+  overflow-wrap:break-word;
+  overflow-x:hidden;
+  line-height:1.62;
+  letter-spacing:-.01em;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+
+/* 차고 바닥 조명 */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:
+    radial-gradient(120% 68% at 50% -8%, rgba(255,207,138,.13), rgba(255,207,138,0) 62%),
+    radial-gradient(80% 50% at 88% 12%, rgba(255,122,69,.10), rgba(255,122,69,0) 60%),
+    radial-gradient(90% 60% at 6% 78%, rgba(79,209,165,.06), rgba(79,209,165,0) 60%);
+}
+/* 금속 표면 그레인 */
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+  opacity:.055;
+  mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.shell{position:relative;z-index:2}
+
+img,svg{max-width:100%}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit}
+
+:focus-visible{
+  outline:2px solid var(--foil-hi);
+  outline-offset:3px;
+  border-radius:6px;
+}
+
+.wrap{width:min(1180px,100% - clamp(24px,6vw,72px));margin-inline:auto}
+
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+
+.foil-text{
+  background:linear-gradient(100deg,
+    var(--foil-shadow) 0%, var(--foil) 16%, var(--foil-hi) 26%,
+    var(--foil-deep) 40%, var(--foil-shadow) 50%, var(--foil) 66%,
+    var(--foil-hi) 76%, var(--foil-deep) 92%, var(--foil-shadow) 100%);
+  background-size:220% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+  animation:foilDrift 9s linear infinite;
+}
+@keyframes foilDrift{to{background-position:220% 0}}
+/* 포일 텍스트 안의 자식 요소가 투명해지지 않도록 */
+.foil-text > *{
+  background:inherit;
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+}
+.foil-text small,.foil-text .plain{
+  background:none;
+  color:var(--muted);-webkit-text-fill-color:var(--muted);
+}
+
+.eyebrow{
+  font-family:var(--mono);
+  font-size:.68rem;
+  letter-spacing:.24em;
+  text-transform:uppercase;
+  color:var(--foil-deep);
+  display:flex;align-items:center;gap:.62em;
+  margin:0 0 .9rem;
+}
+.eyebrow::before{
+  content:"";width:26px;height:1px;flex:none;
+  background:linear-gradient(90deg,transparent,var(--foil-deep));
+}
+
+/* ── 헤더 ───────────────────────────────── */
+.site-head{
+  position:sticky;top:0;z-index:60;
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  background:linear-gradient(180deg,rgba(11,10,8,.92),rgba(11,10,8,.66));
+  border-bottom:1px solid rgba(232,213,164,.10);
+}
+.head-in{display:flex;align-items:center;gap:16px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;flex:none;font-weight:700;letter-spacing:-.03em}
+.brand-mark{
+  width:28px;height:28px;flex:none;
+  display:grid;place-items:center;
+  border-radius:8px;
+  background:linear-gradient(145deg,#3a3226,#15130f);
+  box-shadow:inset 0 1px 0 rgba(255,245,217,.28), inset 0 -2px 6px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.5);
+}
+.brand-mark svg{width:16px;height:16px;display:block}
+.brand b{font-size:1.02rem}
+.brand span{color:var(--foil-deep)}
+
+.site-nav{margin-left:auto;display:flex;gap:4px;align-items:center}
+.site-nav a{
+  padding:7px 12px;border-radius:99px;font-size:.85rem;color:var(--ink-2);
+  transition:background .2s,color .2s;
+}
+.site-nav a:hover{background:rgba(232,213,164,.09);color:var(--ink)}
+@media (max-width:860px){.site-nav .opt{display:none}}
+@media (max-width:520px){.site-nav{display:none}}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:.5em;
+  padding:12px 22px;border-radius:99px;border:0;cursor:pointer;
+  font-weight:700;font-size:.92rem;letter-spacing:-.02em;
+  transition:transform .18s cubic-bezier(.2,.9,.2,1), box-shadow .18s, filter .18s;
+}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn-foil{
+  color:#241c0d;
+  background:linear-gradient(140deg,#fff5d9 0%,#e8d5a4 24%,#c4a463 52%,#f3e5bd 74%,#a4854a 100%);
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 -2px 8px rgba(90,70,30,.5) inset, 0 8px 22px rgba(180,140,60,.22);
+}
+.btn-foil:hover{filter:brightness(1.07);box-shadow:0 1px 0 rgba(255,255,255,.7) inset,0 -2px 8px rgba(90,70,30,.5) inset,0 12px 30px rgba(200,160,70,.32)}
+.btn-ghost{
+  color:var(--ink);
+  background:rgba(255,255,255,.03);
+  box-shadow:inset 0 0 0 1px rgba(232,213,164,.24);
+}
+.btn-ghost:hover{background:rgba(232,213,164,.10)}
+.btn-sm{padding:9px 16px;font-size:.82rem}
+.head-cta{flex:none}
+@media (max-width:400px){.head-cta{padding:8px 13px;font-size:.78rem}}
+
+/* ── 히어로 ─────────────────────────────── */
+.hero{padding:clamp(38px,7vw,84px) 0 clamp(30px,5vw,60px)}
+.hero-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);
+  gap:clamp(30px,5vw,60px);
+  align-items:center;
+}
+@media (max-width:1000px){.hero-grid{grid-template-columns:1fr;gap:38px}}
+
+h1{
+  margin:0 0 20px;
+  font-size:clamp(2.05rem,6.2vw,3.9rem);
+  line-height:1.16;
+  letter-spacing:-.045em;
+  font-weight:800;
+}
+h1 em{display:block;font-style:normal}
+
+.lede{
+  margin:0 0 26px;max-width:44ch;
+  font-size:clamp(1rem,2.2vw,1.12rem);
+  color:var(--ink-2);
+}
+.lede b{color:var(--foil);font-weight:600}
+
+.hero-cta{display:flex;flex-wrap:wrap;gap:11px;margin-bottom:28px}
+
+/* Genesis 게이지 */
+.gen-strip{
+  border:1px solid var(--line);
+  border-radius:var(--r-md);
+  padding:15px 17px;
+  background:linear-gradient(160deg,rgba(255,245,217,.045),rgba(0,0,0,.28));
+  max-width:440px;
+}
+.gen-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:.82rem}
+.gen-top .lbl{font-family:var(--mono);letter-spacing:.14em;color:var(--foil-deep);font-size:.7rem}
+.gen-top .rest{margin-left:auto;color:var(--muted)}
+.gen-top .rest b{color:var(--ember);font-family:var(--mono);font-size:1.02rem}
+.gauge{
+  margin-top:10px;height:7px;border-radius:99px;
+  background:#231f18;overflow:hidden;
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.7);
+}
+.gauge i{
+  display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,#a4854a,#e8d5a4 55%,#fff5d9);
+  box-shadow:0 0 12px rgba(232,213,164,.55);
+  animation:fill 1.5s .35s cubic-bezier(.2,.8,.2,1) forwards;
+}
+@keyframes fill{to{width:var(--pct,72%)}}
+.gen-note{margin:9px 0 0;font-size:.76rem;color:var(--muted)}
+
+/* ── 카드 ───────────────────────────────── */
+.cardwrap{
+  perspective:1300px;
+  perspective-origin:50% 40%;
+  position:relative;
+  padding:14px 0 46px;
+}
+.card{
+  position:relative;
+  transform-style:preserve-3d;
+  transform:rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+  transition:transform .55s cubic-bezier(.16,.9,.24,1);
+  border-radius:var(--r-lg);
+  will-change:transform;
+}
+.card.tilting{transition:transform .08s linear}
+.card-shadow{
+  position:absolute;left:8%;right:8%;bottom:-6px;height:52px;
+  border-radius:50%;
+  background:radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.72), rgba(0,0,0,0) 70%);
+  filter:blur(11px);
+  transform:translate3d(var(--sx,0px), var(--sy,0px), -60px);
+  transition:transform .55s cubic-bezier(.16,.9,.24,1);
+  z-index:-1;
+}
+
+.card-face{
+  position:relative;
+  border-radius:var(--r-lg);
+  padding:clamp(16px,3vw,24px);
+  overflow:hidden;
+  background:
+    linear-gradient(168deg,#2a251c 0%,#1a1713 38%,#141210 70%,#1e1a14 100%);
+  box-shadow:
+    0 0 0 1px rgba(232,213,164,.20),
+    0 1px 0 rgba(255,245,217,.14) inset,
+    0 -1px 0 rgba(0,0,0,.6) inset,
+    0 30px 70px rgba(0,0,0,.62),
+    0 6px 18px rgba(0,0,0,.5);
+}
+/* 카드 테두리 포일 */
+.card-face::before{
+  content:"";position:absolute;inset:6px;border-radius:16px;pointer-events:none;
+  border:1px solid transparent;
+  background:linear-gradient(135deg,rgba(232,213,164,.55),rgba(232,213,164,.04) 32%,rgba(255,245,217,.42) 52%,rgba(164,133,74,.06) 74%,rgba(232,213,164,.42)) border-box;
+  -webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+}
+/* 홀로 포일 */
+.card-foil{
+  position:absolute;inset:0;border-radius:var(--r-lg);pointer-events:none;
+  background:
+    radial-gradient(120% 90% at var(--mx,50%) var(--my,30%), rgba(255,245,217,.34), rgba(255,245,217,0) 52%),
+    conic-gradient(from 180deg at var(--mx,50%) var(--my,30%),
+      rgba(255,154,77,.16), rgba(255,233,168,.20), rgba(111,227,196,.13),
+      rgba(255,208,138,.20), rgba(255,154,77,.16));
+  mix-blend-mode:screen;
+  opacity:.9;
+  transition:background .12s linear;
+}
+/* 라미네이트 스윕 */
+.card-sweep{
+  position:absolute;top:-40%;bottom:-40%;width:34%;left:-45%;
+  pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,245,217,.16) 42%,rgba(255,255,255,.30) 50%,rgba(255,245,217,.12) 60%,transparent);
+  transform:rotate(9deg);
+  animation:sweep 7.5s 1.2s cubic-bezier(.5,0,.5,1) infinite;
+  mix-blend-mode:screen;
+}
+@keyframes sweep{0%{left:-45%}45%,100%{left:120%}}
+
+.card-head{display:flex;align-items:flex-start;gap:12px;position:relative;z-index:3}
+.gen-mark{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:5px 11px 5px 8px;border-radius:99px;
+  background:linear-gradient(140deg,#fff5d9,#dcc48b 40%,#a4854a);
+  color:#221a0b;font-size:.68rem;font-weight:800;letter-spacing:.06em;
+  box-shadow:0 2px 8px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.6);
+}
+.gen-mark svg{width:13px;height:13px;display:block}
+.serial{
+  margin-left:auto;text-align:right;font-family:var(--mono);
+  font-size:.66rem;letter-spacing:.06em;color:var(--foil-deep);line-height:1.5;
+}
+.serial b{display:block;color:var(--foil);font-size:.92rem;letter-spacing:.02em}
+
+.card-id{position:relative;z-index:3;margin-top:14px}
+.card-id h2{
+  margin:0;font-size:clamp(1.24rem,3.4vw,1.6rem);letter-spacing:-.035em;font-weight:800;
+}
+.card-id .sub{
+  display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;
+}
+.chip{
+  font-size:.7rem;padding:4px 10px;border-radius:99px;
+  background:rgba(255,245,217,.05);
+  box-shadow:inset 0 0 0 1px rgba(232,213,164,.20);
+  color:var(--ink-2);white-space:nowrap;
+}
+.chip.hot{color:#ffd7bd;background:rgba(255,122,69,.12);box-shadow:inset 0 0 0 1px rgba(255,122,69,.32)}
+.chip.live{color:#bff2e2;background:rgba(79,209,165,.10);box-shadow:inset 0 0 0 1px rgba(79,209,165,.30);display:inline-flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--jade);box-shadow:0 0 0 0 rgba(79,209,165,.6);animation:pulse 2.2s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(79,209,165,0)}100%{box-shadow:0 0 0 0 rgba(79,209,165,0)}}
+
+/* 차량 무대 */
+.stage{
+  position:relative;z-index:3;
+  margin:6px -6px 4px;
+  transform:translate3d(var(--ptx,0px),var(--pty,0px),0);
+  transition:transform .55s cubic-bezier(.16,.9,.24,1);
+}
+.card.tilting .stage{transition:transform .08s linear}
+.stage-floor{
+  position:absolute;left:12%;right:12%;bottom:16%;height:46px;
+  background:radial-gradient(ellipse at 50% 50%, rgba(255,208,138,.22), rgba(255,208,138,0) 70%);
+  filter:blur(6px);
+}
+.car{display:block;width:100%;height:auto}
+
+/* 스탯 */
+.stat-grid{
+  position:relative;z-index:3;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:1px;margin-top:12px;
+  background:rgba(232,213,164,.13);
+  border-radius:var(--r-md);
+  overflow:hidden;
+  box-shadow:0 0 0 1px rgba(232,213,164,.13);
+}
+@media (max-width:520px){.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{
+  background:linear-gradient(180deg,rgba(35,32,25,.96),rgba(19,17,16,.96));
+  padding:12px 11px 13px;
+}
+.stat dt{
+  font-size:.63rem;letter-spacing:.1em;color:var(--muted);
+  font-family:var(--mono);text-transform:uppercase;margin:0 0 4px;
+}
+.stat dd{
+  margin:0;font-family:var(--mono);font-weight:700;
+  font-size:clamp(1.02rem,2.7vw,1.28rem);letter-spacing:-.03em;
+  color:var(--foil);line-height:1.2;
+}
+.stat dd small{font-size:.62em;color:var(--muted);font-weight:500;margin-left:2px;letter-spacing:0}
+.stat.accent dd{color:var(--ember-soft)}
+
+/* VIN + 티어 */
+.card-foot{position:relative;z-index:3;margin-top:12px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.vin{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;color:var(--muted);
+  display:flex;align-items:center;gap:8px;
+}
+.vin b{color:var(--ink-2);letter-spacing:.16em}
+.vin .mask{color:var(--foil-deep);-webkit-user-select:none;user-select:none}
+.tierbar{flex:1 1 190px;min-width:150px}
+.tierbar .row{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-bottom:5px;font-family:var(--mono);letter-spacing:.06em}
+.tierbar .row b{color:var(--foil)}
+.tier-track{height:5px;border-radius:99px;background:#241f18;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.7)}
+.tier-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff7a45,#ffd08a);animation:fill 1.6s .5s cubic-bezier(.2,.8,.2,1) forwards;box-shadow:0 0 10px rgba(255,168,119,.5)}
+
+.card-hint{
+  text-align:center;margin:14px 0 0;font-size:.72rem;color:var(--muted);
+  font-family:var(--mono);letter-spacing:.05em;
+}
+
+/* ── 섹션 공통 ───────────────────────────── */
+section{position:relative;padding:clamp(46px,7vw,88px) 0}
+.sec-head{max-width:58ch;margin-bottom:clamp(22px,3.5vw,38px)}
+h2.sec{
+  margin:0 0 12px;font-size:clamp(1.5rem,4vw,2.35rem);
+  letter-spacing:-.045em;line-height:1.22;font-weight:800;
+}
+.sec-head p{margin:0;color:var(--muted);font-size:clamp(.94rem,2vw,1.02rem)}
+
+.rule{height:1px;background:linear-gradient(90deg,transparent,rgba(232,213,164,.26),transparent)}
+
+/* ── 라이브 티커 ─────────────────────────── */
+.ticker{
+  border-block:1px solid var(--line-soft);
+  background:linear-gradient(180deg,rgba(255,245,217,.03),rgba(0,0,0,.2));
+  padding:0;
+}
+.ticker-in{display:flex;align-items:center;gap:16px;height:56px}
+.ticker-lbl{
+  flex:none;display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;color:var(--jade);
+}
+.ticker-feed{position:relative;flex:1;height:56px;overflow:hidden;min-width:0}
+.ticker-feed li{
+  position:absolute;inset:0;display:flex;align-items:center;gap:12px;
+  opacity:0;transform:translateY(14px);
+  transition:opacity .5s,transform .5s;
+  font-size:.86rem;color:var(--ink-2);
+}
+.ticker-feed li.on{opacity:1;transform:none}
+.ticker-feed .msg{
+  flex:1 1 auto;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ticker-feed .who{color:var(--foil);font-weight:700}
+.ticker-feed .amt{font-family:var(--mono);color:var(--ember-soft);font-weight:700}
+.ticker-feed time{color:var(--muted);font-size:.72rem;font-family:var(--mono);flex:0 0 auto;white-space:nowrap}
+.ticker-static{list-style:none;margin:0;padding:0}
+@media (max-width:560px){.ticker-lbl span{display:none}}
+
+/* ── 배지 진열장 ─────────────────────────── */
+.case{
+  border-radius:var(--r-lg);
+  padding:clamp(18px,3.5vw,30px);
+  background:
+    linear-gradient(180deg,rgba(255,245,217,.05),rgba(0,0,0,.34)),
+    repeating-linear-gradient(90deg,rgba(255,245,217,.028) 0 1px,transparent 1px 34px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,245,217,.14),
+    inset 0 -30px 60px rgba(0,0,0,.5),
+    0 0 0 1px rgba(232,213,164,.13),
+    0 24px 60px rgba(0,0,0,.5);
+}
+.medals{
+  list-style:none;margin:0;padding:0;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));
+  gap:clamp(14px,2.6vw,22px);
+}
+.medal{text-align:center}
+.medal .disc{
+  width:clamp(62px,12vw,78px);aspect-ratio:1;margin:0 auto 10px;
+  border-radius:50%;display:grid;place-items:center;
+  position:relative;
+  background:conic-gradient(from 205deg,#6b5730,#e8d5a4 12%,#fff5d9 20%,#b7995c 34%,#5d4b28 50%,#dbc590 66%,#8a7040 80%,#6b5730);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255,245,217,.42),
+    inset 0 6px 12px rgba(255,255,255,.20),
+    inset 0 -9px 16px rgba(0,0,0,.55),
+    0 10px 22px rgba(0,0,0,.55);
+  transition:transform .25s cubic-bezier(.2,.9,.2,1),box-shadow .25s;
+}
+.medal .disc::after{
+  content:"";position:absolute;inset:9px;border-radius:50%;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.32), inset 0 2px 5px rgba(0,0,0,.4);
+  background:radial-gradient(circle at 34% 26%, rgba(255,255,255,.24), rgba(0,0,0,.28) 72%);
+}
+.medal .disc b{
+  position:relative;z-index:2;
+  font-family:var(--mono);font-size:clamp(.82rem,2.2vw,1rem);font-weight:800;
+  color:#241b09;letter-spacing:-.03em;
+  text-shadow:0 1px 0 rgba(255,245,217,.55);
+}
+.medal:hover .disc,.medal:focus-within .disc{transform:translateY(-4px) rotate(-4deg);box-shadow:inset 0 0 0 1.5px rgba(255,245,217,.6),inset 0 6px 12px rgba(255,255,255,.24),inset 0 -9px 16px rgba(0,0,0,.55),0 16px 30px rgba(0,0,0,.62)}
+.medal .nm{display:block;font-size:.8rem;font-weight:700;letter-spacing:-.02em}
+.medal .dt{display:block;font-size:.68rem;color:var(--muted);font-family:var(--mono)}
+.medal.locked .disc{
+  background:linear-gradient(150deg,#2b2721,#1a1714);
+  box-shadow:inset 0 0 0 1px rgba(232,213,164,.12),inset 0 -6px 14px rgba(0,0,0,.5);
+}
+.medal.locked .disc b{color:#4d463a;text-shadow:none}
+.medal.locked .disc::after{background:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.medal.locked .nm{color:var(--muted)}
+.medal.ember .disc{
+  background:conic-gradient(from 205deg,#7a3416,#ff7a45 14%,#ffd0aa 22%,#c2542a 36%,#6d2f13 52%,#ff9a68 68%,#8f3d1b 82%,#7a3416);
+}
+.medal.ember .disc b{color:#2c1207;text-shadow:0 1px 0 rgba(255,220,200,.5)}
+
+/* ── 랭킹 ───────────────────────────────── */
+.scroller{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border-radius:var(--r-md);
+  box-shadow:0 0 0 1px rgba(232,213,164,.13);
+  background:linear-gradient(180deg,rgba(35,32,25,.7),rgba(15,14,12,.9));
+}
+.scroller::-webkit-scrollbar{height:8px}
+.scroller::-webkit-scrollbar-thumb{background:rgba(232,213,164,.22);border-radius:99px}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:.88rem}
+caption{text-align:left;padding:0 0 12px;color:var(--muted);font-size:.82rem}
+th,td{padding:13px 14px;text-align:left;border-bottom:1px solid rgba(232,213,164,.08);white-space:nowrap}
+thead th{
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;color:var(--foil-deep);
+  text-transform:uppercase;font-weight:600;background:rgba(255,245,217,.03);
+}
+td.num,th.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+tbody tr:hover{background:rgba(255,245,217,.035)}
+.rk{font-family:var(--mono);font-weight:800;color:var(--muted);width:1%}
+.rk.top{color:var(--foil)}
+.who{font-weight:700}
+.car-lbl{color:var(--muted);font-size:.82rem}
+tr.me{background:linear-gradient(90deg,rgba(255,122,69,.12),rgba(255,122,69,.02))}
+tr.me td{border-bottom-color:rgba(255,122,69,.22)}
+tr.me .who::after{content:"내 차";font-size:.62rem;font-family:var(--mono);margin-left:8px;padding:2px 7px;border-radius:99px;background:rgba(255,122,69,.2);color:#ffd7bd;letter-spacing:.06em;vertical-align:middle}
+tr.you td{
+  color:var(--foil);font-weight:700;
+  background:repeating-linear-gradient(135deg,rgba(232,213,164,.05) 0 8px,transparent 8px 16px);
+  border-bottom:0;
+}
+tr.you td a{text-decoration:underline;text-underline-offset:4px;text-decoration-color:rgba(232,213,164,.45)}
+
+/* ── 퀘스트 ─────────────────────────────── */
+.quests{list-style:none;margin:0;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(255px,1fr))}
+.quest{
+  border-radius:var(--r-md);padding:18px;
+  background:linear-gradient(165deg,rgba(255,245,217,.045),rgba(0,0,0,.28));
+  box-shadow:0 0 0 1px rgba(232,213,164,.14), 0 12px 30px rgba(0,0,0,.35);
+  display:flex;flex-direction:column;gap:10px;
+}
+.quest .qtop{display:flex;align-items:center;gap:9px}
+.qicon{
+  width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(150deg,#3a3226,#17140f);
+  box-shadow:inset 0 1px 0 rgba(255,245,217,.24),inset 0 -2px 6px rgba(0,0,0,.6);
+}
+.qicon svg{width:17px;height:17px;display:block}
+.quest h3{margin:0;font-size:.98rem;letter-spacing:-.03em;font-weight:700}
+.quest .rw{margin-left:auto;font-family:var(--mono);font-size:.8rem;font-weight:800;color:var(--ember-soft);flex:none}
+.quest p{margin:0;font-size:.84rem;color:var(--muted)}
+.qbar{height:5px;border-radius:99px;background:#241f18;overflow:hidden;box-shadow:inset 0 1px 2px rgba(0,0,0,.7)}
+.qbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#a4854a,#e8d5a4);animation:fill 1.4s cubic-bezier(.2,.8,.2,1) forwards}
+.qmeta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+
+/* ── 적립 게이지 ─────────────────────────── */
+.dials{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.dial{
+  border-radius:var(--r-lg);padding:24px 22px;
+  background:linear-gradient(170deg,rgba(255,245,217,.06),rgba(0,0,0,.32));
+  box-shadow:inset 0 1px 0 rgba(255,245,217,.16), 0 0 0 1px rgba(232,213,164,.13), 0 18px 40px rgba(0,0,0,.4);
+  position:relative;overflow:hidden;
+}
+.dial::after{
+  content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,208,138,.14),transparent 70%);
+}
+.dial .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;color:var(--foil-deep);text-transform:uppercase}
+.dial .v{
+  display:block;font-family:var(--mono);font-weight:800;letter-spacing:-.045em;
+  font-size:clamp(2rem,6.5vw,2.9rem);line-height:1.05;margin:8px 0 6px;
+}
+.dial .v small{font-size:.36em;letter-spacing:0;color:var(--muted);font-weight:600;margin-left:4px}
+.dial p{margin:0;font-size:.84rem;color:var(--muted)}
+.dial.ember .v{color:var(--ember-soft)}
+
+.signals{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-top:18px}
+.sig{
+  border-radius:var(--r-sm);padding:12px 14px;
+  background:rgba(255,245,217,.035);
+  box-shadow:inset 0 0 0 1px rgba(232,213,164,.13);
+}
+.sig b{display:block;font-size:.86rem;letter-spacing:-.02em}
+.sig span{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
+
+.pull{
+  margin:clamp(26px,4vw,42px) 0 0;
+  font-size:clamp(1.1rem,3.2vw,1.55rem);
+  letter-spacing:-.04em;font-weight:700;line-height:1.4;
+  padding-left:18px;border-left:2px solid var(--foil-deep);
+  max-width:34ch;
+}
+.pull span{color:var(--muted);display:block;font-size:.62em;font-weight:500;letter-spacing:-.02em;margin-top:8px;line-height:1.6}
+
+/* 3단계 */
+.steps{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.step{
+  padding:20px;border-radius:var(--r-md);
+  background:linear-gradient(165deg,rgba(255,245,217,.04),rgba(0,0,0,.24));
+  box-shadow:0 0 0 1px rgba(232,213,164,.12);
+}
+.step .n{
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.18em;color:var(--foil-deep);
+  display:block;margin-bottom:9px;
+}
+.step h3{margin:0 0 7px;font-size:1.02rem;letter-spacing:-.03em}
+.step p{margin:0;font-size:.86rem;color:var(--muted)}
+
+/* ── TSLM ───────────────────────────────── */
+.keys{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:24px}
+.key{
+  padding:20px;border-radius:var(--r-md);
+  background:linear-gradient(165deg,rgba(79,209,165,.06),rgba(0,0,0,.26));
+  box-shadow:0 0 0 1px rgba(79,209,165,.18);
+}
+.key .k{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;color:var(--jade);display:block;margin-bottom:8px}
+.key h3{margin:0 0 6px;font-size:1rem;letter-spacing:-.03em}
+.key p{margin:0;font-size:.85rem;color:var(--muted)}
+
+/* ── Genesis CTA ─────────────────────────── */
+.genesis{
+  border-radius:clamp(20px,3vw,30px);
+  padding:clamp(28px,5.5vw,62px);
+  position:relative;overflow:hidden;
+  background:
+    radial-gradient(90% 130% at 82% 0%, rgba(255,208,138,.18), transparent 58%),
+    radial-gradient(70% 100% at 10% 100%, rgba(255,122,69,.14), transparent 60%),
+    linear-gradient(160deg,#28221a,#141210 62%);
+  box-shadow:inset 0 1px 0 rgba(255,245,217,.2), 0 0 0 1px rgba(232,213,164,.22), 0 30px 70px rgba(0,0,0,.55);
+}
+.genesis::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(115deg,rgba(255,245,217,.035) 0 2px,transparent 2px 9px);
+  mask-image:radial-gradient(70% 90% at 80% 0%,#000,transparent 70%);
+  -webkit-mask-image:radial-gradient(70% 90% at 80% 0%,#000,transparent 70%);
+}
+.gen-grid{position:relative;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(24px,4vw,50px);align-items:center}
+@media (max-width:880px){.gen-grid{grid-template-columns:1fr}}
+.genesis h2{margin:0 0 14px;font-size:clamp(1.7rem,5vw,2.7rem);letter-spacing:-.05em;line-height:1.16;font-weight:800}
+.genesis p.big{margin:0 0 22px;color:var(--ink-2);font-size:clamp(.96rem,2.2vw,1.06rem);max-width:42ch}
+.perks{list-style:none;margin:0 0 26px;padding:0;display:grid;gap:9px}
+.perks li{display:flex;gap:11px;align-items:flex-start;font-size:.92rem}
+.perks svg{width:17px;height:17px;flex:none;margin-top:4px}
+.perks b{color:var(--foil)}
+
+.counter-box{
+  border-radius:var(--r-md);padding:22px;
+  background:rgba(9,8,7,.55);
+  box-shadow:inset 0 0 0 1px rgba(232,213,164,.2), inset 0 1px 0 rgba(255,245,217,.14);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+}
+.counter-box .k{font-family:var(--mono);font-size:.65rem;letter-spacing:.18em;color:var(--foil-deep)}
+.counter-box .big{
+  font-family:var(--mono);font-weight:800;letter-spacing:-.05em;
+  font-size:clamp(2.8rem,10vw,4.2rem);line-height:1;margin:6px 0 2px;
+}
+.counter-box .of{font-family:var(--mono);color:var(--muted);font-size:.84rem}
+.counter-box .gauge{margin-top:16px}
+.counter-box .roster{margin-top:14px;font-size:.76rem;color:var(--muted);line-height:1.7}
+.counter-box .roster b{color:var(--ink-2)}
+
+/* ── 푸터 ───────────────────────────────── */
+footer{padding:clamp(36px,5vw,60px) 0 46px;border-top:1px solid var(--line-soft);margin-top:clamp(30px,5vw,60px)}
+.foot-grid{display:flex;flex-wrap:wrap;gap:22px 40px;align-items:flex-start}
+.foot-nav{display:flex;flex-wrap:wrap;gap:8px 20px;margin-left:auto;font-size:.85rem}
+.foot-nav a{color:var(--ink-2)}
+.foot-nav a:hover{color:var(--foil)}
+.legal{
+  margin:26px 0 0;font-size:.72rem;color:#6f6759;line-height:1.75;max-width:70ch;
+}
+.legal em,.legal span{font-style:normal;display:block;margin-top:6px}
+.legal em{color:#867c6b}
+
+/* 리빌 */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+.rv.in{opacity:1;transform:none}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip{position:absolute;left:-9999px;top:8px;z-index:100;background:var(--foil);color:#221a0b;padding:10px 16px;border-radius:8px;font-weight:700}
+.skip:focus{left:12px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+  .rv{opacity:1;transform:none}
+  .gauge i{width:var(--pct,72%)}
+  .tier-track i,.qbar i{width:var(--pct,60%)}
+  .card-sweep{display:none}
+  .foil-text{animation:none;background-position:20% 0}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+<div class="shell">
+
+<header class="site-head">
+  <div class="wrap head-in">
+    <a class="brand" href="#top" aria-label="teslam.io 홈">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M2 11.5 12 4l10 7.5" stroke="#e8d5a4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="12" width="14" height="8" rx="1.4" stroke="#a4854a" stroke-width="1.5"/><path d="M8 20v-4h8v4" stroke="#ff9a68" stroke-width="1.4"/></svg>
+      </span>
+      <b>teslam<span>.io</span></b>
+    </a>
+    <nav class="site-nav" aria-label="주요 메뉴">
+      <a href="#garage">내 차고</a>
+      <a href="#badges">진열장</a>
+      <a href="#rank">랭킹</a>
+      <a href="#quest" class="opt">퀘스트</a>
+      <a href="#drv" class="opt">적립</a>
+    </nav>
+    <a class="btn btn-foil btn-sm head-cta" href="#genesis">Genesis 500</a>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ══════════ 히어로 ══════════ -->
+<section class="hero" id="top" aria-labelledby="h1">
+  <div class="wrap hero-grid">
+
+    <div>
+      <p class="eyebrow">대한민국 테슬람 성지 · teslam.io</p>
+      <h1 id="h1">주행거리는 쌓입니다.<br><em class="foil-text">이제 명패로 남습니다.</em></h1>
+      <p class="lede">
+        테슬라 계정 한 번만 연결하면 끝입니다. 달린 거리는 <b>오도미터 그대로</b> 검증되고,
+        1km마다 <b>10 DRV</b>씩 내 차고 명패에 새겨집니다. 개발자 계정도, API 청구서도 필요 없습니다.
+      </p>
+
+      <div class="hero-cta">
+        <a class="btn btn-foil" href="#genesis">Genesis 500 합류하기</a>
+        <button class="btn btn-ghost" type="button" id="spinBtn">내 명패 돌려보기</button>
+      </div>
+
+      <div class="gen-strip">
+        <div class="gen-top">
+          <span class="lbl">GENESIS 500</span>
+          <span class="rest">잔여 <b id="restSeat">137</b>석</span>
+        </div>
+        <div class="gauge" role="img" aria-label="Genesis 500 중 363석 마감, 잔여 137석">
+          <i style="--pct:72.6%"></i>
+        </div>
+        <p class="gen-note">363명 마감 · 1기에게만 1.5배 적립과 토크노믹스 투표권이 갑니다.</p>
+      </div>
+    </div>
+
+    <!-- ══ 오너 카드 ══ -->
+    <div class="cardwrap" id="garage">
+      <div class="card" id="ownerCard">
+        <div class="card-shadow" aria-hidden="true"></div>
+        <article class="card-face" aria-label="오너 명패 카드: 실장님전용_MY">
+          <div class="card-foil" aria-hidden="true"></div>
+          <div class="card-sweep" aria-hidden="true"></div>
+
+          <div class="card-head">
+            <span class="gen-mark">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.6 14.9 9l6.6.5-5 4.3 1.5 6.6L12 16.9 6 20.4l1.5-6.6-5-4.3L9.1 9 12 2.6Z" fill="#221a0b"/></svg>
+              GENESIS 1기
+            </span>
+            <span class="serial">
+              OWNER PLATE
+              <b>No. 0147 / 500</b>
+            </span>
+          </div>
+
+          <div class="card-id">
+            <h2>실장님전용_MY</h2>
+            <div class="sub">
+              <span class="chip">Model Y Long Range AWD</span>
+              <span class="chip">미드나이트 실버</span>
+              <span class="chip">경기 성남</span>
+              <span class="chip live"><i class="dot" aria-hidden="true"></i>주행 중</span>
+            </div>
+          </div>
+
+          <div class="stage">
+            <div class="stage-floor" aria-hidden="true"></div>
+            <svg class="car" viewBox="0 0 560 232" role="img" aria-labelledby="carTitle carDesc">
+              <title id="carTitle">Model Y 측면 실루엣</title>
+              <desc id="carDesc">쇼룸 조명 아래 놓인 미드나이트 실버 Model Y 롱레인지의 측면 렌더링</desc>
+              <defs>
+                <linearGradient id="bodyG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#e2e7ea"/>
+                  <stop offset=".16" stop-color="#aeb5bc"/>
+                  <stop offset=".38" stop-color="#6a7178"/>
+                  <stop offset=".55" stop-color="#454b51"/>
+                  <stop offset=".78" stop-color="#2a2e33"/>
+                  <stop offset="1" stop-color="#191c1f"/>
+                </linearGradient>
+                <linearGradient id="cladG" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#20242a" stop-opacity="0"/>
+                  <stop offset=".45" stop-color="#14171b" stop-opacity=".85"/>
+                  <stop offset="1" stop-color="#0b0d0f"/>
+                </linearGradient>
+                <linearGradient id="glassG" x1=".05" y1="0" x2=".95" y2="1">
+                  <stop offset="0" stop-color="#3a4a57"/>
+                  <stop offset=".3" stop-color="#151d24"/>
+                  <stop offset=".58" stop-color="#22303b"/>
+                  <stop offset="1" stop-color="#0b0f13"/>
+                </linearGradient>
+                <linearGradient id="rimG" x1=".15" y1="0" x2=".85" y2="1">
+                  <stop offset="0" stop-color="#f0f3f6"/>
+                  <stop offset=".38" stop-color="#aab1b8"/>
+                  <stop offset=".7" stop-color="#666d74"/>
+                  <stop offset="1" stop-color="#3d4247"/>
+                </linearGradient>
+                <linearGradient id="beltG" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#e8d5a4" stop-opacity=".1"/>
+                  <stop offset=".42" stop-color="#fff5d9" stop-opacity=".8"/>
+                  <stop offset="1" stop-color="#a4854a" stop-opacity=".12"/>
+                </linearGradient>
+                <linearGradient id="shineG" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset=".42" stop-color="#fff" stop-opacity=".30"/>
+                  <stop offset=".52" stop-color="#fff" stop-opacity=".42"/>
+                  <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+                </linearGradient>
+                <radialGradient id="floorG" cx=".5" cy=".5" r=".5">
+                  <stop offset="0" stop-color="#000" stop-opacity=".8"/>
+                  <stop offset="1" stop-color="#000" stop-opacity="0"/>
+                </radialGradient>
+                <clipPath id="bodyClip">
+                  <path d="M44 172 C33 166 28 152 34 138 C40 126 52 121 66 118 C98 113 134 109 168 104 C184 87 210 66 244 51 C286 36 346 34 398 43 C444 52 484 70 516 94 C526 102 532 114 531 128 C530 148 526 162 518 170 L480 175 C476 101 384 101 380 175 L178 177 C174 103 82 103 78 177 Z"/>
+                </clipPath>
+                <g id="rim">
+                  <circle r="28" fill="#0c0e11"/>
+                  <circle r="26.5" fill="url(#rimG)"/>
+                  <g fill="#13171c">
+                    <path d="M-5 -9 L5 -9 L8.5 -22.5 L-8.5 -22.5 Z"/>
+                    <path d="M-5 -9 L5 -9 L8.5 -22.5 L-8.5 -22.5 Z" transform="rotate(72)"/>
+                    <path d="M-5 -9 L5 -9 L8.5 -22.5 L-8.5 -22.5 Z" transform="rotate(144)"/>
+                    <path d="M-5 -9 L5 -9 L8.5 -22.5 L-8.5 -22.5 Z" transform="rotate(216)"/>
+                    <path d="M-5 -9 L5 -9 L8.5 -22.5 L-8.5 -22.5 Z" transform="rotate(288)"/>
+                  </g>
+                  <circle r="26.5" fill="none" stroke="#dfe4e9" stroke-width="2" opacity=".85"/>
+                  <circle r="9" fill="#2c3238"/>
+                  <circle r="9" fill="none" stroke="#e8d5a4" stroke-width="1" opacity=".55"/>
+                  <circle r="2.6" fill="#e8d5a4" opacity=".8"/>
+                </g>
+              </defs>
+
+              <!-- 바닥 그림자 -->
+              <ellipse cx="282" cy="207" rx="228" ry="15" fill="url(#floorG)"/>
+              <ellipse cx="128" cy="205" rx="44" ry="9" fill="#000" opacity=".5"/>
+              <ellipse cx="430" cy="205" rx="44" ry="9" fill="#000" opacity=".5"/>
+
+              <!-- 타이어 -->
+              <circle cx="128" cy="166" r="38" fill="#0d0f12"/>
+              <circle cx="128" cy="166" r="33" fill="none" stroke="#191d21" stroke-width="2"/>
+              <circle cx="430" cy="166" r="38" fill="#0d0f12"/>
+              <circle cx="430" cy="166" r="33" fill="none" stroke="#191d21" stroke-width="2"/>
+
+              <!-- 차체 -->
+              <path d="M44 172 C33 166 28 152 34 138 C40 126 52 121 66 118 C98 113 134 109 168 104 C184 87 210 66 244 51 C286 36 346 34 398 43 C444 52 484 70 516 94 C526 102 532 114 531 128 C530 148 526 162 518 170 L480 175 C476 101 384 101 380 175 L178 177 C174 103 82 103 78 177 Z"
+                    fill="url(#bodyG)"/>
+
+              <g clip-path="url(#bodyClip)">
+                <!-- 하단 클래딩 -->
+                <rect x="20" y="140" width="530" height="60" fill="url(#cladG)"/>
+                <!-- 캐릭터 라인 -->
+                <path d="M52 140 C170 134 360 130 540 140" stroke="#eef2f5" stroke-width="1.6" fill="none" opacity=".22"/>
+                <path d="M60 156 C180 150 370 147 540 156" stroke="#000" stroke-width="1.4" fill="none" opacity=".3"/>
+
+                <!-- 유리 -->
+                <path d="M180 102 C197 88 222 68 252 55 C290 42 345 40 394 49 C437 57 472 73 502 95 Z" fill="url(#glassG)"/>
+                <!-- 앞유리 반사 -->
+                <path d="M182 101 C199 87 224 67 254 54 C272 47 296 43 320 41 L256 100 Z" fill="#7d94a6" opacity=".22"/>
+                <path d="M356 41 C392 43 424 51 450 63 L408 96 Z" fill="#5f7688" opacity=".16"/>
+                <!-- 필러 -->
+                <path d="M298 41.5 L311 41 L314 100 L302 101 Z" fill="#090c0f"/>
+                <path d="M396 49 L406 51 L414 96 L404 95 Z" fill="#090c0f" opacity=".6"/>
+                <!-- 벨트라인 하이라이트 -->
+                <path d="M180 102 L502 95" stroke="url(#beltG)" stroke-width="2.4" fill="none"/>
+                <!-- 도어 컷 -->
+                <path d="M216 104 L212 176" stroke="#0b0e11" stroke-width="1.6" opacity=".55"/>
+                <path d="M338 100 L336 177" stroke="#0b0e11" stroke-width="1.6" opacity=".55"/>
+                <path d="M444 97 L452 172" stroke="#0b0e11" stroke-width="1.4" opacity=".35"/>
+                <!-- 플러시 도어 핸들 -->
+                <rect x="246" y="112" width="27" height="5" rx="2.5" fill="#dde3e8" opacity=".8"/>
+                <rect x="366" y="108" width="27" height="5" rx="2.5" fill="#dde3e8" opacity=".8"/>
+                <!-- 사이드미러 -->
+                <path d="M182 94 L160 89 L157 99 L180 103 Z" fill="#1e2226"/>
+                <!-- 헤드램프 -->
+                <path d="M35 131 C48 124 63 120 78 119 L76 130 C61 131 47 134 37 139 Z" fill="#f2f6fa" opacity=".9"/>
+                <path d="M37 133 C49 127 62 124 75 123 L74.5 127 C61 128 48 131 38 136 Z" fill="#bfe7ff" opacity=".55"/>
+                <!-- 테일램프 -->
+                <path d="M494 112 L529 125 L527 136 L491 123 Z" fill="#ff7a45" opacity=".9"/>
+                <path d="M496 116 L524 127 L523 131 L495 120 Z" fill="#ffd0aa" opacity=".5"/>
+                <!-- 충전 포트 -->
+                <rect x="466" y="106" width="14" height="9" rx="2" fill="#0d1013" opacity=".55"/>
+                <!-- 광택 스윕 -->
+                <rect class="shine" x="-180" y="10" width="110" height="200" fill="url(#shineG)" transform="skewX(-16)"/>
+              </g>
+
+              <!-- 휠 -->
+              <use href="#rim" x="128" y="166"/>
+              <use href="#rim" x="430" y="166"/>
+            </svg>
+          </div>
+
+          <dl class="stat-grid">
+            <div class="stat">
+              <dt>누적 주행</dt>
+              <dd><span class="count" data-to="38412">0</span><small>km</small></dd>
+            </div>
+            <div class="stat">
+              <dt>출고</dt>
+              <dd>D+<span class="count" data-to="412">0</span></dd>
+            </div>
+            <div class="stat accent">
+              <dt>보유 DRV</dt>
+              <dd><span class="count" data-to="24860">0</span></dd>
+            </div>
+            <div class="stat">
+              <dt>최고 효율</dt>
+              <dd>7.4<small>km/kWh</small></dd>
+            </div>
+          </dl>
+
+          <div class="card-foot">
+            <p class="vin">VIN <b>LRWYGDEK</b><span class="mask">▮▮▮▮▮</span><b>417</b></p>
+            <div class="tierbar">
+              <div class="row"><span>티어 <b>골드</b></span><span>플래티넘까지 1,588km</span></div>
+              <div class="tier-track"><i style="--pct:68%"></i></div>
+            </div>
+          </div>
+        </article>
+      </div>
+      <p class="card-hint">카드를 움직여 보세요 — 각도에 따라 포일이 흐릅니다</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════ 라이브 티커 ══════════ -->
+<div class="ticker" aria-label="실시간 차고 활동">
+  <div class="wrap ticker-in">
+    <span class="ticker-lbl"><i class="dot" aria-hidden="true"></i>지금 <span>차고에서</span></span>
+    <ul class="ticker-feed ticker-static" id="feed">
+      <li class="on"><span class="msg"><span class="who">판교셔틀_M3P</span> 님이 오늘 <span class="amt">+480 DRV</span> 적립했습니다</span><time>방금</time></li>
+      <li><span class="msg"><span class="who">흰둥이Y오너</span> 님이 <span class="amt">7.0 클럽</span> 배지를 획득했습니다</span><time>2분 전</time></li>
+      <li><span class="msg"><span class="who">제주도한바퀴</span> 님이 V4 슈퍼차저 <span class="amt">애월점</span>에 체크인</span><time>6분 전</time></li>
+      <li><span class="msg"><span class="who">프렁크에라면</span> 님의 글 &lsquo;2026.20.4 히든 메뉴 정리&rsquo;</span><time>11분 전</time></li>
+      <li><span class="msg"><span class="who">새벽5시출근러</span> 님이 누적 <span class="amt">50,000km</span>를 돌파했습니다</span><time>18분 전</time></li>
+      <li><span class="msg"><span class="who">광명_레드M3</span> 님이 Genesis 500 <span class="amt">No.0364</span>번을 배정받았습니다</span><time>24분 전</time></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════ 진열장 ══════════ -->
+<section id="badges" aria-labelledby="h-badges">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">진열장</p>
+      <h2 class="sec" id="h-badges">배지는 자랑하라고 만든 겁니다</h2>
+      <p>주행, 효율, 순례, 개근. 차고 벽에 걸리는 것들입니다. 획득 순간 카드 뒷면에 새겨지고, 프로필 어디에서나 따라다닙니다.</p>
+    </div>
+
+    <div class="case rv">
+      <ul class="medals">
+        <li class="medal"><span class="disc"><b>100</b></span><span class="nm">첫 100km</span><span class="dt">25.03.19</span></li>
+        <li class="medal"><span class="disc"><b>7.0</b></span><span class="nm">7.0 클럽</span><span class="dt">25.05.02</span></li>
+        <li class="medal"><span class="disc"><b>V4</b></span><span class="nm">V4 순례자</span><span class="dt">25.07.11</span></li>
+        <li class="medal"><span class="disc"><b>300</b></span><span class="nm">무정차 300</span><span class="dt">25.09.28</span></li>
+        <li class="medal"><span class="disc"><b>05</b></span><span class="nm">새벽 러너</span><span class="dt">25.11.04</span></li>
+        <li class="medal ember"><span class="disc"><b>G1</b></span><span class="nm">Genesis 1기</span><span class="dt">한정 500</span></li>
+        <li class="medal"><span class="disc"><b>OTA</b></span><span class="nm">업데이트 인싸</span><span class="dt">26.01.22</span></li>
+        <li class="medal locked"><span class="disc"><b>30</b></span><span class="nm">만근 30일</span><span class="dt">잠김 · 22/30</span></li>
+        <li class="medal locked"><span class="disc"><b>제주</b></span><span class="nm">제주 원정대</span><span class="dt">잠김</span></li>
+        <li class="medal locked"><span class="disc"><b>8.0</b></span><span class="nm">8.0 초인</span><span class="dt">잠김 · 최고 7.4</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- ══════════ 랭킹 ══════════ -->
+<section id="rank" aria-labelledby="h-rank">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">이번 주 차고 랭킹</p>
+      <h2 class="sec" id="h-rank">숫자는 거짓말을 안 합니다</h2>
+      <p>매주 월요일 05:00에 초기화됩니다. 순위는 오도미터 검증분만 집계합니다.</p>
+    </div>
+
+    <div class="scroller rv">
+      <table>
+        <caption class="sr-only">이번 주 주행 랭킹 상위 8명</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="rk">#</th>
+            <th scope="col">오너</th>
+            <th scope="col">차량</th>
+            <th scope="col" class="num">이번 주</th>
+            <th scope="col" class="num">최고 효율</th>
+            <th scope="col" class="num">획득 DRV</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="rk top">01</td><td class="who">새벽5시출근러</td><td class="car-lbl">Model 3 LR · 인천</td><td class="num">618 km</td><td class="num">7.9</td><td class="num">3,500</td></tr>
+          <tr><td class="rk top">02</td><td class="who">제주도한바퀴</td><td class="car-lbl">Model Y RWD · 제주</td><td class="num">572 km</td><td class="num">8.1</td><td class="num">3,500</td></tr>
+          <tr><td class="rk top">03</td><td class="who">판교셔틀_M3P</td><td class="car-lbl">Model 3 Perf · 경기</td><td class="num">544 km</td><td class="num">6.2</td><td class="num">3,500</td></tr>
+          <tr><td class="rk">04</td><td class="who">흰둥이Y오너</td><td class="car-lbl">Model Y LR · 서울</td><td class="num">431 km</td><td class="num">7.3</td><td class="num">3,140</td></tr>
+          <tr class="me"><td class="rk">05</td><td class="who">실장님전용_MY</td><td class="car-lbl">Model Y LR · 성남</td><td class="num">402 km</td><td class="num">7.4</td><td class="num">2,890</td></tr>
+          <tr><td class="rk">06</td><td class="who">프렁크에라면</td><td class="car-lbl">Model S Plaid · 부산</td><td class="num">388 km</td><td class="num">5.6</td><td class="num">2,760</td></tr>
+          <tr><td class="rk">07</td><td class="who">오토파일럿중독</td><td class="car-lbl">Model X LR · 대전</td><td class="num">351 km</td><td class="num">5.9</td><td class="num">2,510</td></tr>
+          <tr><td class="rk">08</td><td class="who">광명_레드M3</td><td class="car-lbl">Model 3 RWD · 경기</td><td class="num">297 km</td><td class="num">7.1</td><td class="num">2,120</td></tr>
+          <tr class="you"><td class="rk">··</td><td colspan="5">여기가 비어 있습니다 — <a href="#genesis">Genesis 500으로 내 자리 만들기</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 퀘스트 ══════════ -->
+<section id="quest" aria-labelledby="h-quest">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">이번 주 퀘스트</p>
+      <h2 class="sec" id="h-quest">그냥 달리기 심심하잖아요</h2>
+      <p>매주 새 퀘스트가 걸립니다. 클리어하면 DRV가 얹히고, 어떤 건 배지까지 따라옵니다.</p>
+    </div>
+
+    <ul class="quests rv">
+      <li class="quest">
+        <div class="qtop">
+          <span class="qicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#e8d5a4"/></svg></span>
+          <h3>7.0 넘기기</h3>
+          <span class="rw">+300</span>
+        </div>
+        <p>이번 주 안에 한 번이라도 7.0 km/kWh를 찍으면 클리어. 30분 이상 주행분만 인정.</p>
+        <div class="qbar" role="img" aria-label="진행률 86퍼센트"><i style="--pct:86%"></i></div>
+        <div class="qmeta"><span>최고 6.8 / 7.0</span><span>D-3</span></div>
+      </li>
+      <li class="quest">
+        <div class="qtop">
+          <span class="qicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z" stroke="#ff9a68" stroke-width="1.8"/><circle cx="12" cy="10" r="2.4" fill="#ff9a68"/></svg></span>
+          <h3>V4 체크인</h3>
+          <span class="rw">+150</span>
+        </div>
+        <p>전국 V4 슈퍼차저 아무 데나 한 곳. 체크인하면 &lsquo;V4 순례자&rsquo; 배지 진행도도 같이 오릅니다.</p>
+        <div class="qbar" role="img" aria-label="진행률 40퍼센트"><i style="--pct:40%"></i></div>
+        <div class="qmeta"><span>2 / 5 지점</span><span>상시</span></div>
+      </li>
+      <li class="quest">
+        <div class="qtop">
+          <span class="qicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5" width="17" height="15" rx="2.4" stroke="#4fd1a5" stroke-width="1.7"/><path d="M3.5 10h17M8 3v4M16 3v4" stroke="#4fd1a5" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+          <h3>7일 개근</h3>
+          <span class="rw">+400</span>
+        </div>
+        <p>7일 연속으로 하루 10km 이상. 주말 포함입니다. 하루라도 빠지면 처음부터.</p>
+        <div class="qbar" role="img" aria-label="진행률 71퍼센트"><i style="--pct:71%"></i></div>
+        <div class="qmeta"><span>5 / 7 일</span><span>D-2</span></div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<div class="wrap"><div class="rule"></div></div>
+
+<!-- ══════════ 적립 ══════════ -->
+<section id="drv" aria-labelledby="h-drv">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">스코어보드</p>
+      <h2 class="sec" id="h-drv">명패는 이렇게 채워집니다</h2>
+      <p>복잡한 건 없습니다. 달린 만큼 쌓이고, 쌓인 만큼 씁니다.</p>
+    </div>
+
+    <div class="dials rv">
+      <div class="dial">
+        <span class="k">RATE</span>
+        <span class="v mono foil-text">10 DRV<small>/ 1km</small></span>
+        <p>주행 1km당 10 DRV. 속도도, 시간대도 상관없습니다. 거리만 봅니다.</p>
+      </div>
+      <div class="dial ember">
+        <span class="k">DAILY CAP</span>
+        <span class="v mono">500 DRV<small>/ 하루</small></span>
+        <p>하루 상한 500 DRV, 즉 50km까지. 어뷰징 방지선이자 모두에게 같은 출발선입니다.</p>
+      </div>
+      <div class="dial">
+        <span class="k">EXCHANGE</span>
+        <span class="v mono foil-text">1,000 DRV<small>≈ 500원</small></span>
+        <p>슈퍼차저 크레딧, 기프트카드, 세차 쿠폰. 실물로 바꾸는 게 목적입니다.</p>
+      </div>
+    </div>
+
+    <p class="pull rv">
+      GPS는 속일 수 있어도<br>오도미터는 못 속입니다.
+      <span>적립 판정은 오도미터 증가분으로만 합니다. 단조 증가하는 숫자라 되돌릴 수도, 늘려 붙일 수도 없습니다. 좌표는 참고용일 뿐입니다.</span>
+    </p>
+
+    <ol class="steps rv">
+      <li class="step">
+        <span class="n">STEP 01</span>
+        <h3>계정 한 번 연결</h3>
+        <p>테슬라 공식 OAuth로 1회 연결. 개발자 계정 만들 필요 없고, Fleet API 비용은 teslam.io가 냅니다. 오너에게 청구서는 가지 않습니다.</p>
+      </li>
+      <li class="step">
+        <span class="n">STEP 02</span>
+        <h3>달릴 때만 신호</h3>
+        <p>차가 움직이는 동안에만 60초마다 4개 값이 들어옵니다. 주차 중에는 아무것도 오지 않습니다.</p>
+        <div class="signals">
+          <div class="sig"><b>위도</b><span>latitude</span></div>
+          <div class="sig"><b>경도</b><span>longitude</span></div>
+          <div class="sig"><b>속도</b><span>vehicle speed</span></div>
+          <div class="sig"><b>오도미터</b><span>odometer · 판정 기준</span></div>
+        </div>
+      </li>
+      <li class="step">
+        <span class="n">STEP 03</span>
+        <h3>명패에 새김</h3>
+        <p>검증된 거리가 DRV로 바뀌어 카드에 반영됩니다. 누적 km, 티어, 배지, 랭킹이 그 자리에서 갱신됩니다.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══════════ TSLM ══════════ -->
+<section id="tslm" aria-labelledby="h-tslm">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">차고 열쇠 · TSLM</p>
+      <h2 class="sec" id="h-tslm">달리는 사람 말고,<br>만드는 사람의 몫</h2>
+      <p>DRV가 주행의 기록이라면 TSLM은 이 커뮤니티의 지분입니다. 총 발행량 1억 개로 고정, 더 찍지 않습니다.</p>
+    </div>
+
+    <div class="keys rv">
+      <div class="key">
+        <span class="k">EARN</span>
+        <h3>DRV 락업 또는 좋은 글</h3>
+        <p>모은 DRV를 잠그거나, 오너들이 실제로 찾아보는 기술 글을 쓰면 TSLM이 들어옵니다.</p>
+      </div>
+      <div class="key">
+        <span class="k">VOTE</span>
+        <h3>규칙을 직접 정합니다</h3>
+        <p>적립률, 상한, 교환 품목까지 TSLM 보유자 투표로 결정합니다.</p>
+      </div>
+      <div class="key">
+        <span class="k">SUPPLY</span>
+        <h3>100,000,000 고정</h3>
+        <p>추가 발행 없음. 광고 게재권도 TSLM으로만 열립니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ GENESIS 500 ══════════ -->
+<section id="genesis" aria-labelledby="h-gen">
+  <div class="wrap">
+    <div class="genesis rv">
+      <div class="gen-grid">
+        <div>
+          <p class="eyebrow">한정 500명 · 모집 중</p>
+          <h2 id="h-gen">1기 명패에는<br><span class="foil-text">번호가 박힙니다</span></h2>
+          <p class="big">
+            No.0001부터 No.0500까지. 나중에 아무리 많이 달려도 이 번호는 다시 나오지 않습니다.
+            지금 들어오는 500명이 이 차고의 규칙을 처음으로 정합니다.
+          </p>
+          <ul class="perks">
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19.5 7" stroke="#e8d5a4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>1.5배 적립</b> — 같은 거리를 달려도 1기는 15 DRV/km</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19.5 7" stroke="#e8d5a4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>&lsquo;Genesis 1기&rsquo; 마크</b> — 카드, 랭킹, 글에 영구 표시</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19.5 7" stroke="#e8d5a4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>토크노믹스 투표권</b> — 적립률과 상한을 1기가 결정</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5 10 17.5 19.5 7" stroke="#e8d5a4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>일련번호</b> — 배정된 No.는 양도도 재발급도 없습니다</span></li>
+          </ul>
+          <a class="btn btn-foil" href="#genesis" id="joinBtn">테슬라 계정 연결하고 1기 등록</a>
+        </div>
+
+        <div class="counter-box">
+          <span class="k">SEATS TAKEN</span>
+          <div class="big mono"><span class="count foil-text" data-to="363">0</span></div>
+          <span class="of">/ 500석 · 잔여 137석</span>
+          <div class="gauge" role="img" aria-label="500석 중 363석 마감"><i style="--pct:72.6%"></i></div>
+          <p class="roster">
+            최근 배정 · <b>광명_레드M3</b> No.0364<br>
+            <b>서초_화이트Y</b> No.0362 · <b>대구_롱레인지</b> No.0359<br>
+            연결부터 배정까지 평균 40초.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="#top" aria-label="teslam.io 홈">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M2 11.5 12 4l10 7.5" stroke="#e8d5a4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="12" width="14" height="8" rx="1.4" stroke="#a4854a" stroke-width="1.5"/><path d="M8 20v-4h8v4" stroke="#ff9a68" stroke-width="1.4"/></svg>
+          </span>
+          <b>teslam<span>.io</span></b>
+        </a>
+        <p class="legal" style="margin-top:14px">테슬라 오너가 만드는 테슬라 오너의 차고.</p>
+      </div>
+      <nav class="foot-nav" aria-label="푸터 메뉴">
+        <a href="#garage">내 차고</a>
+        <a href="#badges">진열장</a>
+        <a href="#rank">랭킹</a>
+        <a href="#quest">퀘스트</a>
+        <a href="#drv">적립 규칙</a>
+        <a href="#tslm">TSLM</a>
+        <a href="#genesis">Genesis 500</a>
+      </nav>
+    </div>
+    <p class="legal">
+      DRV·TSLM은 커뮤니티 내 활동 보상 포인트이며 교환 품목과 적립률은 보유자 투표로 변경될 수 있습니다. 화면의 오너 정보와 기록은 예시입니다.
+      <em>teslam.io는 Tesla, Inc.와 제휴하거나 후원받는 관계가 아닌 독립 커뮤니티 프로젝트입니다.</em>
+      <span>&copy; 2026 teslam.io</span>
+    </p>
+  </div>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var noMotion = reduce.matches;
+
+  /* ── 1. 카드 틸트 (차고 스포트라이트 아래 실물 카드) ── */
+  var wrap = document.querySelector(".cardwrap");
+  var card = document.getElementById("ownerCard");
+
+  function setTilt(rx, ry, mx, my){
+    var s = card.style;
+    s.setProperty("--rx", rx.toFixed(2) + "deg");
+    s.setProperty("--ry", ry.toFixed(2) + "deg");
+    s.setProperty("--mx", mx.toFixed(1) + "%");
+    s.setProperty("--my", my.toFixed(1) + "%");
+    /* 스포트라이트가 고정이므로 그림자는 기울기 반대로 흐른다 */
+    s.setProperty("--sx", (ry * -1.6).toFixed(1) + "px");
+    s.setProperty("--sy", (rx * 0.9).toFixed(1) + "px");
+    /* 차량은 카드보다 살짝 앞에 떠 있다 */
+    s.setProperty("--ptx", (ry * 0.7).toFixed(1) + "px");
+    s.setProperty("--pty", (rx * -0.55).toFixed(1) + "px");
+  }
+  function rest(){
+    card.classList.remove("tilting");
+    setTilt(0, 0, 50, 28);
+  }
+
+  if (card && wrap && !noMotion){
+    var ticking = false, lastEv = null;
+
+    function apply(){
+      ticking = false;
+      if (!lastEv) return;
+      var r = wrap.getBoundingClientRect();
+      var px = (lastEv.clientX - r.left) / r.width;
+      var py = (lastEv.clientY - r.top) / r.height;
+      px = Math.max(0, Math.min(1, px));
+      py = Math.max(0, Math.min(1, py));
+      setTilt((0.5 - py) * 11, (px - 0.5) * 15, px * 100, py * 100);
+    }
+
+    wrap.addEventListener("pointermove", function(e){
+      lastEv = e;
+      card.classList.add("tilting");
+      if (!ticking){ ticking = true; requestAnimationFrame(apply); }
+    }, {passive:true});
+
+    wrap.addEventListener("pointerleave", rest, {passive:true});
+    wrap.addEventListener("pointercancel", rest, {passive:true});
+
+    /* 등장 시 1회 프레젠테이션 회전 */
+    var shown = false;
+    function present(){
+      if (shown) return;
+      shown = true;
+      var t0 = null, dur = 2100;
+      function frame(t){
+        if (t0 === null) t0 = t;
+        var p = Math.min(1, (t - t0) / dur);
+        var e = p < 0.5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2)/2;
+        var a = Math.sin(e * Math.PI * 2);
+        setTilt(a * -4.5, a * 13, 50 + a * 34, 30 - a * 12);
+        if (p < 1) requestAnimationFrame(frame); else rest();
+      }
+      card.classList.add("tilting");
+      requestAnimationFrame(frame);
+    }
+
+    if ("IntersectionObserver" in window){
+      var cio = new IntersectionObserver(function(es){
+        es.forEach(function(en){ if (en.isIntersecting){ setTimeout(present, 420); cio.disconnect(); } });
+      }, {threshold:0.4});
+      cio.observe(card);
+    } else { setTimeout(present, 600); }
+
+    var spin = document.getElementById("spinBtn");
+    if (spin) spin.addEventListener("click", function(){
+      card.scrollIntoView({behavior:"smooth", block:"center"});
+      shown = false; present();
+    });
+  } else if (card){
+    setTilt(0, 0, 50, 28);
+    var spin2 = document.getElementById("spinBtn");
+    if (spin2) spin2.addEventListener("click", function(){
+      card.scrollIntoView({block:"center"});
+    });
+  }
+
+  /* ── 2. 숫자 카운트업 ── */
+  var counts = [].slice.call(document.querySelectorAll(".count"));
+  function fmt(n){ return n.toLocaleString("ko-KR"); }
+  function run(el){
+    var to = parseInt(el.getAttribute("data-to"), 10) || 0;
+    if (noMotion){ el.textContent = fmt(to); return; }
+    var t0 = null, dur = 1500;
+    function step(t){
+      if (t0 === null) t0 = t;
+      var p = Math.min(1, (t - t0) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(Math.round(to * e));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  if ("IntersectionObserver" in window){
+    var nio = new IntersectionObserver(function(es){
+      es.forEach(function(en){
+        if (en.isIntersecting){ run(en.target); nio.unobserve(en.target); }
+      });
+    }, {threshold:0.5});
+    counts.forEach(function(el){ nio.observe(el); });
+  } else {
+    counts.forEach(run);
+  }
+
+  /* ── 3. 라이브 티커 ── */
+  var feed = document.getElementById("feed");
+  if (feed && !noMotion){
+    feed.classList.remove("ticker-static");
+    var items = [].slice.call(feed.children);
+    var i = 0;
+    setInterval(function(){
+      items[i].classList.remove("on");
+      i = (i + 1) % items.length;
+      items[i].classList.add("on");
+    }, 3200);
+  } else if (feed){
+    /* 모션 최소화: 첫 항목만 정적으로 노출 */
+    [].slice.call(feed.children).forEach(function(li, idx){
+      if (idx > 0) li.style.display = "none";
+      else { li.style.position = "static"; li.style.opacity = "1"; li.style.transform = "none"; }
+    });
+  }
+
+  /* ── 4. 스크롤 리빌 ── */
+  var rvs = [].slice.call(document.querySelectorAll(".rv"));
+  if (noMotion || !("IntersectionObserver" in window)){
+    rvs.forEach(function(el){ el.classList.add("in"); });
+  } else {
+    var rio = new IntersectionObserver(function(es){
+      es.forEach(function(en){
+        if (en.isIntersecting){ en.target.classList.add("in"); rio.unobserve(en.target); }
+      });
+    }, {threshold:0.12, rootMargin:"0px 0px -6% 0px"});
+    rvs.forEach(function(el){ rio.observe(el); });
+  }
+
+  /* ── 5. 차체 광택 스윕 (쇼룸 조명이 보닛을 훑고 지나간다) ── */
+  var shine = document.querySelector(".shine");
+  if (shine && !noMotion && shine.animate){
+    shine.animate(
+      [{transform:"skewX(-18deg) translateX(0px)"},{transform:"skewX(-18deg) translateX(1000px)"}],
+      {duration:4200, delay:900, iterations:Infinity, easing:"cubic-bezier(.55,0,.45,1)"}
+    );
+  }
+
+  /* ── 6. 부드러운 앵커 이동 ── */
+  document.addEventListener("click", function(e){
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if (!a) return;
+    var id = a.getAttribute("href");
+    if (!id || id === "#") return;
+    var t = document.querySelector(id);
+    if (!t) return;
+    e.preventDefault();
+    t.scrollIntoView({behavior: noMotion ? "auto" : "smooth", block:"start"});
+    if (history.replaceState) history.replaceState(null, "", id);
+  });
+})();
+</script>
+</body>
+</html>

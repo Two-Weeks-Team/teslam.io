@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>teslam.io 지갑 — 달린 만큼 쌓이고, 쌓인 만큼 씁니다</title>
+<meta name="description" content="테슬라 오너를 위한 주행 리워드 지갑. 오도미터로 검증된 주행만 DRV로 적립되고, 슈퍼차저 충전권·기프티콘·세차 쿠폰으로 바로 씁니다." />
+<meta name="theme-color" content="#0C1116" />
+<style>
+  /* ---------------------------------------------------------
+     teslam.io — 리워드 지갑 (alt9)
+     팔레트: ink #0C1116 · mint #00D08A · gold #FFB43D · paper #F3F5F7
+     --------------------------------------------------------- */
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  :root {
+    --ink:      #0C1116;
+    --ink-2:    #17222C;
+    --ink-3:    #2A3744;
+    --paper:    #EFF2F5;
+    --card:     #FFFFFF;
+    --line:     #E3E8ED;
+    --line-2:   #D5DCE4;
+    --text:     #101820;
+    --muted:    #5B6B7C;
+    --muted-2:  #8494A4;
+
+    --mint:     #00D08A;
+    --mint-2:   #00B478;
+    --mint-deep:#00694F;
+    --mint-soft:#E4FAF1;
+    --mint-glow:#6FF7C6;
+
+    --gold:     #FFB43D;
+    --gold-deep:#7C4E00;
+    --gold-soft:#FFF3DC;
+
+    --sky:      #1F8FE0;
+    --sky-soft: #E7F3FC;
+
+    --r-xl: 28px;
+    --r-lg: 22px;
+    --r-md: 16px;
+    --r-sm: 11px;
+
+    --shadow-card: 0 1px 2px rgba(16,24,32,.05), 0 8px 24px -12px rgba(16,24,32,.18);
+    --shadow-pop:  0 2px 6px rgba(16,24,32,.07), 0 22px 48px -20px rgba(16,24,32,.35);
+
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    overflow-x: clip;
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--text);
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    letter-spacing: -0.011em;
+    word-break: keep-all;          /* 한국어 줄바꿈 — 필수 */
+    overflow-wrap: break-word;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* 배경: 아주 옅은 그리드 + 상단 민트 헤이즈 */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 420px at 50% -180px, rgba(0,208,138,.16), transparent 70%),
+      linear-gradient(180deg, #F7FAFB 0%, var(--paper) 420px);
+  }
+
+  h1, h2, h3, h4 { margin: 0; font-weight: 800; letter-spacing: -0.03em; line-height: 1.25; }
+  p { margin: 0; }
+  ul, ol { margin: 0; padding: 0; list-style: none; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
+
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; letter-spacing: -0.02em; }
+
+  :focus-visible {
+    outline: 3px solid #0B7BD1;
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  .on-dark :focus-visible { outline-color: var(--mint-glow); }
+
+  .skip {
+    position: absolute; left: 12px; top: -80px; z-index: 90;
+    background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 999px;
+    font-weight: 700; font-size: 14px; transition: top .18s ease;
+  }
+  .skip:focus { top: 12px; }
+
+  .sr {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  /* ============ 레이아웃 ============ */
+  .shell {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 0 16px 40px;
+  }
+
+  .stack > * + * { margin-top: 14px; }
+
+  /* ============ 앱바 ============ */
+  .appbar {
+    position: sticky; top: 0; z-index: 40;
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    background: rgba(247,250,251,.82);
+    border-bottom: 1px solid rgba(210,220,228,.7);
+  }
+  .appbar__in {
+    max-width: 460px; margin: 0 auto;
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .brand { display: flex; align-items: center; gap: 9px; min-height: 44px; }
+  .brand__mark {
+    width: 30px; height: 30px; border-radius: 10px;
+    background: linear-gradient(150deg, var(--ink-2), var(--ink));
+    display: grid; place-items: center;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 3px 10px -4px rgba(12,17,22,.6);
+  }
+  .brand__mark svg { display: block; }
+  .brand__name { font-weight: 800; font-size: 16.5px; letter-spacing: -0.04em; }
+  .brand__name span { color: var(--mint-deep); }
+  .appbar__spacer { flex: 1; }
+  .iconbtn {
+    width: 44px; height: 44px; border-radius: 14px;
+    display: grid; place-items: center;
+    background: rgba(255,255,255,.7);
+    border: 1px solid var(--line);
+    position: relative;
+  }
+  .iconbtn:hover { background: #fff; }
+  .dot-badge {
+    position: absolute; top: 9px; right: 10px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--mint); border: 2px solid #fff;
+  }
+  .avatar {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: linear-gradient(140deg, #00D08A, #0A9E9C);
+    color: #04241B; font-weight: 900; font-size: 13px;
+    display: grid; place-items: center;
+    box-shadow: 0 3px 12px -6px rgba(0,140,100,.9);
+  }
+
+  /* ============ 히어로 문구 ============ */
+  .lead { padding: 22px 2px 4px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 12.5px; font-weight: 800; letter-spacing: 0.02em;
+    color: var(--mint-deep); background: var(--mint-soft);
+    border: 1px solid rgba(0,180,120,.22);
+    padding: 6px 11px; border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  h1 {
+    font-size: clamp(25px, 6.6vw, 34px);
+    letter-spacing: -0.045em;
+    line-height: 1.24;
+  }
+  h1 em { font-style: normal; color: var(--mint-deep); }
+  .lead p {
+    margin-top: 10px; color: var(--muted); font-size: 14.5px; line-height: 1.6;
+  }
+
+  /* ============ 잔액 카드 ============ */
+  .balance {
+    position: relative; overflow: hidden;
+    border-radius: var(--r-xl);
+    background: linear-gradient(158deg, #1B2A34 0%, #101A21 46%, #0A0F14 100%);
+    color: #EAF3F0;
+    padding: 20px 20px 18px;
+    box-shadow: var(--shadow-pop);
+  }
+  .balance::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(420px 210px at 88% -30%, rgba(0,208,138,.34), transparent 65%);
+  }
+  .balance > * { position: relative; z-index: 2; }
+  .balance__car {
+    position: absolute; z-index: 1;
+    right: -34px; bottom: -18px; width: 250px; opacity: .12;
+    pointer-events: none;
+  }
+
+  .tabs { display: flex; gap: 6px; background: rgba(255,255,255,.07); padding: 4px; border-radius: 999px; width: fit-content; }
+  .tab {
+    padding: 8px 16px; border-radius: 999px; font-size: 13.5px; font-weight: 800;
+    color: rgba(234,243,240,.62); min-height: 36px;
+  }
+  .tab[aria-selected="true"] { background: rgba(255,255,255,.96); color: #0C1116; }
+
+  .balance__label {
+    margin-top: 16px; font-size: 13px; font-weight: 700; color: rgba(234,243,240,.6);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .figure {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    margin-top: 2px;
+  }
+  .figure__n {
+    font-family: var(--mono); font-weight: 700;
+    font-size: clamp(40px, 12.5vw, 58px);
+    line-height: 1.05; letter-spacing: -0.045em;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    transition: color .2s ease;
+  }
+  .figure__n.bump { animation: bump .5s cubic-bezier(.2,.9,.25,1); }
+  @keyframes bump {
+    0%   { transform: translateY(0) scale(1); color: #fff; }
+    28%  { transform: translateY(-5px) scale(1.035); color: var(--mint-glow); }
+    100% { transform: translateY(0) scale(1); color: #fff; }
+  }
+  .figure__u { font-size: 20px; font-weight: 800; color: var(--mint); letter-spacing: -0.02em; }
+  .figure__krw {
+    margin-top: 4px; font-size: 14px; color: rgba(234,243,240,.72); font-weight: 600;
+  }
+  .figure__krw b { color: #fff; font-weight: 800; }
+
+  .drivepill {
+    margin-top: 16px;
+    display: inline-flex; align-items: center; gap: 9px;
+    background: rgba(0,208,138,.14);
+    border: 1px solid rgba(0,208,138,.34);
+    color: #B7F5DC; font-size: 12.5px; font-weight: 700;
+    padding: 8px 13px 8px 11px; border-radius: 999px;
+    max-width: 100%;
+  }
+  .drivepill.is-done { background: rgba(255,180,61,.14); border-color: rgba(255,180,61,.36); color: #FFDFA6; }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--mint);
+    box-shadow: 0 0 0 0 rgba(0,208,138,.75);
+    animation: pulse 1.9s infinite;
+    flex: none;
+  }
+  .is-done .live-dot { background: var(--gold); animation: none; box-shadow: none; }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(0,208,138,.6); }
+    70%  { box-shadow: 0 0 0 9px rgba(0,208,138,0); }
+    100% { box-shadow: 0 0 0 0 rgba(0,208,138,0); }
+  }
+
+  .cap { margin-top: 16px; }
+  .cap__row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    font-size: 12.5px; font-weight: 700; color: rgba(234,243,240,.66);
+  }
+  .cap__row b { color: #fff; font-family: var(--mono); font-size: 13.5px; }
+  .cap__bar {
+    margin-top: 8px; height: 9px; border-radius: 999px;
+    background: rgba(255,255,255,.12); overflow: hidden;
+  }
+  .cap__fill {
+    height: 100%; border-radius: 999px; width: 64%;
+    background: linear-gradient(90deg, #00B478, var(--mint) 60%, var(--mint-glow));
+    transition: width .6s cubic-bezier(.3,.9,.3,1);
+  }
+
+  /* TSLM 패널 */
+  .tslm-panel { display: none; }
+  .tslm-panel.is-on { display: block; }
+  .drv-panel.is-off { display: none; }
+  .tslm-grid {
+    margin-top: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .tslm-cell {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.09);
+    border-radius: var(--r-md); padding: 12px 13px;
+  }
+  .tslm-cell dt { font-size: 11.5px; font-weight: 700; color: rgba(234,243,240,.58); }
+  .tslm-cell dd { margin: 3px 0 0; font-family: var(--mono); font-size: 17px; font-weight: 700; color: #fff; letter-spacing: -0.03em; }
+  .tslm-note { margin-top: 12px; font-size: 12.5px; color: rgba(234,243,240,.66); line-height: 1.6; }
+
+  /* ============ 퀵 액션 ============ */
+  .quick {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--r-lg); padding: 12px 8px;
+    box-shadow: var(--shadow-card);
+  }
+  .quick a {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 8px 2px; border-radius: var(--r-md); min-height: 78px; justify-content: center;
+    font-size: 12px; font-weight: 700; color: var(--text); text-align: center;
+  }
+  .quick a:hover { background: #F5F8FA; }
+  .qi {
+    width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center;
+    background: var(--mint-soft); color: var(--mint-deep);
+  }
+  .qi.g { background: var(--gold-soft); color: var(--gold-deep); }
+  .qi.s { background: var(--sky-soft); color: #0A5F9E; }
+  .qi.k { background: #F0F2F5; color: #333F4D; }
+
+  /* ============ 카드 공통 ============ */
+  .card {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .card__head {
+    display: flex; align-items: center; gap: 10px;
+    padding: 17px 18px 12px;
+  }
+  .card__head h2 { font-size: 16.5px; letter-spacing: -0.035em; }
+  .card__head .sub { font-size: 12px; color: var(--muted-2); font-weight: 600; }
+  .card__head .grow { flex: 1; }
+  .linkbtn {
+    font-size: 12.5px; font-weight: 800; color: var(--muted);
+    padding: 8px 10px; border-radius: 10px; min-height: 40px;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .linkbtn:hover { background: #F2F5F8; color: var(--text); }
+  .card__body { padding: 0 18px 18px; }
+
+  /* ============ 주간 차트 ============ */
+  .chartwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 18px 6px; }
+  .chartwrap svg { display: block; width: 100%; min-width: 300px; height: auto; }
+  .bar { transform-box: fill-box; transform-origin: bottom; }
+  .bar--anim { animation: grow .85s cubic-bezier(.22,.9,.3,1) backwards; }
+  @keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  .chart-legend {
+    display: flex; flex-wrap: wrap; gap: 14px; padding: 4px 18px 18px;
+    font-size: 12px; color: var(--muted); font-weight: 600;
+  }
+  .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* ============ 적립 내역 ============ */
+  .hist { padding: 0 8px 8px; }
+  .hist li {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 10px; border-radius: 14px;
+  }
+  .hist li + li { border-top: 1px solid #F0F3F6; }
+  .hist li.row--new { animation: slidein .55s cubic-bezier(.2,.9,.25,1); }
+  @keyframes slidein {
+    from { opacity: 0; transform: translateY(-10px); background: var(--mint-soft); }
+    60%  { background: var(--mint-soft); }
+    to   { opacity: 1; transform: translateY(0); background: transparent; }
+  }
+  .hist__ic {
+    width: 42px; height: 42px; border-radius: 14px; flex: none;
+    display: grid; place-items: center;
+    background: var(--mint-soft); color: var(--mint-deep);
+  }
+  .hist__ic.out { background: #F0F2F5; color: #4A5866; }
+  .hist__ic.q   { background: var(--gold-soft); color: var(--gold-deep); }
+  .hist__ic.t   { background: var(--sky-soft); color: #0A5F9E; }
+  .hist__txt { flex: 1; min-width: 0; }
+  .hist__t1 { font-size: 14.5px; font-weight: 700; letter-spacing: -0.02em; }
+  .hist__t2 {
+    font-size: 11.5px; color: var(--muted-2); margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hist__amt { text-align: right; flex: none; }
+  .hist__amt b {
+    display: block; font-family: var(--mono); font-size: 15px; font-weight: 700;
+    color: var(--mint-deep); letter-spacing: -0.03em;
+  }
+  .hist__amt.minus b { color: #3C4855; }
+  .hist__amt span { font-size: 11px; color: var(--muted-2); font-weight: 600; }
+
+  /* 날아가는 +10 DRV 칩 */
+  .flychip {
+    position: fixed; z-index: 80; pointer-events: none;
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    background: var(--ink); color: var(--mint-glow);
+    padding: 7px 13px; border-radius: 999px;
+    box-shadow: 0 10px 26px -8px rgba(10,20,16,.65);
+    white-space: nowrap;
+  }
+
+  /* ============ 교환 선반 ============ */
+  .shelf {
+    display: flex; gap: 12px; overflow-x: auto; padding: 2px 18px 20px;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .shelf::-webkit-scrollbar { height: 6px; }
+  .shelf::-webkit-scrollbar-thumb { background: #D8DFE6; border-radius: 99px; }
+  .item {
+    flex: 0 0 158px; scroll-snap-align: start;
+    border: 1px solid var(--line); border-radius: 18px;
+    background: #fff; overflow: hidden; display: flex; flex-direction: column;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .item:hover { transform: translateY(-3px); box-shadow: 0 14px 28px -18px rgba(16,24,32,.5); }
+  .item__art {
+    height: 96px; position: relative; display: grid; place-items: center;
+    background: linear-gradient(150deg, #E8F7F1, #D6F0E6);
+  }
+  .item__art.a2 { background: linear-gradient(150deg, #FFF1D9, #FFE3B4); }
+  .item__art.a3 { background: linear-gradient(150deg, #E4F1FC, #CFE6F9); }
+  .item__art.a4 { background: linear-gradient(150deg, #EEF0F3, #DDE2E8); }
+  .item__art.a5 { background: linear-gradient(150deg, #E9F6E8, #D3EDD1); }
+  .item__tag {
+    position: absolute; top: 8px; left: 8px;
+    font-size: 10.5px; font-weight: 800; padding: 4px 8px; border-radius: 999px;
+    background: rgba(12,17,22,.85); color: #fff; letter-spacing: -0.01em;
+  }
+  .item__tag.hot { background: #C2410C; }
+  .item__b { padding: 11px 12px 13px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .item__n { font-size: 13.5px; font-weight: 700; line-height: 1.35; letter-spacing: -0.025em; }
+  .item__s { font-size: 11px; color: var(--muted-2); font-weight: 600; }
+  .item__p {
+    margin-top: 8px; font-family: var(--mono); font-size: 15px; font-weight: 700;
+    color: var(--text); letter-spacing: -0.03em;
+  }
+  .item__p em { font-style: normal; font-size: 11px; color: var(--muted-2); font-family: inherit; margin-left: 3px; }
+  .item__k { font-size: 10.5px; color: var(--muted-2); font-weight: 600; margin-top: 1px; }
+  .item__btn {
+    margin-top: 10px; text-align: center; font-size: 12.5px; font-weight: 800;
+    background: var(--mint-soft); color: var(--mint-deep);
+    padding: 10px; border-radius: 11px; min-height: 42px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .item__btn:hover { background: #D3F6E6; }
+  .item__btn.off { background: #F1F3F6; color: var(--muted-2); }
+
+  /* ============ 퀘스트 ============ */
+  .quest { display: flex; gap: 12px; padding: 13px 0; align-items: flex-start; }
+  .quest + .quest { border-top: 1px solid #F0F3F6; }
+  .quest__ic {
+    width: 40px; height: 40px; border-radius: 13px; flex: none; display: grid; place-items: center;
+    background: var(--gold-soft); color: var(--gold-deep); font-size: 17px;
+  }
+  .quest__ic.b { background: var(--sky-soft); color: #0A5F9E; }
+  .quest__m { flex: 1; min-width: 0; }
+  .quest__t { font-size: 14.5px; font-weight: 700; letter-spacing: -0.025em; }
+  .quest__d { font-size: 11.5px; color: var(--muted-2); margin-top: 2px; }
+  .qbar { margin-top: 8px; height: 8px; border-radius: 999px; background: #EDF1F4; overflow: hidden; }
+  .qbar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #FFB43D, #FFCF7A); }
+  .qbar.mint i { background: linear-gradient(90deg, var(--mint-2), var(--mint)); }
+  .quest__r {
+    flex: none; text-align: right; font-family: var(--mono); font-size: 13.5px;
+    font-weight: 700; color: var(--gold-deep);
+  }
+  .quest__r.m { color: var(--mint-deep); }
+
+  /* ============ 랭킹 ============ */
+  .rank li { display: flex; align-items: center; gap: 11px; padding: 11px 0; }
+  .rank li + li { border-top: 1px solid #F0F3F6; }
+  .rank__n {
+    width: 26px; height: 26px; border-radius: 9px; flex: none; display: grid; place-items: center;
+    font-family: var(--mono); font-size: 12px; font-weight: 700;
+    background: #F0F3F6; color: var(--muted);
+  }
+  .rank li:nth-child(1) .rank__n { background: #FFF0CC; color: #7C4E00; }
+  .rank li:nth-child(2) .rank__n { background: #ECEFF3; color: #46525F; }
+  .rank li:nth-child(3) .rank__n { background: #FBEADF; color: #8A4A21; }
+  .rank__w { flex: 1; min-width: 0; }
+  .rank__nm { font-size: 14px; font-weight: 700; letter-spacing: -0.02em; }
+  .rank__nm .badge {
+    display: inline-block; margin-left: 5px; font-size: 10px; font-weight: 800;
+    padding: 2px 6px; border-radius: 6px; background: var(--ink); color: var(--mint-glow);
+    vertical-align: 1.5px; letter-spacing: 0;
+  }
+  .rank__sub { font-size: 11.5px; color: var(--muted-2); }
+  .rank__v { font-family: var(--mono); font-size: 14px; font-weight: 700; letter-spacing: -0.03em; }
+  .rank__me { background: var(--mint-soft); border-radius: 13px; padding: 11px 12px !important; border-top: 0 !important; margin-top: 8px; }
+
+  /* ============ 티커 ============ */
+  .ticker {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 999px;
+    padding: 11px 15px; box-shadow: var(--shadow-card);
+    font-size: 12.5px; color: var(--muted); font-weight: 600;
+    min-height: 48px; overflow: hidden;
+  }
+  .ticker__t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ticker__t.swap { animation: swap .45s ease; }
+  @keyframes swap { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .ticker__t b { color: var(--text); font-weight: 800; }
+  .ticker__t .v { color: var(--mint-deep); font-family: var(--mono); font-weight: 700; }
+
+  /* ============ 작동 방식 ============ */
+  .how { display: grid; gap: 10px; }
+  .how li {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: #F7FAFB; border: 1px solid #E9EEF2; border-radius: var(--r-md); padding: 13px 14px;
+  }
+  .how__n {
+    width: 24px; height: 24px; border-radius: 8px; flex: none; display: grid; place-items: center;
+    background: var(--ink); color: var(--mint-glow); font-family: var(--mono); font-size: 12px; font-weight: 700;
+  }
+  .how__t { font-size: 14px; font-weight: 700; letter-spacing: -0.025em; }
+  .how__d { font-size: 12.5px; color: var(--muted); margin-top: 3px; line-height: 1.58; }
+
+  /* ============ 제네시스 CTA ============ */
+  .genesis {
+    position: relative; overflow: hidden;
+    border-radius: var(--r-xl);
+    background: linear-gradient(160deg, #221A0C 0%, #14100A 52%, #0B0E12 100%);
+    color: #F6EEDF; padding: 22px 20px;
+    box-shadow: var(--shadow-pop);
+  }
+  .genesis::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(360px 200px at 12% -20%, rgba(255,180,61,.36), transparent 66%);
+  }
+  .genesis > * { position: relative; z-index: 2; }
+  .gen__chip {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11.5px; font-weight: 800; letter-spacing: 0.02em;
+    background: rgba(255,180,61,.16); border: 1px solid rgba(255,180,61,.4);
+    color: #FFD79A; padding: 6px 11px; border-radius: 999px;
+  }
+  .genesis h2 { margin-top: 13px; font-size: clamp(21px, 5.6vw, 27px); color: #fff; letter-spacing: -0.04em; }
+  .genesis > p { margin-top: 9px; font-size: 14px; color: rgba(246,238,223,.78); line-height: 1.62; }
+  .seats { margin-top: 18px; }
+  .seats__top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .seats__n { font-family: var(--mono); font-size: 30px; font-weight: 700; color: var(--gold); letter-spacing: -0.04em; }
+  .seats__n small { font-size: 14px; color: rgba(246,238,223,.7); margin-left: 4px; font-family: inherit; }
+  .seats__c { font-size: 12.5px; font-weight: 700; color: rgba(246,238,223,.6); font-family: var(--mono); }
+  .seats__bar { margin-top: 9px; height: 10px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .seats__fill {
+    height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, #C9822A, var(--gold) 70%, #FFDCA0);
+    transition: width .7s cubic-bezier(.3,.9,.3,1);
+  }
+  .perks { margin-top: 18px; display: grid; gap: 8px; }
+  .perks li {
+    display: flex; gap: 9px; align-items: flex-start;
+    font-size: 13.5px; color: rgba(246,238,223,.9); line-height: 1.5;
+  }
+  .perks svg { flex: none; margin-top: 3px; }
+  .cta {
+    margin-top: 20px; display: flex; flex-direction: column; gap: 9px;
+  }
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 56px; border-radius: 17px; font-size: 16px; font-weight: 800;
+    letter-spacing: -0.03em; transition: transform .12s ease, filter .18s ease;
+  }
+  .btn:active { transform: scale(.985); }
+  .btn--gold { background: linear-gradient(160deg, #FFC864, var(--gold)); color: #2B1A00; box-shadow: 0 12px 30px -14px rgba(255,180,61,.9); }
+  .btn--gold:hover { filter: brightness(1.06); }
+  .btn--ghost { background: rgba(255,255,255,.08); color: #F6EEDF; border: 1px solid rgba(255,255,255,.16); min-height: 50px; font-size: 14px; }
+  .btn--ghost:hover { background: rgba(255,255,255,.13); }
+  .cta__note { margin-top: 11px; font-size: 11.5px; color: rgba(246,238,223,.52); text-align: center; line-height: 1.6; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px);
+    z-index: 70; background: var(--ink); color: #EAF3F0;
+    padding: 12px 18px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    box-shadow: 0 16px 40px -14px rgba(10,16,22,.8);
+    opacity: 0; pointer-events: none; transition: opacity .3s ease, transform .3s ease;
+    max-width: calc(100vw - 32px); text-align: center;
+  }
+  .toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast b { color: var(--mint-glow); }
+
+  /* ============ 푸터 ============ */
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--line-2); margin-top: 34px;
+    background: #E9EDF1;
+  }
+  .foot { max-width: 460px; margin: 0 auto; padding: 26px 16px 40px; }
+  .foot__nav { display: flex; flex-wrap: wrap; gap: 6px 4px; margin-bottom: 16px; }
+  .foot__nav a {
+    font-size: 13px; font-weight: 700; color: var(--muted);
+    padding: 9px 12px; border-radius: 10px; min-height: 40px; display: inline-flex; align-items: center;
+  }
+  .foot__nav a:hover { background: #DFE5EB; color: var(--text); }
+  .foot__peg {
+    font-size: 12px; color: var(--muted); background: #F4F7F9; border: 1px solid #DFE5EB;
+    border-radius: 14px; padding: 12px 14px; line-height: 1.65;
+  }
+  .foot__peg b { color: var(--text); font-family: var(--mono); }
+  .disclaimer {
+    margin-top: 14px; font-size: 11px; line-height: 1.65; color: #7C8A99;
+  }
+  .foot__c { margin-top: 10px; font-size: 11px; color: #93A0AD; }
+
+  /* =========================================================
+     ≥ 720px : 태블릿 — 2열
+     ========================================================= */
+  @media (min-width: 720px) {
+    .appbar__in, .shell, .foot { max-width: 1180px; }
+    .shell { padding: 0 24px 56px; }
+    .lead { padding: 34px 4px 8px; max-width: 620px; }
+    h1 { font-size: clamp(32px, 4.4vw, 46px); }
+    .lead p { font-size: 16px; }
+
+    .grid {
+      display: grid; gap: 18px;
+      grid-template-columns: minmax(320px, 400px) 1fr;
+      align-items: start;
+    }
+    .grid > * { margin-top: 0 !important; }
+    .col { display: grid; gap: 18px; align-content: start; }
+    .col--a { position: sticky; top: 78px; }
+    .balance { padding: 24px 24px 22px; }
+    .figure__n { font-size: 56px; }
+    .item { flex-basis: 176px; }
+    .cta { flex-direction: row; }
+    .cta .btn { flex: 1; }
+    .btn--ghost { min-height: 56px; }
+    .foot__peg { max-width: 640px; }
+    .disclaimer { max-width: 720px; }
+  }
+
+  /* =========================================================
+     ≥ 1080px : 데스크톱 — 3열 대시보드
+     ========================================================= */
+  @media (min-width: 1080px) {
+    .grid {
+      grid-template-columns: minmax(330px, 390px) minmax(0, 1fr) minmax(300px, 360px);
+    }
+    .lead { padding: 44px 4px 10px; }
+    .genesis { padding: 32px 34px; }
+    .genesis h2 { font-size: 32px; }
+    .gen-wrap { display: grid; grid-template-columns: 1.15fr 1fr; gap: 34px; align-items: center; }
+    .gen-wrap > div:last-child { align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+    .cta { flex-direction: column; }
+  }
+
+  /* =========================================================
+     모션 축소
+     ========================================================= */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+      scroll-behavior: auto !important;
+    }
+    .live-dot { animation: none; }
+    .bar--anim { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+
+<header class="appbar">
+  <div class="appbar__in">
+    <a class="brand" href="#main" aria-label="teslam.io 홈">
+      <span class="brand__mark" aria-hidden="true">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+          <path d="M3 15.5h18M5.6 15.5l1.7-5.1A2.5 2.5 0 0 1 9.7 8.7h4.6a2.5 2.5 0 0 1 2.4 1.7l1.7 5.1M7 18.5v-3M17 18.5v-3" stroke="#00D08A" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="brand__name">teslam<span>.io</span></span>
+    </a>
+    <span class="appbar__spacer"></span>
+    <button class="iconbtn" type="button" aria-label="알림 3건">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 3a5.5 5.5 0 0 0-5.5 5.5c0 3.2-.7 5-1.4 6.1-.4.6 0 1.4.8 1.4h12.2c.8 0 1.2-.8.8-1.4-.7-1.1-1.4-2.9-1.4-6.1A5.5 5.5 0 0 0 12 3ZM10 19.2a2.2 2.2 0 0 0 4 0" stroke="#2A3744" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span class="dot-badge" aria-hidden="true"></span>
+    </button>
+    <button class="avatar" type="button" aria-label="내 프로필: 판교모델Y">판교</button>
+  </div>
+</header>
+
+<main id="main" class="shell">
+
+  <div class="lead">
+    <p class="eyebrow">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M13 2 4.5 13.2h6L11 22l8.5-11.2h-6L13 2Z" fill="#00694F"/>
+      </svg>
+      테슬라 오너 전용 주행 지갑
+    </p>
+    <h1>달린 만큼 쌓이고,<br><em>쌓인 만큼 씁니다.</em></h1>
+    <p>주차 중엔 아무것도 안 보내요. 시동 걸고 굴러가는 동안만 오도미터가 올라가고, 올라간 만큼 지갑에 DRV가 들어옵니다. 1km = 10 DRV.</p>
+  </div>
+
+  <div class="grid" style="margin-top:18px">
+
+    <!-- ========== 왼쪽 열 : 잔액 · 퀵액션 · 차트 ========== -->
+    <div class="col col--a">
+
+      <!-- 잔액 카드 -->
+      <section class="balance on-dark" aria-labelledby="bal-h">
+        <h2 id="bal-h" class="sr">내 지갑 잔액</h2>
+
+        <svg class="balance__car" viewBox="0 0 300 96" fill="none" aria-hidden="true">
+          <path d="M12 66h276M40 66c0-9 7-16 16-16s16 7 16 16M228 66c0-9 7-16 16-16s16 7 16 16" stroke="#00D08A" stroke-width="3" stroke-linecap="round"/>
+          <path d="M22 66c-4 0-7-3-6-7l3-14c1-5 5-8 10-9l24-4 22-16c4-3 9-5 14-5h72c6 0 11 2 15 6l19 17 44 6c11 2 19 10 21 20l1 6H22Z" stroke="#00D08A" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M96 15v27M148 15v27M64 42h176" stroke="#00D08A" stroke-width="2.4" stroke-linecap="round"/>
+        </svg>
+
+        <div class="tabs" role="tablist" aria-label="토큰 선택">
+          <button class="tab" role="tab" id="tab-drv" aria-selected="true" aria-controls="panel-drv" type="button">DRV</button>
+          <button class="tab" role="tab" id="tab-tslm" aria-selected="false" aria-controls="panel-tslm" type="button">TSLM</button>
+        </div>
+
+        <!-- DRV 패널 -->
+        <div id="panel-drv" class="drv-panel" role="tabpanel" aria-labelledby="tab-drv">
+          <p class="balance__label">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="#00D08A" stroke-width="2"/><path d="M12 7v10M9 10h6M9 14h6" stroke="#00D08A" stroke-width="2" stroke-linecap="round"/></svg>
+            사용 가능 잔액
+          </p>
+          <p class="figure">
+            <span class="figure__n num" id="balN">24,860</span>
+            <span class="figure__u">DRV</span>
+          </p>
+          <p class="figure__krw">실물 교환가 약 <b class="num" id="balKRW">12,430</b>원 상당</p>
+
+          <p class="drivepill" id="drivePill" role="status">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span id="driveTxt">지금 주행 중 · 경부고속도로 판교IC 부근 · 오늘 32.0km</span>
+          </p>
+
+          <div class="cap">
+            <div class="cap__row">
+              <span>오늘 적립</span>
+              <span><b class="num" id="todayN">320</b> / 500 DRV</span>
+            </div>
+            <div class="cap__bar">
+              <span class="cap__fill" id="capFill" style="width:64%"></span>
+            </div>
+            <p class="cap__row" style="margin-top:8px;font-size:11.5px;color:rgba(234,243,240,.5)">
+              <span>하루 한도 50km까지. 나머지는 내일의 나에게.</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- TSLM 패널 -->
+        <div id="panel-tslm" class="tslm-panel" role="tabpanel" aria-labelledby="tab-tslm" hidden>
+          <p class="balance__label">보유 거버넌스 토큰</p>
+          <p class="figure">
+            <span class="figure__n num">12.4</span>
+            <span class="figure__u" style="color:var(--gold)">TSLM</span>
+          </p>
+          <p class="figure__krw">투표권 <b>12표</b> · 광고 게재권 <b>1슬롯</b> 보유</p>
+
+          <dl class="tslm-grid">
+            <div class="tslm-cell"><dt>총 발행량 (고정)</dt><dd>100,000,000</dd></div>
+            <div class="tslm-cell"><dt>내 락업 DRV</dt><dd>9,000</dd></div>
+            <div class="tslm-cell"><dt>락업 잔여</dt><dd>18일</dd></div>
+            <div class="tslm-cell"><dt>글로 받은 TSLM</dt><dd>4.0</dd></div>
+          </dl>
+          <p class="tslm-note">DRV를 묶어두거나, 진짜 쓸모 있는 기술글을 쓰면 TSLM이 들어옵니다. 더 이상 찍어내지 않아요 — 1억 개가 전부입니다.</p>
+        </div>
+      </section>
+
+      <!-- 퀵 액션 -->
+      <nav class="quick" aria-label="빠른 실행">
+        <a href="#exchange">
+          <span class="qi" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 8h13l-3-3M20 16H7l3 3" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          교환하기
+        </a>
+        <a href="#tslm-sec">
+          <span class="qi g" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><rect x="4.5" y="10" width="15" height="10" rx="3" stroke="currentColor" stroke-width="2.1"/><path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg></span>
+          락업
+        </a>
+        <a href="#rank">
+          <span class="qi s" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M5 20V12M12 20V5M19 20v-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+          랭킹
+        </a>
+        <a href="#quest">
+          <span class="qi k" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M12 3.5 14.6 9l6 .9-4.3 4.2 1 6-5.3-2.8L6.7 20l1-6L3.4 9.9 9.4 9 12 3.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+          퀘스트
+        </a>
+      </nav>
+
+      <!-- 주간 차트 -->
+      <section class="card" aria-labelledby="chart-h">
+        <div class="card__head">
+          <div>
+            <h2 id="chart-h">이번 주 적립</h2>
+            <p class="sub">8/3 월 – 8/9 일</p>
+          </div>
+          <span class="grow"></span>
+          <p style="text-align:right">
+            <b class="num" style="font-size:19px;letter-spacing:-.04em" id="weekTotal">2,490</b>
+            <span style="font-size:11.5px;color:var(--muted-2);font-weight:700;display:block;margin-top:-2px">DRV</span>
+          </p>
+        </div>
+
+        <div class="chartwrap">
+          <svg viewBox="0 0 350 196" role="img" aria-labelledby="chart-title chart-desc">
+            <title id="chart-title">요일별 DRV 적립 막대그래프</title>
+            <desc id="chart-desc">월 380, 화 500, 수 210, 목 460, 금 500, 토 120, 오늘(일) 320 DRV. 하루 한도는 500 DRV입니다.</desc>
+
+            <!-- 한도선 -->
+            <line x1="14" y1="20" x2="336" y2="20" stroke="#D9E1E7" stroke-width="1.5" stroke-dasharray="4 5"/>
+            <text x="336" y="15" text-anchor="end" font-size="9.5" fill="#8494A4" font-weight="700" font-family="ui-monospace, monospace">한도 500</text>
+            <line x1="14" y1="150" x2="336" y2="150" stroke="#E3E8ED" stroke-width="1.5"/>
+
+            <!-- 막대 -->
+            <g>
+              <rect class="bar bar--anim" style="animation-delay:.04s" x="28"  y="51.2"  width="30" height="98.8"  rx="9" fill="#BEEBDA"/>
+              <rect class="bar bar--anim" style="animation-delay:.10s" x="72"  y="20"    width="30" height="130"   rx="9" fill="#00D08A"/>
+              <rect class="bar bar--anim" style="animation-delay:.16s" x="116" y="95.4"  width="30" height="54.6"  rx="9" fill="#BEEBDA"/>
+              <rect class="bar bar--anim" style="animation-delay:.22s" x="160" y="30.4"  width="30" height="119.6" rx="9" fill="#BEEBDA"/>
+              <rect class="bar bar--anim" style="animation-delay:.28s" x="204" y="20"    width="30" height="130"   rx="9" fill="#00D08A"/>
+              <rect class="bar bar--anim" style="animation-delay:.34s" x="248" y="118.8" width="30" height="31.2"  rx="9" fill="#BEEBDA"/>
+              <rect class="bar bar--anim" id="barToday" style="animation-delay:.40s" x="292" y="66.8" width="30" height="83.2" rx="9" fill="#0C1116"/>
+            </g>
+
+            <!-- 값 -->
+            <g font-family="ui-monospace, monospace" font-size="9.5" font-weight="700" fill="#5B6B7C" text-anchor="middle">
+              <text x="43"  y="45">380</text>
+              <text x="87"  y="14" fill="#00694F">500</text>
+              <text x="131" y="89">210</text>
+              <text x="175" y="24">460</text>
+              <text x="219" y="14" fill="#00694F">500</text>
+              <text x="263" y="112">120</text>
+              <text x="307" y="60.5" id="barTodayLabel" fill="#0C1116">320</text>
+            </g>
+
+            <!-- 요일 -->
+            <g font-size="11" font-weight="700" fill="#8494A4" text-anchor="middle">
+              <text x="43"  y="170">월</text>
+              <text x="87"  y="170">화</text>
+              <text x="131" y="170">수</text>
+              <text x="175" y="170">목</text>
+              <text x="219" y="170">금</text>
+              <text x="263" y="170">토</text>
+              <text x="307" y="170" fill="#0C1116">오늘</text>
+            </g>
+            <rect x="292" y="180" width="30" height="4" rx="2" fill="#0C1116"/>
+          </svg>
+        </div>
+
+        <div class="chart-legend">
+          <span><i style="background:#00D08A"></i>한도 꽉 채운 날</span>
+          <span><i style="background:#0C1116"></i>오늘 (적립 중)</span>
+        </div>
+      </section>
+
+      <p class="ticker" aria-hidden="true">
+        <span class="live-dot" style="flex:none"></span>
+        <span class="ticker__t" id="tickerT"><b>은하수3</b>님이 방금 <span class="v">+180 DRV</span> 적립 · 대전 유성</span>
+      </p>
+
+    </div>
+
+    <!-- ========== 가운데 열 : 내역 · 교환 · 퀘스트 ========== -->
+    <div class="col col--b">
+
+      <!-- 적립 내역 -->
+      <section class="card" aria-labelledby="hist-h">
+        <div class="card__head">
+          <div>
+            <h2 id="hist-h">적립 내역</h2>
+            <p class="sub">오도미터로 검증된 구간만 기록됩니다</p>
+          </div>
+          <span class="grow"></span>
+          <button class="linkbtn" type="button">전체
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <ul class="hist" id="histList">
+          <li>
+            <span class="hist__ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 16h16M6.6 16l1.5-4.6A2.4 2.4 0 0 1 10.4 9.7h3.2a2.4 2.4 0 0 1 2.3 1.7L17.4 16M7.6 18.6V16M16.4 18.6V16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="hist__txt">
+              <span class="hist__t1">주행 적립 · 14.2km</span>
+              <span class="hist__t2">오늘 08:41 · 오도 38,214 → 38,228km</span>
+            </span>
+            <span class="hist__amt"><b>+142</b><span>DRV</span></span>
+          </li>
+          <li>
+            <span class="hist__ic q" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M13 2.5 5.5 13.5h5.2L10 21.5l7.7-11.2h-5.2L13 2.5Z" fill="currentColor"/></svg></span>
+            <span class="hist__txt">
+              <span class="hist__t1">퀘스트 완료 · 7.0km/kWh 돌파</span>
+              <span class="hist__t2">오늘 08:39 · 기록 7.34km/kWh (상위 4%)</span>
+            </span>
+            <span class="hist__amt"><b>+150</b><span>DRV</span></span>
+          </li>
+          <li>
+            <span class="hist__ic out" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M5 8.5h14v10.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19V8.5ZM8.6 8.5V6a3.4 3.4 0 0 1 6.8 0v2.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="hist__txt">
+              <span class="hist__t1">교환 · 셀프세차 10분 코인</span>
+              <span class="hist__t2">어제 21:02 · 성남 분당 세차장 · 사용 완료</span>
+            </span>
+            <span class="hist__amt minus"><b>−4,000</b><span>DRV</span></span>
+          </li>
+          <li>
+            <span class="hist__ic" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 16h16M6.6 16l1.5-4.6A2.4 2.4 0 0 1 10.4 9.7h3.2a2.4 2.4 0 0 1 2.3 1.7L17.4 16M7.6 18.6V16M16.4 18.6V16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="hist__txt">
+              <span class="hist__t1">주행 적립 · 50.0km <b style="color:var(--mint-deep);font-size:11px">한도 달성</b></span>
+              <span class="hist__t2">어제 18:20 · 서울 송파 → 용인 수지</span>
+            </span>
+            <span class="hist__amt"><b>+500</b><span>DRV</span></span>
+          </li>
+          <li>
+            <span class="hist__ic t" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M6 19V7.5A1.5 1.5 0 0 1 7.5 6h9A1.5 1.5 0 0 1 18 7.5V19M9 10h6M9 13.5h6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="hist__txt">
+              <span class="hist__t1">글 채택 · 「하이랜드 서스펜션 3개월 후기」</span>
+              <span class="hist__t2">어제 14:11 · 추천 214 · 기술글 보상</span>
+            </span>
+            <span class="hist__amt"><b>+2.0</b><span>TSLM</span></span>
+          </li>
+          <li>
+            <span class="hist__ic q" aria-hidden="true"><svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.4" stroke="currentColor" stroke-width="1.9"/></svg></span>
+            <span class="hist__txt">
+              <span class="hist__t1">체크인 · V4 슈퍼차저 (하남)</span>
+              <span class="hist__t2">8/4 09:52 · V4 방문 인증 6/10</span>
+            </span>
+            <span class="hist__amt"><b>+80</b><span>DRV</span></span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- 교환 선반 -->
+      <section class="card" id="exchange" aria-labelledby="ex-h">
+        <div class="card__head">
+          <div>
+            <h2 id="ex-h">바로 바꿔 쓰기</h2>
+            <p class="sub">1,000 DRV = 500원 상당 실물</p>
+          </div>
+          <span class="grow"></span>
+          <button class="linkbtn" type="button">전체
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <ul class="shelf" aria-label="교환 가능한 상품">
+          <li class="item">
+            <span class="item__art" aria-hidden="true">
+              <span class="item__tag hot">오늘 132개 소진</span>
+              <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
+                <path d="M18 4 9 26h9l-3 18 17-24h-10l4-16H18Z" fill="#00A971"/>
+                <rect x="4" y="40" width="40" height="4" rx="2" fill="#00A971" opacity=".45"/>
+              </svg>
+            </span>
+            <span class="item__b">
+              <span class="item__n">슈퍼차저 충전권 5kWh</span>
+              <span class="item__s">전국 슈퍼차저 · 즉시 발급</span>
+              <span class="item__p num">4,800<em>DRV</em></span>
+              <span class="item__k">≈ 2,400원 상당</span>
+              <button class="item__btn" type="button">교환</button>
+            </span>
+          </li>
+
+          <li class="item">
+            <span class="item__art a5" aria-hidden="true">
+              <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="15" stroke="#2F7D32" stroke-width="3"/>
+                <path d="M24 13c5 4 5 8 0 11s-5 7 0 11" stroke="#2F7D32" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="item__b">
+              <span class="item__n">스타벅스 아메리카노 T</span>
+              <span class="item__s">모바일 기프티콘</span>
+              <span class="item__p num">9,000<em>DRV</em></span>
+              <span class="item__k">≈ 4,500원 상당</span>
+              <button class="item__btn" type="button">교환</button>
+            </span>
+          </li>
+
+          <li class="item">
+            <span class="item__art a3" aria-hidden="true">
+              <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
+                <path d="M8 34c3-12 8-18 16-18s13 6 16 18" stroke="#0A5F9E" stroke-width="3" stroke-linecap="round"/>
+                <path d="M14 12c1.5 2 1.5 4 0 6M24 8c1.5 2 1.5 4 0 6M34 12c1.5 2 1.5 4 0 6" stroke="#0A5F9E" stroke-width="3" stroke-linecap="round"/>
+                <rect x="6" y="34" width="36" height="6" rx="3" fill="#0A5F9E" opacity=".3"/>
+              </svg>
+            </span>
+            <span class="item__b">
+              <span class="item__n">셀프세차 10분 코인</span>
+              <span class="item__s">전국 380개 지점</span>
+              <span class="item__p num">4,000<em>DRV</em></span>
+              <span class="item__k">≈ 2,000원 상당</span>
+              <button class="item__btn" type="button">교환</button>
+            </span>
+          </li>
+
+          <li class="item">
+            <span class="item__art a2" aria-hidden="true">
+              <span class="item__tag">품절 임박 · 12장</span>
+              <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
+                <rect x="6" y="14" width="36" height="22" rx="4" stroke="#8A5A00" stroke-width="3"/>
+                <path d="M6 22h36M14 30h8" stroke="#8A5A00" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="item__b">
+              <span class="item__n">하이패스 5,000원 충전</span>
+              <span class="item__s">등록 차량 자동 충전</span>
+              <span class="item__p num">10,000<em>DRV</em></span>
+              <span class="item__k">≈ 5,000원 상당</span>
+              <button class="item__btn" type="button">교환</button>
+            </span>
+          </li>
+
+          <li class="item">
+            <span class="item__art a4" aria-hidden="true">
+              <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
+                <rect x="9" y="10" width="30" height="30" rx="5" stroke="#3C4855" stroke-width="3"/>
+                <path d="M17 20h14M17 27h9" stroke="#3C4855" stroke-width="3" stroke-linecap="round"/>
+              </svg>
+            </span>
+            <span class="item__b">
+              <span class="item__n">편의점 3,000원권</span>
+              <span class="item__s">CU · GS25 공통</span>
+              <span class="item__p num">6,000<em>DRV</em></span>
+              <span class="item__k">≈ 3,000원 상당</span>
+              <button class="item__btn" type="button">교환</button>
+            </span>
+          </li>
+
+          <li class="item">
+            <span class="item__art" aria-hidden="true">
+              <svg width="52" height="52" viewBox="0 0 48 48" fill="none">
+                <path d="M10 32c0-8 6-14 14-14s14 6 14 14" stroke="#00A971" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="24" cy="12" r="4" stroke="#00A971" stroke-width="3"/>
+                <rect x="8" y="32" width="32" height="6" rx="3" fill="#00A971" opacity=".35"/>
+              </svg>
+            </span>
+            <span class="item__b">
+              <span class="item__n">테슬람 스티커 팩</span>
+              <span class="item__s">제네시스 1기 한정 디자인</span>
+              <span class="item__p num">2,000<em>DRV</em></span>
+              <span class="item__k">1기 전용</span>
+              <button class="item__btn off" type="button" disabled>1기 전용</button>
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- 퀘스트 -->
+      <section class="card" id="quest" aria-labelledby="q-h">
+        <div class="card__head">
+          <div>
+            <h2 id="q-h">이번 주 퀘스트</h2>
+            <p class="sub">8/9 일요일 자정 마감</p>
+          </div>
+        </div>
+        <div class="card__body">
+          <div class="quest">
+            <span class="quest__ic" aria-hidden="true">⚡</span>
+            <span class="quest__m">
+              <span class="quest__t">주행 효율 7.0km/kWh 넘기기</span>
+              <span class="quest__d">현재 기록 7.34km/kWh · 달성! 보상 지급 완료</span>
+              <span class="qbar mint"><i style="width:100%"></i></span>
+            </span>
+            <span class="quest__r m">+150</span>
+          </div>
+
+          <div class="quest">
+            <span class="quest__ic b" aria-hidden="true">📍</span>
+            <span class="quest__m">
+              <span class="quest__t">V4 슈퍼차저 10곳 체크인</span>
+              <span class="quest__d">6 / 10 방문 · 남은 곳: 안성, 여주, 강릉…</span>
+              <span class="qbar"><i style="width:60%"></i></span>
+            </span>
+            <span class="quest__r">+400</span>
+          </div>
+
+          <div class="quest">
+            <span class="quest__ic" aria-hidden="true">🌙</span>
+            <span class="quest__m">
+              <span class="quest__t">새벽 충전 3회 (23시–07시)</span>
+              <span class="quest__d">2 / 3회 · 심야 요금 시간대만 인정</span>
+              <span class="qbar"><i style="width:66%"></i></span>
+            </span>
+            <span class="quest__r">+200</span>
+          </div>
+
+          <div class="quest">
+            <span class="quest__ic b" aria-hidden="true">🧭</span>
+            <span class="quest__m">
+              <span class="quest__t">한 주 300km 채우기</span>
+              <span class="quest__d">249 / 300km · 51km 남았어요</span>
+              <span class="qbar"><i style="width:83%"></i></span>
+            </span>
+            <span class="quest__r">+300</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ========== 오른쪽 열 : 랭킹 · TSLM · 작동방식 ========== -->
+    <div class="col col--c">
+
+      <!-- 랭킹 -->
+      <section class="card" id="rank" aria-labelledby="rank-h">
+        <div class="card__head">
+          <div>
+            <h2 id="rank-h">이번 주 적립 랭킹</h2>
+            <p class="sub">전국 · 실시간 집계</p>
+          </div>
+        </div>
+        <div class="card__body">
+          <ul class="rank">
+            <li>
+              <span class="rank__n">1</span>
+              <span class="rank__w">
+                <span class="rank__nm">고속도로출퇴근러<span class="badge">1기</span></span>
+                <span class="rank__sub">Model 3 롱레인지 · 경기 화성</span>
+              </span>
+              <span class="rank__v">3,470</span>
+            </li>
+            <li>
+              <span class="rank__n">2</span>
+              <span class="rank__w">
+                <span class="rank__nm">제주도롱레인지</span>
+                <span class="rank__sub">Model Y RWD · 제주 애월</span>
+              </span>
+              <span class="rank__v">3,410</span>
+            </li>
+            <li>
+              <span class="rank__n">3</span>
+              <span class="rank__w">
+                <span class="rank__nm">플레드형님<span class="badge">1기</span></span>
+                <span class="rank__sub">Model S Plaid · 서울 성동</span>
+              </span>
+              <span class="rank__v">3,150</span>
+            </li>
+            <li>
+              <span class="rank__n">4</span>
+              <span class="rank__w">
+                <span class="rank__nm">은하수3</span>
+                <span class="rank__sub">Model 3 하이랜드 · 대전 유성</span>
+              </span>
+              <span class="rank__v">2,980</span>
+            </li>
+            <li>
+              <span class="rank__n">5</span>
+              <span class="rank__w">
+                <span class="rank__nm">청라화이트Y</span>
+                <span class="rank__sub">Model Y 퍼포먼스 · 인천 청라</span>
+              </span>
+              <span class="rank__v">2,860</span>
+            </li>
+            <li class="rank__me">
+              <span class="rank__n" style="background:#00D08A;color:#04241B">12</span>
+              <span class="rank__w">
+                <span class="rank__nm">판교모델Y <span style="font-size:10.5px;color:var(--mint-deep);font-weight:800">나</span></span>
+                <span class="rank__sub">Model Y 롱레인지 · 경기 성남</span>
+              </span>
+              <span class="rank__v" id="myWeek">2,490</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- TSLM -->
+      <section class="card" id="tslm-sec" aria-labelledby="tslm-h">
+        <div class="card__head">
+          <div>
+            <h2 id="tslm-h">DRV 묶어두기</h2>
+            <p class="sub">TSLM으로 바꾸면 표가 생깁니다</p>
+          </div>
+        </div>
+        <div class="card__body">
+          <p style="font-size:13.5px;color:var(--muted);line-height:1.62">
+            DRV를 30일 묶으면 TSLM이 나옵니다. TSLM은 1억 개가 끝 — 더 안 찍어요.
+            보상 비율, 퀘스트 종류, 교환 상품 라인업. 전부 TSLM 들고 있는 사람들이 정합니다.
+          </p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px">
+            <div style="background:#F7FAFB;border:1px solid #E9EEF2;border-radius:14px;padding:12px 13px">
+              <p style="font-size:11.5px;color:var(--muted-2);font-weight:700">현재 락업 총량</p>
+              <p class="num" style="font-size:17px;font-weight:700;margin-top:2px">1,847,300</p>
+              <p style="font-size:10.5px;color:var(--muted-2)">DRV</p>
+            </div>
+            <div style="background:#F7FAFB;border:1px solid #E9EEF2;border-radius:14px;padding:12px 13px">
+              <p style="font-size:11.5px;color:var(--muted-2);font-weight:700">진행 중 투표</p>
+              <p class="num" style="font-size:17px;font-weight:700;margin-top:2px">3건</p>
+              <p style="font-size:10.5px;color:var(--muted-2)">마감 D-4</p>
+            </div>
+          </div>
+          <button class="btn" type="button" style="margin-top:12px;background:var(--ink);color:#EAF3F0;min-height:50px;font-size:14.5px">DRV 락업하고 표 받기</button>
+        </div>
+      </section>
+
+      <!-- 작동 방식 -->
+      <section class="card" aria-labelledby="how-h">
+        <div class="card__head">
+          <div>
+            <h2 id="how-h">어떻게 쌓이나요?</h2>
+            <p class="sub">1분이면 끝나는 세팅</p>
+          </div>
+        </div>
+        <div class="card__body">
+          <ul class="how">
+            <li>
+              <span class="how__n">1</span>
+              <span>
+                <span class="how__t">테슬라 계정 한 번 연결</span>
+                <span class="how__d">공식 OAuth로 로그인만 하면 끝. 개발자 계정 만들 필요 없고, API 요금도 안 냅니다 — Fleet API 비용은 teslam.io가 한꺼번에 계산해요.</span>
+              </span>
+            </li>
+            <li>
+              <span class="how__n">2</span>
+              <span>
+                <span class="how__t">달리는 동안만 신호 4개</span>
+                <span class="how__d">움직이는 동안 60초마다 위도·경도·속도·오도미터. 주차 중엔 아무것도 안 보냅니다. 지하 주차장에서 차가 혼자 떠들지 않아요.</span>
+              </span>
+            </li>
+            <li>
+              <span class="how__n">3</span>
+              <span>
+                <span class="how__t">오도미터로 검증, 그다음 적립</span>
+                <span class="how__d">GPS는 속일 수 있어도 오도미터는 뒤로 안 갑니다. 실제로 올라간 거리만 인정 — 1km = 10 DRV, 하루 500 DRV까지.</span>
+              </span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ========== 제네시스 500 ========== -->
+  <section class="genesis" id="genesis" aria-labelledby="gen-h" style="margin-top:18px">
+    <div class="gen-wrap">
+      <div>
+        <p class="gen__chip">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.7 1.2 6.6L12 17.7 6.1 20.8l1.2-6.6-4.8-4.7 6.6-.9L12 2.5Z" fill="#FFB43D"/></svg>
+          GENESIS 500 · 모집 중
+        </p>
+        <h2 id="gen-h">첫 500명만 새겨지는<br>「제네시스 1기」</h2>
+        <p>지갑 열어보면 남들보다 1.5배씩 쌓여 있습니다. 프로필엔 나중에 아무리 돈 주고도 못 사는 1기 마크가 붙고, 토크노믹스 첫 판을 짜는 투표권이 들어옵니다. 500명 채워지면 그대로 닫아요.</p>
+
+        <div class="seats">
+          <p class="seats__top">
+            <span class="seats__n"><span id="seatsN">327</span><small>석 남음</small></span>
+            <span class="seats__c"><span id="seatsTaken">173</span> / 500</span>
+          </p>
+          <span class="seats__bar" role="img" aria-label="500석 중 173석 마감">
+            <span class="seats__fill" id="seatsFill" style="width:34.6%"></span>
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <ul class="perks">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#FFB43D" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span><b>1.5배 적립</b> — 같은 50km를 달려도 750 DRV. 한도까지 채우면 하루 375원어치.</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#FFB43D" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span><b>제네시스 1기 마크</b> — 닉네임 옆에 영구 표시. 2기는 없습니다.</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#FFB43D" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span><b>토크노믹스 투표권</b> — km당 보상, 일일 한도, 교환 상품. 1기가 먼저 정합니다.</span>
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7" stroke="#FFB43D" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span><b>1기 전용 상품</b> — 스티커 팩, 굿즈, 우선 교환 큐.</span>
+          </li>
+        </ul>
+
+        <div class="cta">
+          <button class="btn btn--gold" type="button" id="joinBtn">제네시스 500 자리 잡기</button>
+          <button class="btn btn--ghost" type="button">먼저 둘러볼게요</button>
+        </div>
+        <p class="cta__note">테슬라 계정 연결 1분 · 개발자 계정 불필요 · API 요금 0원 · 주차 중엔 아무 데이터도 받지 않습니다</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="foot">
+    <nav class="foot__nav" aria-label="푸터 메뉴">
+      <a href="#genesis">제네시스 500</a>
+      <a href="#exchange">교환소</a>
+      <a href="#rank">랭킹</a>
+      <a href="#quest">퀘스트</a>
+      <a href="#tslm-sec">토크노믹스</a>
+      <a href="#main">자주 묻는 질문</a>
+    </nav>
+
+    <p class="foot__peg">
+      DRV 교환가는 <b>1,000 DRV = 500원 상당</b>의 실물(슈퍼차저 충전권·기프티콘·세차 쿠폰)로 고정 운영됩니다.
+      적립은 <b>1km = 10 DRV</b>, 하루 <b>500 DRV</b>(50km)까지. TSLM은 <b>1억 개 고정 발행</b>이며 거버넌스·광고 게재에 쓰입니다.
+      DRV·TSLM은 커뮤니티 내부 포인트로, 현금으로 환급되지 않습니다.
+    </p>
+
+    <p class="disclaimer">
+      teslam.io는 Tesla, Inc.와 제휴하거나 후원받는 관계가 아닌 독립 커뮤니티 프로젝트입니다.
+      Tesla, Model 3, Model Y, Model S, Model X, Supercharger는 Tesla, Inc.의 상표입니다.
+      본 화면의 잔액·닉네임·랭킹·적립 내역은 서비스 소개를 위한 예시 데이터입니다.
+    </p>
+    <p class="foot__c">© 2026 teslam.io — 달린 만큼 쌓이고, 쌓인 만큼 씁니다.</p>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var fmt = function (n) { return n.toLocaleString("ko-KR"); };
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ---------- 상태 ---------- */
+  var state = {
+    balance: 24860,
+    today: 320,
+    cap: 500,
+    week: 2490,
+    odo: 38228,
+    legKm: 0,
+    ticks: 0,
+    driving: true,
+    seatsTaken: 173
+  };
+
+  var balN = $("balN"), balKRW = $("balKRW"), todayN = $("todayN"),
+      capFill = $("capFill"), weekTotal = $("weekTotal"), myWeek = $("myWeek"),
+      barToday = $("barToday"), barTodayLabel = $("barTodayLabel"),
+      pill = $("drivePill"), driveTxt = $("driveTxt"), histList = $("histList");
+
+  /* ---------- 탭 (DRV / TSLM) ---------- */
+  var tabDrv = $("tab-drv"), tabTslm = $("tab-tslm"),
+      panDrv = $("panel-drv"), panTslm = $("panel-tslm");
+
+  function selectTab(which) {
+    var drv = which === "drv";
+    tabDrv.setAttribute("aria-selected", drv ? "true" : "false");
+    tabTslm.setAttribute("aria-selected", drv ? "false" : "true");
+    panDrv.classList.toggle("is-off", !drv);
+    panTslm.classList.toggle("is-on", !drv);
+    panTslm.hidden = drv;
+    panDrv.hidden = !drv;
+  }
+  tabDrv.addEventListener("click", function () { selectTab("drv"); });
+  tabTslm.addEventListener("click", function () { selectTab("tslm"); });
+
+  /* ---------- 토스트 ---------- */
+  var toastEl = $("toast"), toastTimer = null;
+  function toast(html) {
+    toastEl.innerHTML = html;
+    toastEl.classList.add("on");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove("on"); }, 3200);
+  }
+
+  /* ---------- 화면 갱신 ---------- */
+  function render(bump) {
+    balN.textContent = fmt(state.balance);
+    balKRW.textContent = fmt(Math.round(state.balance / 2));
+    todayN.textContent = fmt(state.today);
+    capFill.style.width = Math.min(100, (state.today / state.cap) * 100) + "%";
+    weekTotal.textContent = fmt(state.week);
+    myWeek.textContent = fmt(state.week);
+
+    // 오늘 막대 (0~500 → 높이 0~130, 바닥 y=150)
+    var h = Math.max(2, (state.today / state.cap) * 130);
+    barToday.setAttribute("height", h.toFixed(1));
+    barToday.setAttribute("y", (150 - h).toFixed(1));
+    barTodayLabel.setAttribute("y", (150 - h - 6.3).toFixed(1));
+    barTodayLabel.textContent = fmt(state.today);
+    if (state.today >= state.cap) barToday.setAttribute("fill", "#00D08A");
+
+    if (bump && !reduce) {
+      balN.classList.remove("bump");
+      void balN.offsetWidth;
+      balN.classList.add("bump");
+    }
+  }
+
+  /* ---------- 날아가는 +10 DRV 영수증 ---------- */
+  function flyChip() {
+    if (reduce || !balN.animate) return;
+    var from = balN.getBoundingClientRect();
+    var target = histList.getBoundingClientRect();
+
+    var chip = document.createElement("div");
+    chip.className = "flychip";
+    chip.textContent = "+10 DRV";
+    chip.setAttribute("aria-hidden", "true");
+    document.body.appendChild(chip);
+
+    var cw = chip.offsetWidth, ch = chip.offsetHeight;
+    var x0 = from.left + from.width * 0.5 - cw / 2;
+    var y0 = from.top + from.height * 0.5 - ch / 2;
+    var x1 = target.left + Math.min(target.width * 0.5, 160) - cw / 2;
+    var y1 = target.top + 24;
+
+    chip.style.left = x0 + "px";
+    chip.style.top = y0 + "px";
+
+    var dx = x1 - x0, dy = y1 - y0;
+    var anim = chip.animate([
+      { transform: "translate(0,0) scale(.7)", opacity: 0 },
+      { transform: "translate(" + dx * 0.4 + "px," + (dy * 0.28 - 26) + "px) scale(1.06)", opacity: 1, offset: 0.35 },
+      { transform: "translate(" + dx + "px," + dy + "px) scale(.86)", opacity: 0 }
+    ], { duration: 1000, easing: "cubic-bezier(.45,0,.2,1)" });
+
+    anim.onfinish = function () { chip.remove(); };
+  }
+
+  /* ---------- 내역 행 추가 ---------- */
+  var carIcon = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M4 16h16M6.6 16l1.5-4.6A2.4 2.4 0 0 1 10.4 9.7h3.2a2.4 2.4 0 0 1 2.3 1.7L17.4 16M7.6 18.6V16M16.4 18.6V16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  var legs = [
+    "판교IC → 서초IC",
+    "경부고속도로 하행",
+    "양재대로 · 정체 구간",
+    "분당수서로 → 세곡",
+    "용인서울고속도로",
+    "제2경인 · 순항 중"
+  ];
+
+  function addRow(km, drv, fromOdo, toOdo) {
+    var now = new Date();
+    var hh = String(now.getHours()).padStart(2, "0");
+    var mm = String(now.getMinutes()).padStart(2, "0");
+    var leg = legs[state.ticks % legs.length];
+
+    var li = document.createElement("li");
+    li.className = reduce ? "" : "row--new";
+    li.innerHTML =
+      '<span class="hist__ic" aria-hidden="true">' + carIcon + '</span>' +
+      '<span class="hist__txt">' +
+        '<span class="hist__t1">주행 적립 · ' + km.toFixed(1) + 'km</span>' +
+        '<span class="hist__t2">방금 ' + hh + ':' + mm + ' · ' + leg + ' · 오도 ' + fmt(fromOdo) + ' → ' + fmt(toOdo) + 'km</span>' +
+      '</span>' +
+      '<span class="hist__amt"><b>+' + drv + '</b><span>DRV</span></span>';
+
+    histList.insertBefore(li, histList.firstElementChild);
+    while (histList.children.length > 8) histList.removeChild(histList.lastElementChild);
+  }
+
+  /* ---------- 주행 시뮬레이션 : 1틱 = 1km = 10 DRV ---------- */
+  var driveTimer = null;
+
+  function tick() {
+    if (!state.driving) return;
+
+    state.ticks += 1;
+    state.balance += 10;
+    state.today += 10;
+    state.week += 10;
+    state.odo += 1;
+    state.legKm += 1;
+
+    render(true);
+    flyChip();
+
+    driveTxt.textContent = "지금 주행 중 · " + legs[state.ticks % legs.length] + " · 오늘 " + (state.today / 10).toFixed(1) + "km";
+
+    if (state.legKm >= 3) {
+      var from = state.odo - state.legKm;
+      setTimeout(function () { addRow(state.legKm, state.legKm * 10, from, state.odo); state.legKm = 0; }, reduce ? 0 : 780);
+    }
+
+    if (state.today >= state.cap) {
+      state.today = state.cap;
+      state.driving = false;
+      clearInterval(driveTimer);
+      render(false);
+      pill.classList.add("is-done");
+      driveTxt.textContent = "오늘 한도 500 DRV 달성 🏁 나머지 주행은 내일 다시 쌓입니다";
+      setTimeout(function () {
+        toast('오늘치 <b>500 DRV</b> 꽉 채웠습니다 · 약 250원어치');
+      }, 900);
+    }
+  }
+
+  if (reduce) {
+    render(false);
+  } else {
+    render(false);
+    driveTimer = setInterval(tick, 2800);
+  }
+
+  /* ---------- 커뮤니티 티커 ---------- */
+  var tickerT = $("tickerT");
+  var feed = [
+    '<b>은하수3</b>님이 방금 <span class="v">+180 DRV</span> 적립 · 대전 유성',
+    '<b>플레드형님</b>님이 <span class="v">7.61km/kWh</span> 신기록 · 이번 주 1위',
+    '<b>제주도롱레인지</b>님이 슈퍼차저 충전권 <span class="v">4,800 DRV</span> 교환',
+    '<b>청라화이트Y</b>님이 V4 슈퍼차저(안성) 체크인 <span class="v">+80 DRV</span>',
+    '<b>고속도로출퇴근러</b>님이 오늘 한도 <span class="v">500 DRV</span> 달성 🏁',
+    '<b>야탑슈퍼차저</b>님 글 「하이랜드 서스펜션 3개월」 채택 <span class="v">+2 TSLM</span>',
+    '<b>일산롱레인지</b>님이 DRV 9,000 락업 → <span class="v">+3 TSLM</span>',
+    '<b>부산해운대MY</b>님이 셀프세차 코인 교환 · 잔액 <span class="v">11,240 DRV</span>'
+  ];
+  var fi = 0;
+  if (!reduce) {
+    setInterval(function () {
+      fi = (fi + 1) % feed.length;
+      tickerT.innerHTML = feed[fi];
+      tickerT.classList.remove("swap");
+      void tickerT.offsetWidth;
+      tickerT.classList.add("swap");
+    }, 3400);
+  }
+
+  /* ---------- 제네시스 좌석 ---------- */
+  var seatsN = $("seatsN"), seatsTaken = $("seatsTaken"), seatsFill = $("seatsFill");
+  var newcomers = ["여의도MY", "동탄플레드", "광주하이랜드", "강릉롱레인지", "수원화이트3"];
+  var ni = 0;
+
+  function seatUpdate() {
+    seatsN.textContent = 500 - state.seatsTaken;
+    seatsTaken.textContent = state.seatsTaken;
+    seatsFill.style.width = (state.seatsTaken / 500 * 100).toFixed(1) + "%";
+  }
+
+  if (!reduce) {
+    setInterval(function () {
+      if (state.seatsTaken >= 178) return;
+      state.seatsTaken += 1;
+      seatUpdate();
+      toast('<b>' + newcomers[ni % newcomers.length] + '</b>님이 제네시스 1기 합류 · ' + (500 - state.seatsTaken) + '석 남음');
+      ni += 1;
+    }, 16000);
+  }
+
+  /* ---------- CTA ---------- */
+  $("joinBtn").addEventListener("click", function () {
+    toast('테슬라 계정 연결 창으로 이동합니다 · <b>' + (500 - state.seatsTaken) + '석</b> 남음');
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".item__btn:not(.off)"), function (b) {
+    b.addEventListener("click", function () {
+      var card = b.closest(".item");
+      var name = card.querySelector(".item__n").textContent;
+      var price = card.querySelector(".item__p").textContent.replace("DRV", "").trim();
+      toast(name + ' · <b>' + price + ' DRV</b> 교환 확인');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

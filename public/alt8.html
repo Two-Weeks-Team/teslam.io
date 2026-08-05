@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="description" content="테슬람 — 대한민국 테슬라 오너 저널. 주행 기록을 검증하고 보상하는 커뮤니티, teslam.io 창간준비호.">
+<title>테슬람 · 대한민국 테슬라 오너 저널 — 창간준비호</title>
+<style>
+:root{
+  --paper:#f4f1e8;
+  --paper-2:#ebe5d6;
+  --paper-3:#e2dbc9;
+  --ink:#14120e;
+  --ink-soft:#4a453b;
+  --ink-faint:#867e6f;
+  --rule:rgba(20,18,14,.20);
+  --rule-soft:rgba(20,18,14,.11);
+  --spot:#1f4b40;
+  --spot-deep:#163830;
+  --sienna:#b5522a;
+  --sienna-deep:#94411f;
+  --gold:#d8a24d;
+  --up:#1b5e3f;
+  --down:#94411f;
+  --serif:"Nanum Myeongjo","AppleMyungjo","Batang",Batang,"Times New Roman",Times,serif;
+  --sans:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  --mono:"SF Mono",ui-monospace,Menlo,Consolas,"D2Coding","Courier New",monospace;
+  --pad:clamp(1rem,4vw,2.6rem);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.75;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:80;pointer-events:none;
+  background-image:radial-gradient(rgba(20,18,14,.07) 1px,transparent 1px);
+  background-size:3px 3px;opacity:.42;mix-blend-mode:multiply;
+}
+img,svg{max-width:100%}
+a{color:inherit}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:700;line-height:1.14;letter-spacing:-.02em;margin:0}
+p{margin:0 0 1.05em}
+ul,ol,dl{margin:0;padding:0}
+li{list-style:none}
+.wrap{max-width:1340px;margin:0 auto;padding-inline:var(--pad)}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+:focus-visible{outline:2.5px solid var(--sienna);outline-offset:3px;border-radius:2px}
+.skip{position:absolute;left:-9999px;top:0;background:var(--ink);color:var(--paper);padding:.7em 1.2em;z-index:200;font-size:.9rem}
+.skip:focus{left:0}
+
+/* ───── kicker / rules ───── */
+.kicker{
+  font-family:var(--sans);font-size:.68rem;font-weight:800;letter-spacing:.2em;
+  color:var(--sienna-deep);text-transform:uppercase;margin:0 0 .7em;display:flex;
+  align-items:center;gap:.55em;line-height:1.4;
+}
+.kicker::before{content:"";width:.55em;height:.55em;background:var(--sienna);flex:0 0 auto;transform:rotate(45deg)}
+.kicker--pale{color:var(--gold)}
+.kicker--pale::before{background:var(--gold)}
+.rule-heavy{border:0;border-top:3px solid var(--ink);margin:0}
+.rule-hair{border:0;border-top:1px solid var(--rule);margin:0}
+.rule-dbl{border:0;border-top:1px solid var(--ink);box-shadow:0 3px 0 -1px var(--ink);margin:0 0 4px}
+
+/* ───── masthead ───── */
+.masthead{padding-top:.6rem;position:relative}
+.folio{
+  display:flex;flex-wrap:wrap;gap:.35rem 1.1rem;align-items:baseline;
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.05em;color:var(--ink-soft);
+  padding-bottom:.55rem;text-transform:uppercase;
+}
+.folio b{color:var(--ink);font-weight:700}
+.folio .sep{color:var(--rule)}
+.nameplate{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:1rem;
+  padding:1.1rem 0 .5rem;
+}
+.nameplate__side{font-family:var(--serif);font-size:.8rem;line-height:1.5;color:var(--ink-soft);font-style:italic}
+.nameplate__side--r{text-align:right}
+.nameplate__mid{text-align:center}
+.nameplate__title{
+  font-family:var(--serif);font-weight:700;
+  font-size:clamp(3.2rem,15.5vw,10.5rem);
+  line-height:.86;letter-spacing:-.055em;margin:0;
+  display:block;
+}
+.nameplate__sub{
+  font-family:var(--mono);font-size:clamp(.56rem,1.5vw,.78rem);letter-spacing:.42em;
+  color:var(--ink-soft);margin:.85rem 0 0;padding-left:.42em;
+}
+@media (max-width:820px){
+  .nameplate{grid-template-columns:1fr;gap:.4rem}
+  .nameplate__side{display:none}
+}
+
+/* ───── wire ticker ───── */
+.wire{
+  border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);
+  background:var(--paper-2);overflow:hidden;position:relative;
+}
+.wire__label{
+  position:absolute;left:0;top:0;bottom:0;z-index:3;display:flex;align-items:center;
+  background:var(--ink);color:var(--paper);padding:0 .85rem;
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;font-weight:700;
+}
+.wire__track{display:flex;width:max-content;animation:wire 54s linear infinite;padding-left:6.5rem}
+.wire__list{display:flex;align-items:center}
+.wire__list li{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.02em;color:var(--ink-soft);
+  padding:.62rem 1.2rem;white-space:nowrap;position:relative;
+}
+.wire__list li::after{content:"◆";position:absolute;right:-.35em;color:var(--rule);font-size:.55em;top:50%;transform:translateY(-50%)}
+.wire__list b{color:var(--ink);font-weight:700}
+.wire__list .u{color:var(--up)}
+.wire__list .d{color:var(--down)}
+@keyframes wire{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+
+/* ───── nav ───── */
+.topnav{
+  position:sticky;top:0;z-index:60;background:var(--paper);
+  border-bottom:2px solid var(--ink);
+}
+.topnav__inner{display:flex;gap:0;overflow-x:auto;scrollbar-width:none}
+.topnav__inner::-webkit-scrollbar{display:none}
+.topnav a{
+  flex:0 0 auto;text-decoration:none;padding:.78rem 1.05rem;
+  font-size:.78rem;font-weight:700;letter-spacing:.02em;color:var(--ink-soft);
+  border-right:1px solid var(--rule-soft);white-space:nowrap;
+}
+.topnav a:first-child{padding-left:0}
+.topnav a:hover{color:var(--sienna-deep);background:var(--paper-2)}
+.topnav a.is-cta{color:var(--paper);background:var(--spot);border-right:0;margin-left:auto}
+.topnav a.is-cta:hover{background:var(--spot-deep);color:var(--paper)}
+
+/* ───── front page grid ───── */
+.front{display:grid;grid-template-columns:1fr;padding:0 0 2rem}
+@media (min-width:900px){
+  .front{grid-template-columns:15rem minmax(0,1fr);gap:0}
+}
+@media (min-width:1180px){
+  .front{grid-template-columns:15rem minmax(0,1fr) 19rem}
+}
+.col{padding:1.7rem 0}
+@media (min-width:900px){
+  .col--lead{padding-inline:2.2rem;border-left:1px solid var(--rule);border-right:1px solid var(--rule)}
+  .col--rail{padding-right:1.9rem}
+  .col--side{padding-left:1.9rem}
+}
+@media (max-width:899px){
+  .col+.col{border-top:1px solid var(--rule)}
+}
+
+/* index list */
+.idx{margin-bottom:2.2rem}
+.idx h2,.side h2,.rail h2{
+  font-family:var(--sans);font-size:.68rem;font-weight:800;letter-spacing:.2em;
+  border-bottom:2px solid var(--ink);padding-bottom:.45rem;margin-bottom:.8rem;
+}
+.idx li{
+  display:grid;grid-template-columns:2.6rem 1fr;gap:.6rem;
+  padding:.55rem 0;border-bottom:1px dotted var(--rule);font-size:.86rem;line-height:1.5;
+}
+.idx li span{font-family:var(--mono);font-size:.7rem;color:var(--sienna-deep);padding-top:.2em}
+.idx a{text-decoration:none}
+.idx a:hover{text-decoration:underline;text-underline-offset:3px}
+
+.numbers dl{display:grid;grid-template-columns:1fr;gap:0}
+.numbers .row{display:flex;align-items:baseline;gap:.7rem;padding:.6rem 0;border-bottom:1px solid var(--rule-soft)}
+.numbers dt{font-family:var(--mono);font-size:1.18rem;font-weight:700;letter-spacing:-.02em;flex:0 0 auto;color:var(--spot)}
+.numbers dd{margin:0;font-size:.78rem;color:var(--ink-soft);line-height:1.45}
+
+/* lead article */
+.lead__kicker{margin-bottom:1rem}
+.lead h1{
+  font-size:clamp(2.35rem,6.2vw,4.4rem);
+  line-height:1.03;letter-spacing:-.035em;margin:0 0 .55rem;
+}
+.lead__deck{
+  font-family:var(--serif);font-size:clamp(1.02rem,2vw,1.32rem);line-height:1.62;
+  color:var(--ink-soft);margin:0 0 1.1rem;max-width:46ch;
+}
+.byline{
+  font-family:var(--mono);font-size:.66rem;letter-spacing:.09em;color:var(--ink-faint);
+  border-top:1px solid var(--ink);border-bottom:1px solid var(--rule);
+  padding:.5rem 0;margin-bottom:1.6rem;display:flex;flex-wrap:wrap;gap:.3rem 1rem;
+}
+.byline b{color:var(--ink)}
+
+figure{margin:0 0 1.6rem}
+.cut{border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:1.2rem 0 .9rem;background:linear-gradient(180deg,var(--paper) 0%,var(--paper-2) 100%)}
+.hedcut{display:block;width:100%;height:auto}
+figcaption{
+  font-size:.74rem;line-height:1.55;color:var(--ink-soft);
+  border-top:1px solid var(--rule);margin-top:.75rem;padding-top:.55rem;
+}
+figcaption b{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;color:var(--sienna-deep);display:block;margin-bottom:.2rem}
+
+.body-text{font-family:var(--serif);font-size:1.055rem;line-height:1.85;letter-spacing:-.005em}
+.body-text p{margin-bottom:1.15em}
+.lede::first-letter{
+  float:left;font-family:var(--serif);font-weight:700;font-size:4.5em;
+  line-height:.76;margin:.05em .14em -.02em 0;color:var(--spot);
+}
+.pull{
+  margin:1.9rem 0;padding:1.35rem 0;border-top:3px solid var(--ink);border-bottom:1px solid var(--ink);
+  font-family:var(--serif);font-size:clamp(1.28rem,2.9vw,1.85rem);line-height:1.42;
+  letter-spacing:-.025em;text-indent:-.42em;
+}
+.pull cite{display:block;font-family:var(--mono);font-size:.64rem;font-style:normal;letter-spacing:.14em;color:var(--ink-faint);margin-top:.9rem;text-indent:0}
+.stepbox{
+  border:1px solid var(--ink);background:var(--paper-2);padding:1.15rem 1.25rem;margin:1.7rem 0;
+}
+.stepbox h3{font-size:1.05rem;margin-bottom:.75rem;letter-spacing:-.01em}
+.stepbox ol{counter-reset:s}
+.stepbox li{
+  counter-increment:s;display:grid;grid-template-columns:1.7rem 1fr;gap:.6rem;
+  font-size:.86rem;line-height:1.62;padding:.5rem 0;border-top:1px dotted var(--rule);
+}
+.stepbox li::before{
+  content:counter(s);font-family:var(--mono);font-weight:700;color:var(--paper);
+  background:var(--spot);width:1.35rem;height:1.35rem;display:grid;place-items:center;
+  font-size:.7rem;margin-top:.16em;
+}
+.jump{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;color:var(--sienna-deep);border-top:1px solid var(--rule);padding-top:.7rem}
+.jump a{text-decoration:none;border-bottom:1px solid currentColor}
+
+/* wire desk / feed */
+.desk{border:1px solid var(--ink);margin-bottom:1.8rem}
+.desk__hd{
+  background:var(--ink);color:var(--paper);padding:.5rem .8rem;
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;display:flex;justify-content:space-between;align-items:center;
+}
+.blip{width:.5rem;height:.5rem;border-radius:50%;background:var(--gold);animation:blip 1.9s ease-in-out infinite}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.15}}
+.feed{padding:.3rem .8rem .6rem}
+.feed li{
+  padding:.55rem 0;border-bottom:1px dotted var(--rule);font-size:.78rem;line-height:1.5;
+  animation:slide .45s ease both;
+}
+.feed li:last-child{border-bottom:0}
+.feed time{font-family:var(--mono);font-size:.62rem;color:var(--ink-faint);letter-spacing:.05em;display:block}
+.feed b{font-weight:700}
+.feed em{font-style:normal;font-family:var(--mono);font-size:.72rem;color:var(--spot);font-weight:700}
+@keyframes slide{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+.briefs{margin-bottom:1.8rem}
+.briefs li{padding:.85rem 0;border-bottom:1px solid var(--rule-soft);font-size:.82rem;line-height:1.62}
+.briefs h3{font-family:var(--sans);font-size:.87rem;font-weight:800;letter-spacing:-.01em;margin-bottom:.2rem;line-height:1.45}
+.briefs .dateline{font-family:var(--mono);font-size:.63rem;color:var(--sienna-deep);letter-spacing:.1em;margin-right:.35em}
+.briefs p{margin:0;color:var(--ink-soft);font-size:.79rem}
+
+.promo{border:3px double var(--ink);padding:1.15rem;text-align:center}
+.promo p{font-family:var(--serif);font-size:.95rem;line-height:1.6;margin-bottom:.9rem}
+.promo strong{font-size:1.6rem;display:block;font-family:var(--serif);letter-spacing:-.03em;margin-bottom:.35rem}
+
+/* buttons */
+.btn{
+  display:inline-block;background:var(--spot);color:var(--paper);text-decoration:none;
+  font-family:var(--sans);font-weight:800;font-size:.86rem;letter-spacing:.02em;
+  padding:.78rem 1.5rem;border:0;cursor:pointer;transition:background .18s ease;
+}
+.btn:hover{background:var(--spot-deep)}
+.btn--gold{background:var(--gold);color:var(--ink)}
+.btn--gold:hover{background:#c98f36}
+
+/* ───── generic section ───── */
+.sec{padding:3.4rem 0;border-top:3px solid var(--ink)}
+.sec__hd{margin-bottom:2rem}
+.sec__hd h2{font-size:clamp(1.9rem,4.6vw,3.15rem);letter-spacing:-.035em;line-height:1.08;margin-bottom:.5rem}
+.sec__hd .sub{font-family:var(--serif);font-size:1.02rem;color:var(--ink-soft);max-width:52ch}
+
+/* feature layout */
+.feat{display:grid;grid-template-columns:1fr;gap:2rem}
+@media (min-width:1000px){
+  .feat{grid-template-columns:12rem minmax(0,1fr) 15.5rem;gap:0}
+  .feat__rail{padding-right:1.7rem}
+  .feat__main{padding-inline:2rem;border-left:1px solid var(--rule);border-right:1px solid var(--rule)}
+  .feat__side{padding-left:1.7rem}
+  .feat__main .body-text{columns:2;column-gap:2.4rem;column-rule:1px solid var(--rule-soft)}
+  .feat__main .body-text h3{column-span:none}
+}
+.body-text h3{
+  font-size:1.15rem;margin:1.5em 0 .5em;letter-spacing:-.02em;
+  break-after:avoid;page-break-after:avoid;
+}
+.body-text h3::before{content:"§ ";color:var(--sienna);font-family:var(--mono);font-size:.72em}
+.factbox{border-top:3px solid var(--ink);padding-top:.85rem;margin-bottom:1.6rem}
+.factbox h3{font-family:var(--sans);font-size:.68rem;font-weight:800;letter-spacing:.19em;margin-bottom:.7rem}
+.factbox dt{font-family:var(--mono);font-weight:700;font-size:.85rem;color:var(--spot);margin-top:.75rem}
+.factbox dd{margin:0;font-size:.79rem;color:var(--ink-soft);line-height:1.6}
+.quotemark{font-family:var(--serif);font-size:3.4rem;line-height:.6;color:var(--sienna);display:block;margin-bottom:.3rem}
+
+/* interview */
+.iv{display:grid;grid-template-columns:1fr;gap:2rem}
+@media (min-width:960px){.iv{grid-template-columns:minmax(0,1.75fr) minmax(0,1fr);gap:0}
+ .iv__main{padding-right:2.2rem;border-right:1px solid var(--rule)}
+ .iv__aside{padding-left:2.2rem}
+}
+.mono-card{
+  border:1px solid var(--ink);padding:1rem;display:flex;gap:1rem;align-items:center;margin-bottom:1.4rem;
+  background:var(--paper-2);
+}
+.monogram{
+  flex:0 0 auto;width:4.6rem;height:4.6rem;border:1px solid var(--ink);
+  display:grid;place-items:center;font-family:var(--serif);font-size:1.75rem;font-weight:700;
+  background:var(--paper);letter-spacing:-.04em;
+}
+.mono-card .meta{font-size:.78rem;line-height:1.6;color:var(--ink-soft)}
+.mono-card .meta b{display:block;font-family:var(--sans);font-size:1rem;color:var(--ink);letter-spacing:-.01em}
+.qa{border-top:1px solid var(--rule)}
+.qa dt{
+  font-family:var(--sans);font-weight:800;font-size:.94rem;line-height:1.6;
+  padding:1.15rem 0 .45rem;display:grid;grid-template-columns:1.5rem 1fr;gap:.5rem;
+}
+.qa dt::before{content:"문";font-family:var(--mono);font-size:.62rem;background:var(--ink);color:var(--paper);
+  width:1.25rem;height:1.25rem;display:grid;place-items:center;margin-top:.28em}
+.qa dd{
+  margin:0 0 .3rem;font-family:var(--serif);font-size:1rem;line-height:1.8;color:#2a2620;
+  padding-bottom:1.1rem;border-bottom:1px dotted var(--rule);
+  display:grid;grid-template-columns:1.5rem 1fr;gap:.5rem;
+}
+.qa dd::before{content:"답";font-family:var(--mono);font-size:.62rem;border:1px solid var(--ink);color:var(--ink);
+  width:1.25rem;height:1.25rem;display:grid;place-items:center;margin-top:.4em}
+.shorts li{border-top:1px solid var(--rule);padding:1.1rem 0}
+.shorts h3{font-size:1.02rem;margin-bottom:.35rem}
+.shorts .who{font-family:var(--mono);font-size:.65rem;letter-spacing:.09em;color:var(--sienna-deep);margin-bottom:.5rem}
+.shorts p{font-family:var(--serif);font-size:.94rem;line-height:1.75;margin:0;color:var(--ink-soft)}
+
+/* table */
+.tbl-wrap{overflow-x:auto;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink);-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:760px}
+caption{text-align:left;font-size:.78rem;color:var(--ink-soft);padding:.6rem 0}
+th,td{padding:.62rem .7rem;text-align:left;border-bottom:1px solid var(--rule-soft);font-size:.84rem;white-space:nowrap}
+thead th{
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;font-weight:700;
+  border-bottom:1px solid var(--ink);color:var(--ink-soft);text-transform:uppercase;
+}
+tbody tr:nth-child(odd){background:rgba(20,18,14,.028)}
+tbody tr:hover{background:var(--paper-3)}
+.rk{font-family:var(--mono);font-weight:700;font-size:1rem;width:2.6rem;color:var(--ink-faint)}
+tbody tr:nth-child(1) .rk,tbody tr:nth-child(2) .rk,tbody tr:nth-child(3) .rk{color:var(--sienna);font-size:1.15rem}
+.nick{font-weight:800;letter-spacing:-.01em}
+.trim{color:var(--ink-soft);font-size:.78rem}
+.num{font-family:var(--mono);text-align:right;font-variant-numeric:tabular-nums}
+.up{color:var(--up);font-family:var(--mono);text-align:right;font-size:.78rem}
+.down{color:var(--down);font-family:var(--mono);text-align:right;font-size:.78rem}
+.cap-flag{
+  font-family:var(--mono);font-size:.58rem;background:var(--ink);color:var(--paper);
+  padding:.12em .4em;margin-left:.35em;letter-spacing:.06em;
+}
+.gen-flag{color:var(--gold);font-size:.85rem}
+.tnotes{font-size:.72rem;color:var(--ink-faint);line-height:1.7;margin-top:.85rem}
+.hint{display:none;font-family:var(--mono);font-size:.63rem;color:var(--ink-faint);letter-spacing:.1em;margin-bottom:.5rem}
+@media (max-width:860px){.hint{display:block}}
+
+/* bar chart */
+.chart{border:1px solid var(--rule);padding:1.2rem 1.1rem .9rem;margin-top:2rem;background:var(--paper-2)}
+.chart h3{font-family:var(--sans);font-size:.68rem;font-weight:800;letter-spacing:.18em;margin-bottom:1.1rem}
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:.5rem;align-items:end;height:9.5rem}
+.bar{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:.35rem;text-align:center}
+.bar i{display:block;background:var(--spot);width:100%;border-top:3px solid var(--ink);transform-origin:bottom;animation:grow .8s cubic-bezier(.2,.7,.3,1) both}
+.bar:nth-child(6) i{background:var(--sienna)}
+.bar .v{font-family:var(--mono);font-size:.66rem;font-weight:700}
+.bar .d{font-family:var(--mono);font-size:.62rem;color:var(--ink-faint)}
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+
+/* column / explainer */
+.updates{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid var(--ink)}
+.updates li{
+  display:grid;grid-template-columns:2.4rem minmax(0,1fr) auto;gap:1rem;align-items:start;
+  padding:1.05rem 0;border-bottom:1px solid var(--rule-soft);
+}
+.updates .no{font-family:var(--mono);font-size:.8rem;color:var(--sienna-deep);font-weight:700;padding-top:.2em}
+.updates h3{font-size:1.06rem;margin-bottom:.25rem;letter-spacing:-.015em}
+.updates p{margin:0;font-size:.85rem;color:var(--ink-soft);line-height:1.65}
+.stars{font-family:var(--mono);font-size:.82rem;letter-spacing:.08em;color:var(--sienna);white-space:nowrap;padding-top:.2em}
+@media (max-width:640px){
+  .updates li{grid-template-columns:2rem minmax(0,1fr);}
+  .stars{grid-column:2;padding-top:.4rem}
+}
+.note{
+  border-left:3px solid var(--spot);padding:.7rem 0 .7rem 1rem;margin-top:1.4rem;
+  font-family:var(--serif);font-size:.95rem;color:var(--ink-soft);line-height:1.7;
+}
+
+/* quests as classifieds */
+.classifieds{display:grid;grid-template-columns:1fr;gap:1.3rem}
+@media (min-width:760px){.classifieds{grid-template-columns:1fr 1fr}}
+.ad{border:1px solid var(--ink);padding:1.4rem;position:relative;background:var(--paper-2)}
+.ad::before{content:"";position:absolute;inset:5px;border:1px solid var(--rule);pointer-events:none}
+.ad .tag{font-family:var(--mono);font-size:.6rem;letter-spacing:.18em;color:var(--sienna-deep);margin-bottom:.7rem}
+.ad h3{font-size:1.35rem;letter-spacing:-.025em;margin-bottom:.55rem}
+.ad p{font-size:.85rem;color:var(--ink-soft);margin-bottom:1rem}
+.ad__meta{display:flex;flex-wrap:wrap;gap:.4rem .9rem;border-top:1px solid var(--rule);padding-top:.7rem;font-family:var(--mono);font-size:.68rem}
+.ad__meta span{color:var(--ink-faint)}
+.ad__meta b{color:var(--spot)}
+.ad svg{position:absolute;right:1.1rem;top:1.1rem;width:2.2rem;height:2.2rem;opacity:.22}
+
+/* genesis */
+.genesis{background:var(--ink);color:var(--paper);border-top:3px solid var(--ink);position:relative}
+.genesis::before{
+  content:"";position:absolute;inset:0;opacity:.5;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(244,241,232,.05) 0 1px,transparent 1px 9px);
+}
+.genesis .wrap{position:relative;padding-block:4rem}
+.gen-grid{display:grid;grid-template-columns:1fr;gap:2.4rem}
+@media (min-width:980px){.gen-grid{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:3.4rem}}
+.genesis h2{font-size:clamp(2.2rem,6vw,4rem);letter-spacing:-.04em;line-height:1.02;margin-bottom:.7rem}
+.genesis .deck{font-family:var(--serif);font-size:1.1rem;line-height:1.7;color:rgba(244,241,232,.74);margin-bottom:1.8rem;max-width:44ch}
+.benefits{border-top:1px solid rgba(244,241,232,.28)}
+.benefits li{
+  display:grid;grid-template-columns:2.3rem 1fr;gap:.9rem;padding:.95rem 0;
+  border-bottom:1px solid rgba(244,241,232,.14);
+}
+.benefits .n{font-family:var(--mono);font-size:.72rem;color:var(--gold);padding-top:.35em;letter-spacing:.06em}
+.benefits b{display:block;font-size:1rem;letter-spacing:-.01em}
+.benefits span{font-size:.82rem;color:rgba(244,241,232,.62);line-height:1.6}
+.counter{display:flex;align-items:baseline;gap:.7rem;margin-bottom:1rem}
+.counter .big{font-family:var(--mono);font-size:clamp(3rem,10vw,4.6rem);font-weight:700;line-height:.9;color:var(--gold);letter-spacing:-.04em}
+.counter .of{font-family:var(--mono);font-size:1rem;color:rgba(244,241,232,.55)}
+.seats{display:grid;grid-template-columns:repeat(25,1fr);gap:3px;max-width:520px;margin-bottom:1.2rem}
+.seat{aspect-ratio:1;border:1px solid rgba(244,241,232,.22);border-radius:1px}
+.seat.is-taken{background:var(--gold);border-color:var(--gold);animation:pop .45s ease both}
+@keyframes pop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:none}}
+@media (max-width:640px){.seats{grid-template-columns:repeat(20,1fr);gap:2px}}
+.applyform{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.5rem}
+.applyform label{display:block;width:100%;font-family:var(--mono);font-size:.63rem;letter-spacing:.14em;color:rgba(244,241,232,.6);margin-bottom:.15rem}
+.applyform input{
+  flex:1 1 15rem;background:transparent;border:1px solid rgba(244,241,232,.4);
+  color:var(--paper);padding:.75rem .9rem;font-family:var(--sans);font-size:.9rem;min-width:0;
+}
+.applyform input::placeholder{color:rgba(244,241,232,.35)}
+.applyform input:focus-visible{outline:2.5px solid var(--gold);outline-offset:2px}
+.genesis .btn:focus-visible{outline-color:var(--gold)}
+.formnote{font-size:.75rem;color:rgba(244,241,232,.55);margin-top:.9rem;line-height:1.6}
+.formmsg{font-family:var(--mono);font-size:.8rem;color:var(--gold);margin-top:.8rem;min-height:1.3em}
+
+/* footer / colophon */
+.colophon{border-top:3px solid var(--ink);padding:2.6rem 0 3.2rem;font-size:.8rem}
+.colo-grid{display:grid;grid-template-columns:1fr;gap:1.8rem}
+@media (min-width:820px){.colo-grid{grid-template-columns:1.4fr 1fr 1fr}}
+.colophon h2{font-family:var(--serif);font-size:1.7rem;letter-spacing:-.03em;margin-bottom:.5rem}
+.colophon h3{font-family:var(--sans);font-size:.66rem;font-weight:800;letter-spacing:.19em;border-bottom:1px solid var(--ink);padding-bottom:.4rem;margin-bottom:.7rem}
+.colophon li,.colophon p{color:var(--ink-soft);line-height:1.75;font-size:.79rem}
+.colophon a{text-decoration:none;border-bottom:1px solid var(--rule)}
+.colophon a:hover{border-color:var(--ink)}
+.correction{border:1px solid var(--rule);padding:.85rem 1rem;background:var(--paper-2);font-size:.75rem;line-height:1.7;color:var(--ink-soft)}
+.correction b{color:var(--ink);font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;display:block;margin-bottom:.3rem}
+.legal{border-top:1px solid var(--rule);margin-top:2.2rem;padding-top:1.1rem;font-size:.7rem;color:var(--ink-faint);line-height:1.8}
+
+/* reveal */
+.rev{opacity:0;transform:translateY(14px)}
+.rev.in{opacity:1;transform:none;transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
+
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .wire__track{animation:none;padding-left:6.5rem}
+  .wire{overflow-x:auto}
+  .rev{opacity:1;transform:none}
+  .bar i{transform:none}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">본문 바로가기</a>
+
+<header class="masthead" role="banner">
+  <div class="wrap">
+    <div class="folio">
+      <span><b>창간준비호</b></span><span class="sep">|</span>
+      <span>제1권 제1호</span><span class="sep">|</span>
+      <span>2026년 8월 6일 목요일</span><span class="sep">|</span>
+      <span>서울 28℃ · 배터리 예열 불필요</span><span class="sep">|</span>
+      <span>현재 시각 <b id="clock">20:41</b></span><span class="sep">|</span>
+      <span>비매품</span>
+    </div>
+    <hr class="rule-heavy">
+    <div class="nameplate">
+      <p class="nameplate__side">오너가 쓰고<br>오너가 읽는다</p>
+      <div class="nameplate__mid">
+        <span class="nameplate__title">테슬람</span>
+        <p class="nameplate__sub">TESLAM.IO</p>
+      </div>
+      <p class="nameplate__side nameplate__side--r">대한민국<br>테슬라 오너 저널</p>
+    </div>
+    <hr class="rule-dbl">
+  </div>
+</header>
+
+<div class="wire" aria-label="속보 티커">
+  <span class="wire__label" aria-hidden="true">속보</span>
+  <div class="wire__track">
+    <ul class="wire__list">
+      <li>TSLA <b>$412.66</b> <span class="u">▲ 2.14%</span></li>
+      <li>오늘 검증 주행 <b>184,220 km</b></li>
+      <li>2026.32.4 국내 순차 배포 <b>개시</b></li>
+      <li>이번 주 최고 효율 <b>8.12 km/kWh</b> · 제주3호기</li>
+      <li>V4 슈퍼차저 김해 <b>12기</b> 개통</li>
+      <li>오늘 발행 <b>1,842,200 DRV</b></li>
+      <li>창간 멤버 <b id="wireSeat">128</b>/500석 접수</li>
+      <li>충전 혼잡도 수도권 <b>보통</b> <span class="d">▼</span></li>
+    </ul>
+    <ul class="wire__list" aria-hidden="true">
+      <li>TSLA <b>$412.66</b> <span class="u">▲ 2.14%</span></li>
+      <li>오늘 검증 주행 <b>184,220 km</b></li>
+      <li>2026.32.4 국내 순차 배포 <b>개시</b></li>
+      <li>이번 주 최고 효율 <b>8.12 km/kWh</b> · 제주3호기</li>
+      <li>V4 슈퍼차저 김해 <b>12기</b> 개통</li>
+      <li>오늘 발행 <b>1,842,200 DRV</b></li>
+      <li>창간 멤버 <b>128</b>/500석 접수</li>
+      <li>충전 혼잡도 수도권 <b>보통</b> <span class="d">▼</span></li>
+    </ul>
+  </div>
+</div>
+
+<nav class="topnav" aria-label="지면 안내">
+  <div class="wrap topnav__inner">
+    <a href="#front">1면</a>
+    <a href="#feature">특집</a>
+    <a href="#interview">인터뷰</a>
+    <a href="#board">시세표</a>
+    <a href="#column">해설</a>
+    <a href="#quest">공지</a>
+    <a class="is-cta" href="#genesis">창간 멤버 500 →</a>
+  </div>
+</nav>
+
+<main id="main">
+<div class="wrap">
+  <div class="front" id="front">
+
+    <!-- 좌측 레일 -->
+    <aside class="col col--rail rail" aria-label="이 호의 목차와 숫자">
+      <section class="idx">
+        <h2>이 호에 실린 글</h2>
+        <ul>
+          <li><span>1면</span><a href="#front">오도미터는 거짓말을 하지 않는다</a></li>
+          <li><span>3면</span><a href="#feature">우리는 왜 주행에 보상을 붙였나</a></li>
+          <li><span>5면</span><a href="#interview">인터뷰 “출퇴근이 취미가 됐다”</a></li>
+          <li><span>7면</span><a href="#board">시세표 · 이번 주 효율 순위</a></li>
+          <li><span>9면</span><a href="#column">해설 · 2026.32.4는 무엇을 바꾸나</a></li>
+          <li><span>11면</span><a href="#quest">편집부 공지 · 이주의 퀘스트</a></li>
+          <li><span>12면</span><a href="#genesis">알림 · 창간 멤버 500인 모집</a></li>
+        </ul>
+      </section>
+
+      <section class="numbers">
+        <h2>숫자로 보는 이번 호</h2>
+        <dl>
+          <div class="row"><dt>10</dt><dd>1km당 지급되는 DRV</dd></div>
+          <div class="row"><dt>500</dt><dd>하루 상한 DRV. 곧 50km</dd></div>
+          <div class="row"><dt>1,000</dt><dd>DRV ≈ 500원어치 실물 교환</dd></div>
+          <div class="row"><dt>60초</dt><dd>주행 중 신호 수신 주기</dd></div>
+          <div class="row"><dt>4줄</dt><dd>위도·경도·속도·오도미터</dd></div>
+          <div class="row"><dt>1억</dt><dd>TSLM 총발행량. 고정</dd></div>
+        </dl>
+      </section>
+    </aside>
+
+    <!-- 헤드라인 기사 -->
+    <article class="col col--lead lead">
+      <p class="kicker lead__kicker">창간 특집 ① · 주행 검증</p>
+      <h1>오도미터는<br>거짓말을 하지 않는다</h1>
+      <p class="lead__deck">GPS는 속일 수 있다. 계기판에 쌓인 숫자는 그렇지 않다. 테슬람이 주행을 세는 방법, 그리고 그 위에 보상을 올려둔 이유.</p>
+      <p class="byline"><span>글 <b>편집장 한지훈</b></span><span>삽화 <b>편집부</b></span><span>2026.08.06</span><span>읽는 데 4분</span></p>
+
+      <figure>
+        <div class="cut">
+          <svg class="hedcut" viewBox="0 0 880 320" role="img" aria-labelledby="hcT hcD">
+            <title id="hcT">전기 세단 측면 동판화 삽화</title>
+            <desc id="hcD">잉크 해칭으로 음영을 넣은 전기 세단의 측면 라인 드로잉. 계기판과 지붕을 가리키는 두 개의 주석선이 붙어 있다.</desc>
+            <defs>
+              <pattern id="hFine" width="7" height="7" patternUnits="userSpaceOnUse">
+                <line x1="3.5" y1="-1" x2="3.5" y2="8" stroke="#14120e" stroke-width="0.5"/>
+              </pattern>
+              <pattern id="hMid" width="7" height="7" patternUnits="userSpaceOnUse">
+                <line x1="3.5" y1="-1" x2="3.5" y2="8" stroke="#14120e" stroke-width="1.5"/>
+              </pattern>
+              <pattern id="hHeavy" width="7" height="7" patternUnits="userSpaceOnUse">
+                <line x1="3.5" y1="-1" x2="3.5" y2="8" stroke="#14120e" stroke-width="3.1"/>
+              </pattern>
+              <pattern id="hDiag" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-38)">
+                <line x1="4" y1="-1" x2="4" y2="9" stroke="#14120e" stroke-width="1.1"/>
+              </pattern>
+              <pattern id="hTire" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(52)">
+                <line x1="4.5" y1="-1" x2="4.5" y2="10" stroke="#14120e" stroke-width="2.2"/>
+              </pattern>
+              <clipPath id="clipBody">
+                <path d="M 56 214 C 55 200, 62 192, 74 188 C 118 174, 168 170, 215 165 C 262 146, 322 108, 392 92 C 425 85, 462 84, 492 88 C 566 100, 652 124, 712 150 C 748 154, 780 158, 794 164 C 810 172, 816 184, 814 200 C 812 220, 804 236, 788 240 L 692 240 A 64 64 0 0 0 564 240 L 296 240 A 64 64 0 0 0 168 240 L 76 240 C 64 240, 57 230, 56 214 Z"/>
+              </clipPath>
+              <clipPath id="clipGlass">
+                <path d="M 246 158 C 288 138, 340 106, 396 96 L 484 96 C 552 106, 616 126, 660 148 Z"/>
+              </clipPath>
+            </defs>
+
+            <!-- crop marks -->
+            <g stroke="#14120e" stroke-width="1" opacity=".5">
+              <path d="M8 26 L8 8 L26 8"/><path d="M854 8 L872 8 L872 26"/>
+              <path d="M8 294 L8 312 L26 312"/><path d="M854 312 L872 312 L872 294"/>
+            </g>
+
+            <!-- body shading -->
+            <g clip-path="url(#clipBody)">
+              <rect x="40" y="70" width="800" height="180" fill="url(#hFine)"/>
+              <rect x="40" y="184" width="800" height="60" fill="url(#hMid)"/>
+              <rect x="40" y="222" width="800" height="24" fill="url(#hHeavy)"/>
+              <rect x="40" y="160" width="90" height="90" fill="url(#hMid)"/>
+              <rect x="760" y="150" width="90" height="100" fill="url(#hMid)"/>
+              <path d="M 90 186 C 240 172, 360 132, 470 112 C 600 118, 700 146, 800 176 L 800 190 C 700 162, 600 134, 470 128 C 360 148, 240 186, 90 200 Z" fill="#f4f1e8" opacity=".93"/>
+            </g>
+
+            <!-- glass -->
+            <g clip-path="url(#clipGlass)">
+              <rect x="230" y="80" width="450" height="100" fill="url(#hDiag)" opacity=".85"/>
+              <path d="M 300 150 C 360 120, 420 104, 470 100 L 470 116 C 420 122, 366 138, 316 162 Z" fill="#f4f1e8" opacity=".9"/>
+            </g>
+
+            <!-- outlines -->
+            <g fill="none" stroke="#14120e" stroke-width="3.2" stroke-linejoin="round">
+              <path d="M 56 214 C 55 200, 62 192, 74 188 C 118 174, 168 170, 215 165 C 262 146, 322 108, 392 92 C 425 85, 462 84, 492 88 C 566 100, 652 124, 712 150 C 748 154, 780 158, 794 164 C 810 172, 816 184, 814 200 C 812 220, 804 236, 788 240 L 692 240 A 64 64 0 0 0 564 240 L 296 240 A 64 64 0 0 0 168 240 L 76 240 C 64 240, 57 230, 56 214 Z"/>
+            </g>
+            <g fill="none" stroke="#14120e" stroke-width="2" stroke-linecap="round">
+              <path d="M 246 158 C 288 138, 340 106, 396 96 L 484 96 C 552 106, 616 126, 660 148"/>
+              <path d="M 322 234 C 330 190, 336 158, 350 130"/>
+              <path d="M 492 236 L 497 94"/>
+              <path d="M 598 232 C 602 192, 600 162, 594 134"/>
+              <path d="M 215 165 C 262 146, 322 108, 392 92"/>
+            </g>
+            <!-- lamps, handles, port -->
+            <g fill="#f4f1e8" stroke="#14120e" stroke-width="2">
+              <path d="M 62 192 L 112 185 L 120 196 L 64 202 Z"/>
+              <path d="M 792 168 L 812 174 L 810 190 L 790 186 Z"/>
+              <rect x="404" y="174" width="38" height="8" rx="4"/>
+              <rect x="530" y="170" width="38" height="8" rx="4"/>
+              <circle cx="752" cy="196" r="7"/>
+              <path d="M 340 152 c 14 -9, 32 -7, 36 3 c -13 7, -28 7, -36 -3 z"/>
+            </g>
+
+            <!-- wheels -->
+            <g>
+              <circle cx="232" cy="236" r="56" fill="url(#hTire)"/>
+              <circle cx="232" cy="236" r="56" fill="none" stroke="#14120e" stroke-width="3.4"/>
+              <circle cx="232" cy="236" r="34" fill="#f4f1e8" stroke="#14120e" stroke-width="2.4"/>
+              <g stroke="#14120e" stroke-width="7" stroke-linecap="round">
+                <line x1="232" y1="236" x2="232" y2="208"/>
+                <line x1="232" y1="236" x2="232" y2="208" transform="rotate(72,232,236)"/>
+                <line x1="232" y1="236" x2="232" y2="208" transform="rotate(144,232,236)"/>
+                <line x1="232" y1="236" x2="232" y2="208" transform="rotate(216,232,236)"/>
+                <line x1="232" y1="236" x2="232" y2="208" transform="rotate(288,232,236)"/>
+              </g>
+              <circle cx="232" cy="236" r="7" fill="#14120e"/>
+            </g>
+            <g>
+              <circle cx="628" cy="236" r="56" fill="url(#hTire)"/>
+              <circle cx="628" cy="236" r="56" fill="none" stroke="#14120e" stroke-width="3.4"/>
+              <circle cx="628" cy="236" r="34" fill="#f4f1e8" stroke="#14120e" stroke-width="2.4"/>
+              <g stroke="#14120e" stroke-width="7" stroke-linecap="round">
+                <line x1="628" y1="236" x2="628" y2="208"/>
+                <line x1="628" y1="236" x2="628" y2="208" transform="rotate(72,628,236)"/>
+                <line x1="628" y1="236" x2="628" y2="208" transform="rotate(144,628,236)"/>
+                <line x1="628" y1="236" x2="628" y2="208" transform="rotate(216,628,236)"/>
+                <line x1="628" y1="236" x2="628" y2="208" transform="rotate(288,628,236)"/>
+              </g>
+              <circle cx="628" cy="236" r="7" fill="#14120e"/>
+            </g>
+
+            <!-- ground -->
+            <ellipse cx="440" cy="294" rx="330" ry="8" fill="url(#hMid)" opacity=".45"/>
+            <line x1="30" y1="294" x2="850" y2="294" stroke="#14120e" stroke-width="2"/>
+
+            <!-- annotations -->
+            <g stroke="#14120e" stroke-width="1.2" fill="none">
+              <path d="M 236 56 L 300 60 L 356 132"/>
+              <path d="M 700 58 L 640 62 L 566 96"/>
+            </g>
+            <g fill="#14120e">
+              <circle cx="356" cy="132" r="3.6"/><circle cx="566" cy="96" r="3.6"/>
+            </g>
+            <g font-family="ui-monospace, Menlo, monospace" font-size="15" fill="#14120e" letter-spacing="0.5">
+              <text x="34" y="61">① 오도미터 — 검증의 원본</text>
+              <text x="846" y="63" text-anchor="end">② 좌표·속도 — 참고 자료</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>
+          <b>그림 1 · 편집부 작도</b>
+          달리는 동안에만, 60초마다 넉 줄이 도착한다. 위도·경도·속도, 그리고 오도미터. 주차 중에는 아무것도 오지 않는다.
+        </figcaption>
+      </figure>
+
+      <div class="body-text">
+        <p class="lede">차를 세워두면 테슬람은 아무것도 받지 않는다. 바퀴가 굴러가는 동안에만, 60초에 한 번, 넉 줄의 숫자가 도착한다. 위도, 경도, 속도, 그리고 오도미터. 이 넉 줄이 전부다. 지하주차장에 세워둔 밤에는 서버가 조용하다.</p>
+
+        <p>많은 서비스가 GPS를 믿는다. 문제는 GPS가 세상에서 가장 속이기 쉬운 숫자라는 점이다. 좌표는 앱 하나로 만들어낼 수 있고, 속도는 대개 그 좌표에서 파생된다. 반면 오도미터는 다르다. 차가 실제로 굴러간 만큼만 올라가고, 절대 내려가지 않으며, 무엇보다 차량 자신이 기록한다.</p>
+
+        <p>그래서 테슬람은 순위를 매길 때 좌표를 먼저 보지 않는다. 두 시점의 오도미터 차이를 본다. 좌표와 속도는 보조 장치다. 지도 위에 궤적을 그리고, 퀘스트 지점을 확인하고, 설명되지 않는 점프를 걸러내는 데 쓴다. 검증의 축은 언제나 계기판이다.</p>
+
+        <blockquote class="pull">“우리가 세는 것은 당신이 어디 있었는지가 아니라, 당신이 지나온 거리다.”
+          <cite>— 편집부, 창간 원칙 제1조</cite>
+        </blockquote>
+
+        <p>보상은 단순하다. 1km에 10 DRV. 하루 상한은 500 DRV, 곧 50km. 상한을 둔 이유는 회계가 아니라 판을 지키기 위해서다. 상한이 없으면 이 판은 하루 종일 고속도로를 도는 사람의 것이 된다. 우리는 출퇴근하는 사람과 주말에 한 번 나가는 사람이 같은 표 안에서 겨루기를 바랐다.</p>
+
+        <div class="stepbox">
+          <h3>검증은 이렇게 한다</h3>
+          <ol>
+            <li>테슬라 계정을 한 번 연결한다. 공식 OAuth다. 개발자 계정도, API 요금도 필요 없다. 비용은 teslam.io가 낸다.</li>
+            <li>주행 중에만 60초마다 넉 줄이 들어온다. 주차 중에는 아무 데이터도 오지 않는다.</li>
+            <li>두 시점의 오도미터 차이만큼만 인정한다. 좌표는 참고, 계기판이 원본.</li>
+          </ol>
+        </div>
+
+        <p>쌓인 DRV는 슈퍼차저 크레딧, 기프트카드, 세차 쿠폰으로 바꾼다. 1,000 DRV가 대략 500원어치다. 큰돈은 아니다. 다만 이번 주에 내가 얼마나 잘 달렸는지가 숫자로 남고, 그 숫자를 다른 오너들이 본다. 이 판에서 그것보다 큰 보상은 별로 없다.</p>
+
+        <p class="jump"><a href="#feature">→ 관련 기사 3면 「우리는 왜 주행에 보상을 붙였나」로 이어짐</a></p>
+      </div>
+    </article>
+
+    <!-- 우측 사이드 -->
+    <aside class="col col--side side" aria-label="실시간 입고와 단신">
+      <section class="desk">
+        <h2 class="desk__hd"><span>조판실 · 실시간 입고</span><span class="blip" aria-hidden="true"></span></h2>
+        <ul class="feed" id="feed">
+          <li><time>방금</time><b>판교모델와이</b> · 14.2 km 검증 <em>+142 DRV</em></li>
+          <li><time>28초 전</time><b>제주3호기</b> · 주간 효율 <b>8.12</b> km/kWh 경신</li>
+          <li><time>1분 전</time><b>성수동_퍼포먼스</b> · V4 슈퍼차저 체크인 <em>+120 DRV</em></li>
+          <li><time>2분 전</time><b>킬로와트장인</b> · 9.6 km 검증 <em>+96 DRV</em></li>
+          <li><time>2분 전</time><b>야간충전러</b> · 일일 상한 <b>500 DRV</b> 도달</li>
+        </ul>
+      </section>
+
+      <section class="briefs">
+        <h2>오늘의 단신</h2>
+        <ul>
+          <li>
+            <h3>김해 V4 슈퍼차저 12기, 오늘 오후 개통</h3>
+            <p><span class="dateline">[김해]</span>남부권 최대 규모. 첫 체크인 배지는 24시간 안에 도착한 오너에게만.</p>
+          </li>
+          <li>
+            <h3>‘7.0 클럽’ 이번 주 신규 가입 214명</h3>
+            <p><span class="dateline">[전국]</span>여름 에어컨 시즌에도 주간 평균 7.0 km/kWh를 넘긴 오너가 늘었다.</p>
+          </li>
+          <li>
+            <h3>하이랜드 초기형 커뮤니티 정비 노트 공개</h3>
+            <p><span class="dateline">[부산]</span>오너 6인이 공동 작성. 좋은 기술 글은 TSLM으로 보상된다.</p>
+          </li>
+          <li>
+            <h3>제주 지사, 주말 번개 접수 시작</h3>
+            <p><span class="dateline">[제주]</span>해안도로 90km 코스. 상한 때문에 DRV는 하루 500까지만 쌓인다는 점 유의.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="promo" aria-label="창간 멤버 안내">
+        <p class="kicker" style="justify-content:center">12면 알림</p>
+        <strong>제네시스 500</strong>
+        <p>첫 500명. 보상 1.5배, ‘1기’ 마크, 그리고 토크노믹스 투표권.</p>
+        <a class="btn" href="#genesis">1기 신청하러 가기</a>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<!-- ─────────── 특집 ─────────── -->
+<section class="sec" id="feature" aria-labelledby="featTitle">
+  <div class="wrap">
+    <header class="sec__hd rev">
+      <p class="kicker">창간 특집 ② · 3면</p>
+      <h2 id="featTitle">우리는 왜 주행에<br>보상을 붙였나</h2>
+      <p class="sub">사진 자랑으로 시작해 광고판으로 끝나는 커뮤니티를 우리는 너무 많이 봤다. 그래서 기여를 기록하기로 했다.</p>
+    </header>
+
+    <div class="feat">
+      <aside class="feat__rail">
+        <div class="factbox">
+          <h3>두 개의 토큰</h3>
+          <dl>
+            <dt>DRV</dt>
+            <dd>주행 보상. 1km당 10, 하루 상한 500. 1,000 DRV ≈ 500원어치 실물로 교환.</dd>
+            <dt>TSLM</dt>
+            <dd>총 1억 개 고정. DRV 락업 또는 좋은 기술 글 기고로 획득. 투표권과 광고 게재권이 붙는다.</dd>
+          </dl>
+        </div>
+        <p class="byline" style="border-bottom:0"><span>글 <b>편집장 한지훈</b></span><span>2026.08.06</span></p>
+      </aside>
+
+      <div class="feat__main">
+        <div class="body-text">
+          <p class="lede">테슬라 오너 커뮤니티는 대체로 같은 방식으로 죽는다. 처음엔 인수 후기와 사진이 올라온다. 다음엔 질문과 답이 오간다. 그리고 어느 날부터, 오래 답을 달아주던 사람이 사라진다. 그 사람이 무엇을 남겼는지 아무도 세지 않았기 때문이다.</p>
+
+          <h3>커뮤니티는 왜 죽는가</h3>
+          <p>기여가 기록되지 않으면 기여는 계속되지 않는다. 좋아요는 휘발되고, 등급은 게시글 수를 센다. 정성껏 쓴 정비 노트 하나와 “좋은 정보 감사합니다” 백 개가 같은 무게로 취급되는 판에서는, 결국 후자만 남는다.</p>
+
+          <h3>그래서 DRV</h3>
+          <p>우리는 테슬라 오너가 이미 매일 하고 있는 일에서 시작하기로 했다. 운전이다. 주행은 자랑처럼 조작하기 어렵고, 계기판이 스스로 증명하며, 무엇보다 모두가 한다. 출퇴근 34km도 기록이고, 주말 강원도 왕복도 기록이다.</p>
+          <p>1km에 10 DRV. 하루 500 DRV까지. 이 상한은 “누가 더 오래 앉아 있었나”를 겨루는 게임을 막는다. 우리가 만들고 싶은 건 지구력 대회가 아니라 매주 갱신되는 표다. 그 표에서 이기는 방법은 오래 타는 게 아니라 잘 타는 쪽으로 설계돼 있다. 효율 순위가 따로 있는 이유다.</p>
+          <p>모인 DRV는 슈퍼차저 크레딧, 기프트카드, 세차 쿠폰이 된다. 1,000 DRV가 대략 500원어치. 이 숫자를 두고 “푼돈”이라고 말하는 사람도 있었다. 맞다. 다만 세차 쿠폰 두 장으로 자랑할 수 있는 판이 있느냐 없느냐는 완전히 다른 문제다.</p>
+
+          <h3>TSLM은 다른 물건이다</h3>
+          <p>DRV가 매일 발행되는 활동 기록이라면, TSLM은 발행이 끝난 지분이다. 1억 개에서 더 늘지 않는다. 얻는 길은 두 가지. DRV를 오래 잠그거나, 이 판이 실제로 필요로 하는 기술 글을 쓰는 것.</p>
+          <p>TSLM을 가진 사람은 규칙을 정한다. 상한을 500에 둘지, 교환비를 어떻게 할지, 어떤 퀘스트를 열지. 편집부가 정하는 게 아니라 오너가 정한다는 뜻이다. 그리고 그 첫 투표를, 우리는 창간 멤버 500명에게 맡긴다.</p>
+        </div>
+      </div>
+
+      <aside class="feat__side">
+        <blockquote class="pull" style="margin-top:0">
+          <span class="quotemark" aria-hidden="true">“</span>
+          정성껏 쓴 정비 노트 하나와 “좋은 정보 감사합니다” 백 개가 같은 무게인 판에서는, 결국 후자만 남는다.
+        </blockquote>
+        <div class="factbox">
+          <h3>편집부가 지키기로 한 것</h3>
+          <dl>
+            <dt>주차 중 무수집</dt>
+            <dd>차가 멈춰 있으면 어떤 신호도 받지 않는다.</dd>
+            <dt>넉 줄만</dt>
+            <dd>위도·경도·속도·오도미터. 그 이상은 받지 않는다.</dd>
+            <dt>비용은 우리가</dt>
+            <dd>Fleet API 요금은 teslam.io가 중앙에서 부담한다. 오너는 로그인 한 번이면 끝.</dd>
+          </dl>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 인터뷰 ─────────── -->
+<section class="sec" id="interview" aria-labelledby="ivTitle">
+  <div class="wrap">
+    <header class="sec__hd rev">
+      <p class="kicker">인터뷰 · 5면</p>
+      <h2 id="ivTitle">“출퇴근이 취미가 됐다”</h2>
+      <p class="sub">경부고속도로 판교IC를 매일 두 번 지나는 3년 차 오너. 그는 요즘 지하주차장에서 지상으로 올라오는 구간의 회생제동까지 계산한다.</p>
+    </header>
+
+    <div class="iv">
+      <div class="iv__main">
+        <div class="mono-card">
+          <div class="monogram" aria-hidden="true">판</div>
+          <p class="meta"><b>판교모델와이</b>Model Y 롱레인지 · 2023년식 · 경기 성남<br>주간 508km · 평균 6.41 km/kWh · 현재 2위</p>
+        </div>
+        <dl class="qa">
+          <dt>처음 계정 연결할 때 망설이지 않았나.</dt>
+          <dd>망설였다. 다른 데서 해보니 개발자 계정 만들고 키 발급받고, 심지어 요금까지 내가 내야 하더라. 그거 하다가 접었다. 여긴 로그인 한 번이 끝이었다. 그날 저녁 퇴근길 34km가 표에 찍혀 있는 걸 보고 좀 웃었다.</dd>
+
+          <dt>효율 순위는 원래 관심이 있었나.</dt>
+          <dd>전혀. 나는 밟는 쪽이었다. 근데 7.0을 한 번 넘고 나면 못 돌아간다. 지하 3층에서 지상까지 올라오는 동안 회생제동으로 몇 퍼센트 더 챙기려고 속도를 조절하고 있더라. 아내가 옆에서 웃는다. 그래도 안 멈춘다.</dd>
+
+          <dt>하루 상한 500 DRV는 답답하지 않나.</dt>
+          <dd>처음엔 그랬다. 508km 달린 주에 상한 걸린 날이 나흘이었으니까. 근데 상한이 없었으면 나는 지금 순위표를 안 봤을 거다. 어차피 하루 종일 도는 사람한테 못 이기니까. 상한이 있으니 오히려 효율로 붙게 된다.</dd>
+
+          <dt>DRV로 뭘 했나.</dt>
+          <dd>세차 쿠폰 두 장. 사실 그건 부수적이고, 단톡방에 순위 캡처 올린 게 본체다. 자랑은 표가 다 해줬다.</dd>
+
+          <dt>창간 멤버는 신청했나.</dt>
+          <dd>했다. 1.5배 때문만은 아니고, 상한을 500에 둘지 700에 둘지 정하는 자리에 끼고 싶었다. 나중에 “저거 우리가 정한 거야” 하고 싶어서.</dd>
+        </dl>
+      </div>
+
+      <aside class="iv__aside">
+        <h2 class="kicker">짧은 인터뷰</h2>
+        <ul class="shorts">
+          <li>
+            <p class="who">제주3호기 · Model 3 RWD · 제주</p>
+            <h3>“섬은 효율에 유리하다. 대신 거리가 안 나온다.”</h3>
+            <p>해안도로는 평균 속도가 낮아 8을 넘기기 좋다. 다만 하루 50km 상한에 금방 닿는다. 그래서 나는 거리 대신 효율 표만 본다. 1위는 한 번 잡으면 안 놓게 된다.</p>
+          </li>
+          <li>
+            <p class="who">야간충전러 · Model S 플래드 · 서울</p>
+            <h3>“플래드로 효율 얘기하는 게 웃기지만.”</h3>
+            <p>5.44면 이 차로는 잘 나온 거다. 표에 플래드가 나 하나뿐이라 비교 대상이 없다. 차종별 표 만들어달라고 편집부에 계속 조르는 중이다. TSLM 모아서 직접 안건 올릴 생각.</p>
+          </li>
+          <li>
+            <p class="who">하이랜드_초기형 · Model 3 · 부산</p>
+            <h3>“정비 노트 썼더니 TSLM이 들어왔다.”</h3>
+            <p>커뮤니티에 글 써서 뭐가 돌아온 건 처음이다. 돈보다 이게 더 이상했다. 좋게 이상했다는 뜻이다.</p>
+          </li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 시세표 ─────────── -->
+<section class="sec" id="board" aria-labelledby="boardTitle">
+  <div class="wrap">
+    <header class="sec__hd rev">
+      <p class="kicker">시세표 · 7면</p>
+      <h2 id="boardTitle">이번 주 시세표</h2>
+      <p class="sub">8월 1일~7일 · 오도미터로 검증된 주행만 집계. 효율은 차량 보고 기준 주간 평균.</p>
+    </header>
+
+    <p class="hint" aria-hidden="true">← 좌우로 밀어 보세요 →</p>
+    <div class="tbl-wrap">
+      <table>
+        <caption class="sr">이번 주 오너별 주행거리, 평균 효율, 지급 DRV 순위표</caption>
+        <thead>
+          <tr>
+            <th scope="col">순위</th>
+            <th scope="col">오너</th>
+            <th scope="col">차종 · 지역</th>
+            <th scope="col" class="num">주간 거리</th>
+            <th scope="col" class="num">평균 효율</th>
+            <th scope="col" class="num">전주 대비</th>
+            <th scope="col" class="num">주간 DRV</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row" class="rk">1</th><td class="nick">제주3호기 <span class="gen-flag" title="제네시스 1기 예약">◈</span></td><td class="trim">Model 3 RWD · 제주</td><td class="num">431 km</td><td class="num">8.12</td><td class="up">▲ 0.34</td><td class="num">3,500<span class="cap-flag">상한</span></td></tr>
+          <tr><th scope="row" class="rk">2</th><td class="nick">판교모델와이 <span class="gen-flag" title="제네시스 1기 예약">◈</span></td><td class="trim">Model Y LR · 성남</td><td class="num">508 km</td><td class="num">6.41</td><td class="up">▲ 0.12</td><td class="num">3,500<span class="cap-flag">상한</span></td></tr>
+          <tr><th scope="row" class="rk">3</th><td class="nick">킬로와트장인</td><td class="trim">Model 3 LR · 대전</td><td class="num">389 km</td><td class="num">7.88</td><td class="down">▼ 0.09</td><td class="num">3,180</td></tr>
+          <tr><th scope="row" class="rk">4</th><td class="nick">광명_화이트펄 <span class="gen-flag" title="제네시스 1기 예약">◈</span></td><td class="trim">Model Y 퍼포먼스 · 광명</td><td class="num">356 km</td><td class="num">6.02</td><td class="up">▲ 0.21</td><td class="num">2,960</td></tr>
+          <tr><th scope="row" class="rk">5</th><td class="nick">야간충전러</td><td class="trim">Model S 플래드 · 서울</td><td class="num">344 km</td><td class="num">5.44</td><td class="up">▲ 0.44</td><td class="num">2,870</td></tr>
+          <tr><th scope="row" class="rk">6</th><td class="nick">하이랜드_초기형</td><td class="trim">Model 3 하이랜드 · 부산</td><td class="num">322 km</td><td class="num">7.31</td><td class="down">▼ 0.15</td><td class="num">2,740</td></tr>
+          <tr><th scope="row" class="rk">7</th><td class="nick">성수동_퍼포먼스</td><td class="trim">Model 3 퍼포먼스 · 서울</td><td class="num">298 km</td><td class="num">6.77</td><td class="up">▲ 0.05</td><td class="num">2,610</td></tr>
+          <tr><th scope="row" class="rk">8</th><td class="nick">스텔스회색 <span class="gen-flag" title="제네시스 1기 예약">◈</span></td><td class="trim">Model Y RWD · 인천</td><td class="num">281 km</td><td class="num">7.02</td><td class="up">▲ 0.18</td><td class="num">2,480</td></tr>
+          <tr><th scope="row" class="rk">9</th><td class="nick">미드나잇체리</td><td class="trim">Model 3 LR · 수원</td><td class="num">264 km</td><td class="num">7.45</td><td class="down">▼ 0.02</td><td class="num">2,340</td></tr>
+          <tr><th scope="row" class="rk">10</th><td class="nick">세단파_이씨</td><td class="trim">Model S LR · 고양</td><td class="num">250 km</td><td class="num">5.98</td><td class="up">▲ 0.31</td><td class="num">2,190</td></tr>
+          <tr><th scope="row" class="rk">11</th><td class="nick">여수밤바다X</td><td class="trim">Model X LR · 여수</td><td class="num">233 km</td><td class="num">5.12</td><td class="down">▼ 0.22</td><td class="num">2,050</td></tr>
+          <tr><th scope="row" class="rk">12</th><td class="nick">6.9km의벽</td><td class="trim">Model 3 RWD · 청주</td><td class="num">219 km</td><td class="num">6.98</td><td class="up">▲ 0.09</td><td class="num">1,930</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tnotes">
+      효율 단위 km/kWh · 전주 대비는 효율 증감 · <b>상한</b> 표시는 하루 500 DRV 상한에 여러 차례 닿아 주간 3,500 DRV로 마감된 경우.<br>
+      <span class="gen-flag">◈</span> 제네시스 1기 예약자. 1.5배 가산은 창간호 발행일부터 반영된다.
+    </p>
+
+    <div class="chart">
+      <h3>일별 검증 주행 총거리 · 단위 만 km</h3>
+      <div class="bars" role="img" aria-label="월요일 16.4만, 화요일 17.2만, 수요일 18.9만, 목요일 18.4만, 금요일 21.7만, 토요일 24.3만, 일요일 22.8만 킬로미터">
+        <div class="bar"><span class="v">16.4</span><i style="height:67%"></i><span class="d">월</span></div>
+        <div class="bar"><span class="v">17.2</span><i style="height:71%"></i><span class="d">화</span></div>
+        <div class="bar"><span class="v">18.9</span><i style="height:78%"></i><span class="d">수</span></div>
+        <div class="bar"><span class="v">18.4</span><i style="height:76%"></i><span class="d">목</span></div>
+        <div class="bar"><span class="v">21.7</span><i style="height:89%"></i><span class="d">금</span></div>
+        <div class="bar"><span class="v">24.3</span><i style="height:100%"></i><span class="d">토</span></div>
+        <div class="bar"><span class="v">22.8</span><i style="height:94%"></i><span class="d">일</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 해설 ─────────── -->
+<section class="sec" id="column" aria-labelledby="colTitle">
+  <div class="wrap">
+    <header class="sec__hd rev">
+      <p class="kicker">해설 · 9면 · 소프트웨어</p>
+      <h2 id="colTitle">2026.32.4는<br>무엇을 바꾸나</h2>
+      <p class="sub">글 · 소프트웨어 담당 오세진 — 릴리스 노트에 한 줄로 적힌 것과 실제로 손끝에 닿는 것은 늘 다르다. 편집부가 나흘 동안 굴려본 결과.</p>
+    </header>
+
+    <ul class="updates">
+      <li>
+        <span class="no">01</span>
+        <div><h3>서라운드 뷰 주차선 보정</h3><p>국내 주차장 규격에서 선이 덜 튄다. 기계식 주차장 입구에서 특히 체감. 후방 카메라 왜곡 보정도 같이 들어간 듯하다.</p></div>
+        <span class="stars" aria-label="별 4개">★★★★☆</span>
+      </li>
+      <li>
+        <span class="no">02</span>
+        <div><h3>저속 구간 회생제동 로직 조정</h3><p>20km/h 이하에서 감속이 조금 더 부드럽다. 체감은 미묘하지만 효율 표에서는 보인다. 사흘 평균 0.08 정도 올랐다.</p></div>
+        <span class="stars" aria-label="별 3개">★★★☆☆</span>
+      </li>
+      <li>
+        <span class="no">03</span>
+        <div><h3>실내 예열 스케줄 개선</h3><p>지금은 쓸 일이 없다. 12월에 고마워할 기능이다. 지금 세팅해두면 첫 추위에 허둥대지 않는다.</p></div>
+        <span class="stars" aria-label="별 4개">★★★★☆</span>
+      </li>
+      <li>
+        <span class="no">04</span>
+        <div><h3>오토파일럿 차선 변경 알림음 변경</h3><p>취향의 영역. 되돌리는 설정은 없다. 사흘이면 익숙해진다는 게 편집부 다수 의견이었다.</p></div>
+        <span class="stars" aria-label="별 2개">★★☆☆☆</span>
+      </li>
+      <li>
+        <span class="no">05</span>
+        <div><h3>국내 한정 · 하이패스 잔액 위젯</h3><p>이거 하나로 이번 업데이트는 값을 했다. 톨게이트 통과 후 잔액이 상단에 뜬다. 왜 이제 왔냐는 말이 커뮤니티에 하루 종일 올라왔다.</p></div>
+        <span class="stars" aria-label="별 5개">★★★★★</span>
+      </li>
+    </ul>
+
+    <p class="note">배포는 지역과 차종에 따라 순차적으로 이루어진다. 아직 안 왔다고 초조해할 필요는 없다. 커뮤니티 관행상, 먼저 받은 사람이 사흘 안에 다 정리해서 올려준다. 그리고 그 글은 TSLM으로 보상된다.</p>
+  </div>
+</section>
+
+<!-- ─────────── 공지 ─────────── -->
+<section class="sec" id="quest" aria-labelledby="qTitle">
+  <div class="wrap">
+    <header class="sec__hd rev">
+      <p class="kicker">편집부 공지 · 11면</p>
+      <h2 id="qTitle">이주의 퀘스트</h2>
+      <p class="sub">일요일 자정에 마감한다. 달성 여부는 오도미터와 차량 보고값으로 자동 판정된다.</p>
+    </header>
+
+    <div class="classifieds">
+      <article class="ad">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#14120e" stroke-width="1.6" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+        <p class="tag">퀘스트 A · 효율</p>
+        <h3>주간 평균 7.0 km/kWh 돌파</h3>
+        <p>에어컨 켜고 7을 넘기면 그건 실력이다. 주간 평균 기준이라 하루 잘 탄 걸로는 안 된다.</p>
+        <div class="ad__meta"><span>보상 <b>+250 DRV</b></span><span>참가 <b>1,204명</b></span><span>마감 <b>일 23:59</b></span></div>
+      </article>
+
+      <article class="ad">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#14120e" stroke-width="1.6" aria-hidden="true"><path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+        <p class="tag">퀘스트 B · 순례</p>
+        <h3>V4 슈퍼차저 체크인</h3>
+        <p>전국 42개소 중 아무 곳이나 한 번. 김해 신규 개통분은 이번 주에만 두 배로 쳐준다.</p>
+        <div class="ad__meta"><span>보상 <b>+120 DRV</b></span><span>배지 <b>순례 Ⅰ</b></span><span>대상 <b>V4 42개소</b></span></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 창간 멤버 ─────────── -->
+<section class="sec genesis" id="genesis" aria-labelledby="genTitle" style="padding:0">
+  <div class="wrap">
+    <div class="gen-grid">
+      <div>
+        <p class="kicker kicker--pale">12면 · 알림</p>
+        <h2 id="genTitle">창간 멤버<br>500인을 찾습니다</h2>
+        <p class="deck">첫 500명이 이 판의 규칙을 정합니다. 상한을 500에 둘지, 교환비를 어떻게 할지, 어떤 퀘스트를 열지. 편집부가 아니라 1기가 정합니다.</p>
+
+        <ul class="benefits">
+          <li><span class="n">01</span><div><b>모든 주행 보상 1.5배</b><span>창간일부터 적용. 1km 10 DRV가 15 DRV가 된다.</span></div></li>
+          <li><span class="n">02</span><div><b>‘제네시스 1기’ 마크</b><span>닉네임 옆에 영구 표시. 나중에 들어온 사람은 절대 가질 수 없다.</span></div></li>
+          <li><span class="n">03</span><div><b>토크노믹스 투표권</b><span>상한·교환비·발행 속도에 대한 첫 투표는 1기 500명만 참여한다.</span></div></li>
+          <li><span class="n">04</span><div><b>창간호 판권면 등재</b><span>500명의 닉네임이 지면에 남는다. 지워지지 않는다.</span></div></li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="counter"><span class="big" id="taken">128</span><span class="of">/ 500석 접수 · <b id="left">372</b>석 남음</p>
+        <div class="seats" id="seats" aria-hidden="true"></div>
+
+        <form class="applyform" id="applyForm" novalidate>
+          <div style="width:100%">
+            <label for="handle">닉네임 또는 이메일</label>
+          </div>
+          <input id="handle" name="handle" type="text" autocomplete="nickname" placeholder="예: 판교모델와이" required>
+          <button class="btn btn--gold" type="submit">1기 신청</button>
+        </form>
+        <p class="formmsg" id="formMsg" role="status" aria-live="polite"></p>
+        <p class="formnote">
+          신청 후에는 테슬라 계정을 한 번만 연결하면 끝입니다. 공식 OAuth를 씁니다. 개발자 계정도, API 요금도 필요 없습니다 — Fleet API 비용은 teslam.io가 냅니다.<br>
+          주차 중에는 어떤 데이터도 수집하지 않으며, 주행 중 받는 값은 위도·경도·속도·오도미터 넉 줄뿐입니다.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="colophon" role="contentinfo">
+  <div class="wrap">
+    <div class="colo-grid">
+      <div>
+        <h2>테슬람</h2>
+        <p>대한민국 테슬라 오너 저널 · 창간준비호<br>발행소 teslam.io · 발행인 편집부 · 2026년 8월 6일 발행 · 비매품</p>
+        <p style="margin-top:1rem"><a class="btn" href="#genesis">제네시스 500 신청</a></p>
+      </div>
+      <div>
+        <h3>지면</h3>
+        <ul>
+          <li><a href="#front">1면 · 오도미터는 거짓말을 하지 않는다</a></li>
+          <li><a href="#feature">3면 · 우리는 왜 주행에 보상을 붙였나</a></li>
+          <li><a href="#interview">5면 · 인터뷰</a></li>
+          <li><a href="#board">7면 · 시세표</a></li>
+          <li><a href="#column">9면 · 소프트웨어 해설</a></li>
+          <li><a href="#quest">11면 · 이주의 퀘스트</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3>정정 및 알림</h3>
+        <div class="correction">
+          <b>정정</b>
+          지난 주 시세표에 실린 제주3호기의 주간 평균 효율 ‘8.2 km/kWh’는 8.12 km/kWh의 오기였습니다. 순위 변동은 없습니다. 바로잡습니다.
+        </div>
+      </div>
+    </div>
+
+    <p class="legal">
+      teslam.io는 Tesla, Inc.와 제휴하거나 후원받는 관계가 아닌 독립 커뮤니티 프로젝트입니다.<br>
+      본 지면에 실린 순위·수치·인용·인물은 창간준비호 지면 구성을 위해 편집부가 만든 예시입니다. DRV·TSLM은 커뮤니티 활동 기록을 위한 포인트이며 투자 상품이 아닙니다.<br>
+      © 2026 teslam.io 편집부.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+  var reduce = mq.matches;
+
+  /* ── 시계 ── */
+  var clock = document.getElementById("clock");
+  function tick(){
+    if(!clock) return;
+    var d = new Date();
+    var h = ("0"+d.getHours()).slice(-2), m = ("0"+d.getMinutes()).slice(-2);
+    clock.textContent = h+":"+m;
+  }
+  tick(); setInterval(tick, 20000);
+
+  /* ── 조판실 실시간 입고 ── */
+  var feed = document.getElementById("feed");
+  var nicks = ["판교모델와이","제주3호기","킬로와트장인","광명_화이트펄","야간충전러","하이랜드_초기형",
+               "성수동_퍼포먼스","스텔스회색","미드나잇체리","세단파_이씨","여수밤바다X","6.9km의벽",
+               "송도_롱레인지","대구흰둥이","분당_스텔스","강릉주말러"];
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+  function makeItem(){
+    var n = pick(nicks), r = Math.random(), html;
+    if(r < 0.62){
+      var km = (3 + Math.random()*21);
+      var drv = Math.round(km*10);
+      html = "<b>"+n+"</b> · "+km.toFixed(1)+" km 검증 <em>+"+drv+" DRV</em>";
+    } else if(r < 0.78){
+      var eff = (6.2 + Math.random()*2).toFixed(2);
+      html = "<b>"+n+"</b> · 주간 효율 <b>"+eff+"</b> km/kWh 갱신";
+    } else if(r < 0.9){
+      html = "<b>"+n+"</b> · V4 슈퍼차저 체크인 <em>+120 DRV</em>";
+    } else {
+      html = "<b>"+n+"</b> · 일일 상한 <b>500 DRV</b> 도달";
+    }
+    var li = document.createElement("li");
+    li.innerHTML = '<time data-t="'+Date.now()+'">방금</time>'+html;
+    return li;
+  }
+
+  function ageLabels(){
+    if(!feed) return;
+    var times = feed.querySelectorAll("time[data-t]");
+    for(var i=0;i<times.length;i++){
+      var s = Math.round((Date.now() - parseInt(times[i].getAttribute("data-t"),10))/1000);
+      times[i].textContent = s < 8 ? "방금" : (s < 60 ? s+"초 전" : Math.floor(s/60)+"분 전");
+    }
+  }
+
+  if(feed && !reduce){
+    setInterval(function(){
+      feed.insertBefore(makeItem(), feed.firstChild);
+      while(feed.children.length > 6){ feed.removeChild(feed.lastChild); }
+    }, 4600);
+    setInterval(ageLabels, 3000);
+  }
+
+  /* ── 제네시스 좌석판 ── */
+  var TOTAL = 500;
+  var taken = 128;
+  var seats = document.getElementById("seats");
+  var takenEl = document.getElementById("taken");
+  var leftEl = document.getElementById("left");
+  var wireSeat = document.getElementById("wireSeat");
+  var cells = [];
+
+  if(seats){
+    var frag = document.createDocumentFragment();
+    for(var i=0;i<TOTAL;i++){
+      var s = document.createElement("span");
+      s.className = "seat";
+      frag.appendChild(s);
+      cells.push(s);
+    }
+    seats.appendChild(frag);
+  }
+
+  function paint(animate){
+    for(var i=0;i<cells.length;i++){
+      var on = i < taken;
+      if(on && cells[i].className.indexOf("is-taken") === -1){
+        if(animate && !reduce){ cells[i].style.animationDelay = (i*5)+"ms"; }
+        else { cells[i].style.animation = "none"; }
+        cells[i].className = "seat is-taken";
+      }
+    }
+    if(takenEl) takenEl.textContent = taken;
+    if(leftEl) leftEl.textContent = (TOTAL - taken);
+    if(wireSeat) wireSeat.textContent = taken;
+  }
+
+  var painted = false;
+  function firstPaint(){ if(painted) return; painted = true; paint(true); }
+
+  if("IntersectionObserver" in window && seats){
+    var io = new IntersectionObserver(function(entries){
+      for(var i=0;i<entries.length;i++){
+        if(entries[i].isIntersecting){ firstPaint(); io.disconnect(); }
+      }
+    }, {threshold:0.15});
+    io.observe(seats);
+  } else { firstPaint(); }
+
+  if(!reduce){
+    setInterval(function(){
+      if(taken < 141){ taken++; paint(false); }
+    }, 11000);
+  }
+
+  /* ── 신청 폼 ── */
+  var form = document.getElementById("applyForm");
+  var msg = document.getElementById("formMsg");
+  if(form){
+    form.addEventListener("submit", function(e){
+      e.preventDefault();
+      var input = document.getElementById("handle");
+      var v = input.value.replace(/^\s+|\s+$/g,"");
+      if(!v){
+        msg.textContent = "닉네임이나 이메일을 적어주세요.";
+        input.focus();
+        return;
+      }
+      taken = Math.min(taken+1, TOTAL);
+      paint(false);
+      msg.textContent = "접수되었습니다 — " + v + " 님, 임시 순번 " + taken + "번. 계정 연결 안내를 보내드립니다.";
+      form.reset();
+    });
+  }
+
+  /* ── 등장 효과 ── */
+  var revs = document.querySelectorAll(".rev");
+  if(reduce || !("IntersectionObserver" in window)){
+    for(var k=0;k<revs.length;k++){ revs[k].className += " in"; }
+  } else {
+    var io2 = new IntersectionObserver(function(entries){
+      for(var i=0;i<entries.length;i++){
+        if(entries[i].isIntersecting){
+          entries[i].target.className += " in";
+          io2.unobserve(entries[i].target);
+        }
+      }
+    }, {threshold:0.12, rootMargin:"0px 0px -8% 0px"});
+    for(var j=0;j<revs.length;j++){ io2.observe(revs[j]); }
+  }
+})();
+</script>
+</body>
+</html>

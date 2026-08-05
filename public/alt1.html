@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>teslam.io — 이번 주, 당신은 몇 위입니까 | 전비 리그 32주차</title>
+<meta name="description" content="오도미터로 검증된 대한민국 테슬라 오너 전비 순위표. 지역전, 주간 퀘스트, DRV 보상. Genesis 500 1기 모집 중.">
+<meta name="color-scheme" content="dark">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#07080A;
+  --bg2:#0A0C10;
+  --panel:#0F1218;
+  --panel2:#141821;
+  --line:#1D232E;
+  --line2:#2A3341;
+  --txt:#E9EDF2;
+  --dim:#8B949F;
+  --dim2:#606A77;
+  --lime:#CCFF00;
+  --lime-d:#9ECC00;
+  --blaze:#FF7A1A;
+  --mint:#00E5A8;
+  --rose:#FF4D6D;
+  --steel:#A8BACB;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--txt);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.6;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:-0.011em;
+}
+img,svg{max-width:100%}
+h1,h2,h3,h4,p,ul,ol,figure{margin:0}
+ul{padding:0;list-style:none}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+
+:focus-visible{
+  outline:2px solid var(--lime);
+  outline-offset:3px;
+  border-radius:1px;
+}
+
+.wrap{width:100%;max-width:1320px;margin:0 auto;padding:0 clamp(14px,3.5vw,40px)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-0.03em}
+
+.skip{
+  position:absolute;left:-9999px;top:0;z-index:200;
+  background:var(--lime);color:#000;padding:12px 18px;font-weight:800;
+}
+.skip:focus{left:12px;top:12px}
+
+/* background grid texture */
+body::before{
+  content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    linear-gradient(180deg,#0B1005 0%,rgba(11,16,5,0) 46%),
+    repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 1px,transparent 1px 64px),
+    repeating-linear-gradient(0deg,rgba(255,255,255,.022) 0 1px,transparent 1px 64px),
+    var(--bg);
+}
+body::after{
+  content:"";position:fixed;left:50%;top:-14vh;z-index:-1;pointer-events:none;
+  width:120vw;height:60vh;transform:translateX(-50%);
+  background:radial-gradient(ellipse at 50% 0%,rgba(204,255,0,.11),rgba(204,255,0,0) 62%);
+}
+
+/* ============ TOP BAR ============ */
+.topbar{
+  position:sticky;top:0;z-index:60;
+  background:rgba(7,8,10,.86);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{display:flex;align-items:center;gap:clamp(10px,2vw,26px);height:60px}
+.brand{display:flex;align-items:center;gap:9px;flex-shrink:0}
+.brand-mk{
+  width:26px;height:26px;flex:none;
+  background:var(--lime);
+  clip-path:polygon(50% 0,100% 100%,50% 74%,0 100%);
+}
+.brand-tx{font-weight:900;font-size:16px;letter-spacing:-0.04em}
+.brand-tx b{color:var(--lime)}
+.navlinks{display:none;gap:2px;margin-left:6px;flex:1;min-width:0}
+@media(min-width:780px){.navlinks{display:flex}}
+.navlinks a{
+  font-size:12.5px;font-weight:700;color:var(--dim);
+  padding:7px 11px;white-space:nowrap;
+  border:1px solid transparent;
+}
+.navlinks a:hover{color:var(--lime);border-color:var(--line2)}
+.top-right{display:flex;align-items:center;gap:12px;margin-left:auto;flex-shrink:0}
+.slotmini{display:none;text-align:right;line-height:1.15}
+@media(min-width:1080px){.slotmini{display:block}}
+.slotmini .k{font-size:9.5px;letter-spacing:.16em;color:var(--dim2);font-weight:800}
+.slotmini .v{font-size:14px;font-weight:900;color:var(--lime)}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:var(--lime);color:#050505;
+  font-weight:900;font-size:13px;letter-spacing:-0.02em;
+  padding:10px 16px;white-space:nowrap;
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%);
+  transition:filter .15s ease,transform .15s ease;
+}
+.btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.btn-lg{font-size:16px;padding:16px 26px;clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%)}
+.btn-gh{background:transparent;color:var(--txt);border:1px solid var(--line2);clip-path:none}
+.btn-gh:hover{border-color:var(--lime);color:var(--lime)}
+
+/* ============ TICKER ============ */
+.tickerbar{
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg,rgba(204,255,0,.05),rgba(204,255,0,0) 45%);
+  overflow:hidden;
+}
+.tickerbar-in{display:flex;align-items:center;height:34px}
+.tickerlab{
+  flex:none;display:flex;align-items:center;gap:7px;
+  background:var(--lime);color:#000;height:34px;padding:0 12px;
+  font-size:10.5px;font-weight:900;letter-spacing:.14em;
+}
+.pip{width:6px;height:6px;background:#000;border-radius:50%;animation:blip 1.3s steps(1,end) infinite}
+@keyframes blip{0%,49%{opacity:1}50%,100%{opacity:.15}}
+.tickerview{flex:1;min-width:0;overflow:hidden;position:relative;mask-image:linear-gradient(90deg,transparent,#000 26px,#000 calc(100% - 40px),transparent)}
+.tickertrack{display:flex;width:max-content;animation:slide 52s linear infinite}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tickertrack span{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:0 18px;font-size:12px;color:var(--dim);white-space:nowrap;
+  border-right:1px solid var(--line);
+}
+.tickertrack b{color:var(--txt);font-weight:700}
+.tickertrack i{font-style:normal;color:var(--lime);font-family:var(--mono);font-weight:700}
+.tickertrack i.dn{color:var(--rose)}
+
+/* ============ ARENA HEAD ============ */
+.arena{padding:clamp(22px,4vw,40px) 0 0}
+.kicker{
+  display:inline-flex;align-items:center;gap:9px;
+  font-size:11px;font-weight:900;letter-spacing:.2em;color:var(--lime);
+  border:1px solid rgba(204,255,0,.34);padding:5px 11px;margin-bottom:16px;
+}
+.kicker .dot{width:5px;height:5px;background:var(--lime);border-radius:50%;box-shadow:0 0 0 3px rgba(204,255,0,.18);animation:blip 1.3s steps(1,end) infinite}
+.headrow{display:flex;flex-wrap:wrap;align-items:flex-end;gap:22px;justify-content:space-between}
+h1{
+  font-size:clamp(2rem,6.4vw,4.05rem);
+  line-height:.99;font-weight:900;letter-spacing:-0.05em;
+  max-width:14ch;
+}
+h1 em{font-style:normal;color:var(--lime);position:relative;white-space:nowrap}
+.lede{margin-top:14px;color:var(--dim);font-size:clamp(13.5px,1.5vw,15.5px);max-width:46ch}
+.lede b{color:var(--txt);font-weight:700}
+.clockbox{
+  border:1px solid var(--line2);background:var(--panel);
+  padding:12px 16px;min-width:min(100%,244px);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);
+}
+.clockbox .k{font-size:10px;letter-spacing:.17em;color:var(--dim2);font-weight:900}
+.clockbox .v{font-size:clamp(22px,3.4vw,29px);font-weight:900;color:var(--txt);line-height:1.15;letter-spacing:-0.04em}
+.clockbox .v .u{color:var(--dim2);font-size:.6em}
+.clockbox .s{font-size:11px;color:var(--lime);font-weight:700;margin-top:2px}
+
+/* ============ PODIUM ============ */
+.podium{
+  display:grid;gap:12px;margin-top:clamp(20px,3vw,30px);
+  grid-template-columns:1fr;
+}
+@media(min-width:760px){.podium{grid-template-columns:1.28fr 1fr 1fr;align-items:end}}
+.pod{
+  position:relative;overflow:hidden;
+  border:1px solid var(--line2);background:linear-gradient(180deg,var(--panel2),var(--panel));
+  padding:16px 16px 14px;
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%);
+}
+.pod::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.pod.p1{--c:var(--lime);padding-top:22px;padding-bottom:20px;background:linear-gradient(150deg,rgba(204,255,0,.13),rgba(204,255,0,.02) 46%,var(--panel) 78%)}
+.pod.p2{--c:var(--steel)}
+.pod.p3{--c:var(--blaze)}
+.pod-top{display:flex;align-items:flex-start;gap:12px}
+.pod-rank{
+  font-family:var(--mono);font-weight:800;line-height:.78;letter-spacing:-0.07em;
+  font-size:clamp(52px,11vw,86px);color:var(--c);
+}
+.pod.p1 .pod-rank{font-size:clamp(66px,15vw,118px);text-shadow:0 0 42px rgba(204,255,0,.32)}
+.pod-tag{
+  margin-left:auto;font-size:9.5px;font-weight:900;letter-spacing:.15em;
+  color:var(--c);border:1px solid currentColor;padding:3px 7px;white-space:nowrap;
+}
+.pod-name{font-size:clamp(17px,2.4vw,22px);font-weight:900;letter-spacing:-0.035em;margin-top:6px}
+.pod-meta{font-size:11.5px;color:var(--dim);margin-top:3px}
+.pod-eff{display:flex;align-items:baseline;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.pod-eff .big{font-family:var(--mono);font-size:clamp(28px,5vw,42px);font-weight:800;letter-spacing:-0.045em;color:var(--txt)}
+.pod.p1 .pod-eff .big{color:var(--lime)}
+.pod-eff .un{font-size:11px;color:var(--dim2);font-weight:700}
+.pod-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+.pod-stats div{line-height:1.2}
+.pod-stats .k{font-size:9.5px;letter-spacing:.13em;color:var(--dim2);font-weight:800}
+.pod-stats .v{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--txt)}
+.pod-car{position:absolute;right:-14px;bottom:-10px;width:190px;opacity:.14;pointer-events:none}
+.pod.p1 .pod-car{opacity:.2;width:250px}
+.rec{
+  position:absolute;right:14px;top:56px;
+  font-size:10px;font-weight:900;letter-spacing:.14em;color:#000;background:var(--lime);
+  padding:3px 8px;opacity:0;transform:translateY(-4px);
+}
+.rec.on{animation:recflash 2.6s ease}
+@keyframes recflash{0%{opacity:0;transform:translateY(-6px) scale(.9)}12%{opacity:1;transform:none}72%{opacity:1}100%{opacity:0}}
+
+/* ============ TIMING TOWER ============ */
+.tower-shell{margin-top:14px;border:1px solid var(--line2);background:var(--panel);}
+.tower-cap{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 14px;border-bottom:1px solid var(--line2);
+  background:linear-gradient(90deg,rgba(204,255,0,.07),transparent 60%);
+}
+.tower-cap h2{font-size:13px;font-weight:900;letter-spacing:.02em}
+.tower-cap .sub{font-size:11.5px;color:var(--dim);margin-left:auto}
+.chip{
+  font-size:10px;font-weight:900;letter-spacing:.11em;
+  border:1px solid var(--line2);color:var(--dim);padding:3px 7px;
+}
+.chip.live{color:var(--lime);border-color:rgba(204,255,0,.4)}
+
+.grid-row{
+  display:grid;
+  grid-template-columns:46px 40px minmax(0,1fr) 84px 62px 66px 62px;
+  align-items:center;
+  gap:0 8px;
+  padding:0 12px;
+}
+@media(min-width:900px){
+  .grid-row{grid-template-columns:56px 46px minmax(0,1fr) 104px 100px 84px 84px 96px 72px;gap:0 10px;padding:0 16px}
+}
+.thead{
+  height:32px;border-bottom:1px solid var(--line2);
+  font-size:9.5px;font-weight:900;letter-spacing:.14em;color:var(--dim2);
+  background:var(--bg2);
+}
+.thead>*{white-space:nowrap;overflow:hidden}
+.col-r{text-align:right}
+.hide-s{display:none}
+@media(min-width:900px){.hide-s{display:block}}
+
+.trow{
+  position:relative;height:52px;border-bottom:1px solid var(--line);
+  will-change:transform;
+}
+.trow:last-child{border-bottom:0}
+.trow:hover{background:rgba(255,255,255,.028)}
+.trow.hot::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(204,255,0,.2),rgba(204,255,0,0) 55%);
+  animation:hotfade 1.7s ease forwards;
+}
+.trow.cold::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,77,109,.16),rgba(255,77,109,0) 50%);
+  animation:hotfade 1.7s ease forwards;
+}
+@keyframes hotfade{0%{opacity:1}100%{opacity:0}}
+
+.c-pos{font-family:var(--mono);font-size:clamp(19px,3vw,26px);font-weight:800;letter-spacing:-0.05em;color:var(--txt)}
+.c-pos.top{color:var(--lime)}
+.c-delta{font-family:var(--mono);font-size:12px;font-weight:800;color:var(--dim2)}
+.c-delta.up{color:var(--mint)}
+.c-delta.dn{color:var(--rose)}
+.c-drv-name{min-width:0}
+.c-drv-name .nm{
+  font-size:14px;font-weight:800;letter-spacing:-0.02em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:flex;align-items:center;gap:6px;
+}
+.c-drv-name .tr{font-size:10.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gbadge{
+  flex:none;font-size:8.5px;font-weight:900;letter-spacing:.1em;
+  background:var(--lime);color:#000;padding:1px 4px;
+}
+.c-reg{font-size:11.5px;color:var(--dim);white-space:nowrap}
+.c-eff{font-family:var(--mono);font-size:clamp(15px,2.2vw,19px);font-weight:800;letter-spacing:-0.035em;text-align:right}
+.c-gap{font-family:var(--mono);font-size:12.5px;color:var(--dim);text-align:right}
+.c-km,.c-drv{font-family:var(--mono);font-size:13px;color:var(--dim);text-align:right}
+.c-drv{color:var(--lime-d)}
+.c-st{font-size:12px;text-align:right;color:var(--blaze);font-weight:700;white-space:nowrap}
+
+.gapmark{
+  display:flex;align-items:center;gap:12px;padding:9px 16px;
+  border-bottom:1px solid var(--line);background:repeating-linear-gradient(-45deg,rgba(255,255,255,.02) 0 6px,transparent 6px 12px);
+  font-size:10.5px;letter-spacing:.14em;font-weight:800;color:var(--dim2);
+}
+.gapmark::before,.gapmark::after{content:"";flex:1;height:1px;background:var(--line2)}
+
+/* GHOST ROW — the move */
+.ghost{
+  position:relative;
+  border-top:1px solid rgba(204,255,0,.34);
+  background:
+    linear-gradient(90deg,rgba(204,255,0,.09),rgba(204,255,0,.01) 62%),
+    repeating-linear-gradient(-45deg,rgba(204,255,0,.045) 0 8px,transparent 8px 16px);
+}
+.ghost::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--lime);
+  animation:ghostpulse 2s ease-in-out infinite;
+}
+@keyframes ghostpulse{0%,100%{opacity:.4}50%{opacity:1}}
+.ghost-row{min-height:70px;padding-top:10px;padding-bottom:10px;align-items:center}
+.ghost .c-pos{color:var(--lime);animation:qflick 1.1s steps(1,end) infinite}
+@keyframes qflick{0%,60%{opacity:1}61%,100%{opacity:.28}}
+.ghost .nm{color:var(--lime)}
+.ghost .tr{color:var(--dim)}
+.ghost-cta{grid-column:4 / -1;justify-self:end}
+@media(max-width:899px){
+  .ghost-row{grid-template-columns:46px 40px minmax(0,1fr);grid-auto-rows:auto}
+  .ghost-cta{grid-column:1 / -1;justify-self:stretch;margin-top:10px}
+  .ghost-cta .btn{width:100%;justify-content:center}
+}
+
+/* ============ SECTIONS ============ */
+section{scroll-margin-top:76px}
+.band{padding:clamp(48px,7vw,86px) 0}
+.sechead{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px;margin-bottom:22px}
+.sechead h2{font-size:clamp(1.5rem,3.6vw,2.35rem);font-weight:900;letter-spacing:-0.045em;line-height:1.05}
+.sechead .sub{font-size:13.5px;color:var(--dim);max-width:44ch}
+.secnum{
+  font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.2em;
+  color:var(--lime);border-left:2px solid var(--lime);padding-left:8px;
+}
+
+/* REGION WAR */
+.battlebar{display:flex;height:58px;border:1px solid var(--line2);overflow:hidden;margin-bottom:6px}
+.battlebar div{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:0 10px;min-width:0;position:relative;
+  border-right:1px solid rgba(0,0,0,.55);
+}
+.battlebar div:last-child{border-right:0}
+.battlebar .rn{font-size:11px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.battlebar .rp{font-family:var(--mono);font-size:13px;font-weight:800}
+.bb1{background:linear-gradient(180deg,var(--lime),var(--lime-d));color:#0A0F00}
+.bb2{background:linear-gradient(180deg,#FF9A44,var(--blaze));color:#180800}
+.bb3{background:linear-gradient(180deg,#4FE3E0,#12A8B4);color:#001416}
+.bb4{background:linear-gradient(180deg,#8E9BB0,#5D6A7E);color:#05080D}
+.bb5{background:linear-gradient(180deg,#3B4453,#2A3341);color:#C7D0DB}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line2);background:var(--panel);-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:660px;font-size:13.5px}
+caption{text-align:left;padding:10px 14px;font-size:11px;letter-spacing:.13em;font-weight:900;color:var(--dim2);border-bottom:1px solid var(--line2);background:var(--bg2)}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+thead th{font-size:10px;letter-spacing:.13em;color:var(--dim2);font-weight:900;background:var(--bg2)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:rgba(255,255,255,.026)}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.tag-up{color:var(--mint);font-family:var(--mono);font-weight:800}
+.tag-dn{color:var(--rose);font-family:var(--mono);font-weight:800}
+.tag-fl{color:var(--dim2);font-family:var(--mono)}
+.rlead{font-weight:900}
+.rlead::before{content:"";display:inline-block;width:8px;height:8px;background:var(--lime);margin-right:8px;transform:translateY(-1px)}
+.scrollhint{font-size:10.5px;color:var(--dim2);margin-top:8px;letter-spacing:.06em}
+@media(min-width:760px){.scrollhint{display:none}}
+
+/* QUESTS + FEED */
+.qwrap{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:940px){.qwrap{grid-template-columns:1.55fr 1fr}}
+.qlist{display:grid;gap:10px;align-content:start}
+.quest{
+  border:1px solid var(--line2);background:var(--panel);padding:15px 16px;
+  clip-path:polygon(0 0,calc(100% - 13px) 0,100% 13px,100% 100%,0 100%);
+  transition:border-color .18s ease,transform .18s ease;
+}
+.quest:hover{border-color:rgba(204,255,0,.45);transform:translateX(2px)}
+.q-top{display:flex;align-items:flex-start;gap:12px}
+.q-ic{
+  flex:none;width:36px;height:36px;display:grid;place-items:center;
+  border:1px solid var(--line2);color:var(--lime);
+  clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);
+}
+.q-name{font-size:15px;font-weight:900;letter-spacing:-0.03em}
+.q-desc{font-size:12px;color:var(--dim);margin-top:2px}
+.q-pay{margin-left:auto;text-align:right;flex:none}
+.q-pay .v{font-family:var(--mono);font-size:19px;font-weight:800;color:var(--lime);letter-spacing:-0.04em}
+.q-pay .k{font-size:9.5px;letter-spacing:.14em;color:var(--dim2);font-weight:800}
+.q-bar{height:5px;background:var(--line);margin-top:13px;overflow:hidden}
+.q-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--lime-d),var(--lime))}
+.q-foot{display:flex;justify-content:space-between;gap:10px;margin-top:7px;font-size:11px;color:var(--dim2);font-family:var(--mono)}
+
+.feed{border:1px solid var(--line2);background:var(--panel);display:flex;flex-direction:column}
+.feed-h{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--line2);background:var(--bg2)}
+.feed-h .t{font-size:11px;font-weight:900;letter-spacing:.14em}
+.feed-h .c{margin-left:auto;font-size:11px;font-family:var(--mono);color:var(--lime)}
+.feed ul{flex:1}
+.feed li{display:flex;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:12.5px;line-height:1.45}
+.feed li:last-child{border-bottom:0}
+.feed .ts{flex:none;width:52px;font-family:var(--mono);font-size:10.5px;color:var(--dim2);padding-top:2px}
+.feed .bd{min-width:0;color:var(--dim)}
+.feed .bd b{color:var(--txt);font-weight:800}
+.feed .bd .up{color:var(--mint);font-family:var(--mono);font-weight:800}
+.feed .bd .drv{color:var(--lime);font-family:var(--mono);font-weight:800}
+.feed li.new{animation:feedin .5s ease}
+@keyframes feedin{from{opacity:0;transform:translateY(-8px);background:rgba(204,255,0,.09)}to{opacity:1;transform:none}}
+
+/* RULES */
+.rulegrid{display:grid;gap:0;border:1px solid var(--line2);background:var(--panel)}
+.rule{display:grid;grid-template-columns:1fr;gap:2px 20px;padding:13px 16px;border-bottom:1px solid var(--line)}
+@media(min-width:680px){.rule{grid-template-columns:170px minmax(0,1fr);align-items:baseline;padding:15px 20px}}
+.rule:last-child{border-bottom:0}
+.rule:hover{background:rgba(204,255,0,.028)}
+.rule dt{font-size:10.5px;letter-spacing:.15em;font-weight:900;color:var(--dim2)}
+.rule dd{margin:0;font-size:14px}
+.rule dd .hi{font-family:var(--mono);font-weight:800;color:var(--lime);font-size:15px}
+.rule dd .no{color:var(--dim)}
+
+/* GENESIS */
+.gen{
+  position:relative;overflow:hidden;
+  border:1px solid rgba(204,255,0,.36);
+  background:linear-gradient(160deg,rgba(204,255,0,.11),rgba(204,255,0,.015) 44%,var(--panel) 76%);
+  padding:clamp(22px,4vw,44px);
+  clip-path:polygon(0 0,calc(100% - 26px) 0,100% 26px,100% 100%,26px 100%,0 calc(100% - 26px));
+}
+.gen-car{position:absolute;right:-40px;bottom:-24px;width:min(60%,460px);opacity:.11;pointer-events:none}
+.gen-grid{display:grid;gap:clamp(20px,3vw,42px);grid-template-columns:1fr;position:relative}
+@media(min-width:900px){.gen-grid{grid-template-columns:1.05fr .95fr;align-items:center}}
+.gen h2{font-size:clamp(1.9rem,5vw,3.1rem);font-weight:900;letter-spacing:-0.05em;line-height:1}
+.gen h2 span{color:var(--lime)}
+.gen .p{margin-top:14px;font-size:14.5px;color:var(--dim);max-width:40ch}
+.gen .p b{color:var(--txt);font-weight:700}
+.perks{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line2);margin-top:22px;border:1px solid var(--line2)}
+.perks li{background:var(--bg2);padding:13px 14px}
+.perks .v{font-family:var(--mono);font-size:18px;font-weight:800;color:var(--lime);letter-spacing:-0.04em;line-height:1.2}
+.perks .k{font-size:11.5px;color:var(--dim);margin-top:2px}
+.cta-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:22px}
+.cta-note{font-size:11.5px;color:var(--dim2);max-width:30ch}
+
+.slotpanel{border:1px solid var(--line2);background:rgba(7,8,10,.62);padding:16px}
+.slot-top{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.slot-big{font-family:var(--mono);font-size:clamp(34px,7vw,58px);font-weight:800;letter-spacing:-0.06em;line-height:.9;color:var(--lime)}
+.slot-of{font-family:var(--mono);font-size:18px;color:var(--dim2);font-weight:700}
+.slot-left{margin-left:auto;text-align:right}
+.slot-left .k{font-size:9.5px;letter-spacing:.15em;color:var(--dim2);font-weight:900}
+.slot-left .v{font-family:var(--mono);font-size:22px;font-weight:800;letter-spacing:-0.04em}
+.slotgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(8px,1fr));gap:2px}
+.slotgrid i{display:block;aspect-ratio:1;background:var(--line)}
+.slotgrid i.f{background:var(--lime-d)}
+.slotgrid i.me{background:transparent;border:1px solid var(--lime);animation:ghostpulse 1.6s ease-in-out infinite}
+.slot-leg{display:flex;gap:16px;flex-wrap:wrap;margin-top:11px;font-size:10.5px;color:var(--dim2)}
+.slot-leg span{display:inline-flex;align-items:center;gap:6px}
+.slot-leg b{width:9px;height:9px;display:inline-block}
+
+/* FOOTER */
+footer{border-top:1px solid var(--line);padding:34px 0 46px;margin-top:20px}
+.foot-in{display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:flex-start}
+.foot-nav{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--dim)}
+.foot-nav a:hover{color:var(--lime)}
+.disc{margin-top:22px;font-size:11px;line-height:1.7;color:var(--dim2);max-width:78ch}
+.disc p+p{margin-top:5px}
+
+/* REDUCED MOTION */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+  .tickerview{mask-image:none;overflow-x:auto}
+  .tickertrack{animation:none;width:auto}
+  .pip,.kicker .dot{opacity:1}
+  .ghost::before{opacity:1}
+  .ghost .c-pos{opacity:1}
+  .slotgrid i.me{border-width:2px}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#leaderboard">본문(순위표)으로 건너뛰기</a>
+
+<!-- ================= TOP BAR ================= -->
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="#top" aria-label="teslam.io 홈">
+      <span class="brand-mk" aria-hidden="true"></span>
+      <span class="brand-tx">teslam<b>.io</b></span>
+    </a>
+    <nav class="navlinks" aria-label="주요 메뉴">
+      <a href="#leaderboard">순위표</a>
+      <a href="#regions">지역전</a>
+      <a href="#quests">퀘스트</a>
+      <a href="#rules">규정</a>
+    </nav>
+    <div class="top-right">
+      <div class="slotmini" id="slotMini">
+        <div class="k">GENESIS 500</div>
+        <div class="v"><span id="slotMiniN">327</span>/500</div>
+      </div>
+      <a class="btn" href="#genesis">1기 자리 잡기</a>
+    </div>
+  </div>
+</header>
+
+<!-- ================= TICKER ================= -->
+<div class="tickerbar" aria-hidden="true">
+  <div class="wrap tickerbar-in" style="padding-right:0">
+    <div class="tickerlab"><span class="pip"></span>LIVE</div>
+    <div class="tickerview">
+      <div class="tickertrack" id="tickerTrack">
+        <span><b>광교전비장인</b> 8.42 km/kWh <i>▲1</i> 1위 탈환</span>
+        <span><b>기흥 V4</b> 체크인 12명 · 대기 0</span>
+        <span><b>제주바람가르기</b> 41일 연속 주행 <i>STREAK</i></span>
+        <span>2026.20.4 국내 순차 배포 시작 · 테크 게시판 <b>342</b>댓글</span>
+        <span><b>판교M3P</b> 오늘 상한 도달 <i>+500 DRV</i></span>
+        <span>지역전 <b>수도권</b> 4주 연속 선두 · 영남 <i>+0.7</i>차</span>
+        <span><b>흰둥이오너</b> <i class="dn">▼2</i> 7위</span>
+        <span>Genesis 500 남은 자리 <b>173</b></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main id="top">
+
+<!-- ================= ARENA ================= -->
+<section class="arena" id="leaderboard" aria-labelledby="h1">
+  <div class="wrap">
+    <p class="kicker"><span class="dot" aria-hidden="true"></span>2026 시즌 · 32주차 · 전비 리그</p>
+    <div class="headrow">
+      <div>
+        <h1 id="h1">이번 주,<br>당신은 <em>몇 위</em>입니까</h1>
+        <p class="lede">지금 <b>12,847명</b>의 테슬람이 이 순위표 위를 달리고 있습니다. GPS 아니고 <b>오도미터</b>로 검증된 기록만 올라갑니다.</p>
+      </div>
+      <div class="clockbox">
+        <div class="k">32주차 마감까지</div>
+        <div class="v num" id="countdown">2<span class="u">일</span> 14:22:07</div>
+        <div class="s" id="cdNote">마감 후 즉시 보상 정산</div>
+      </div>
+    </div>
+
+    <!-- PODIUM -->
+    <div class="podium" id="podium" aria-label="이번 주 상위 3위">
+      <article class="pod p1">
+        <svg class="pod-car" viewBox="0 0 260 82" aria-hidden="true" focusable="false">
+          <path d="M8 62 L13 50 Q20 42 46 39 L86 20 Q112 12 146 13 Q178 14 200 26 L232 38 Q250 42 252 52 L253 62 Z" fill="none" stroke="#CCFF00" stroke-width="2.4"/>
+          <path d="M62 38 L92 22 Q114 16 142 17 L160 34 Z" fill="none" stroke="#CCFF00" stroke-width="1.6"/>
+          <circle cx="62" cy="62" r="12" fill="none" stroke="#CCFF00" stroke-width="2.4"/>
+          <circle cx="200" cy="62" r="12" fill="none" stroke="#CCFF00" stroke-width="2.4"/>
+        </svg>
+        <div class="rec" id="recFlash">신기록</div>
+        <div class="pod-top">
+          <div class="pod-rank num">1</div>
+          <div class="pod-tag">챔피언 · 3주 연속</div>
+        </div>
+        <h3 class="pod-name">광교전비장인</h3>
+        <p class="pod-meta">Model 3 Long Range · 수도권 · Genesis 1기</p>
+        <div class="pod-eff">
+          <span class="big" id="p1eff">8.42</span><span class="un">km/kWh</span>
+        </div>
+        <div class="pod-stats">
+          <div><div class="k">주행</div><div class="v">487 km</div></div>
+          <div><div class="k">DRV</div><div class="v">5,250</div></div>
+          <div><div class="k">연속</div><div class="v">23일</div></div>
+        </div>
+      </article>
+
+      <article class="pod p2">
+        <svg class="pod-car" viewBox="0 0 260 82" aria-hidden="true" focusable="false">
+          <path d="M8 62 L13 50 Q20 42 46 39 L86 20 Q112 12 146 13 Q178 14 200 26 L232 38 Q250 42 252 52 L253 62 Z" fill="none" stroke="#A8BACB" stroke-width="2.4"/>
+          <circle cx="62" cy="62" r="12" fill="none" stroke="#A8BACB" stroke-width="2.4"/>
+          <circle cx="200" cy="62" r="12" fill="none" stroke="#A8BACB" stroke-width="2.4"/>
+        </svg>
+        <div class="pod-top">
+          <div class="pod-rank num">2</div>
+          <div class="pod-tag">▲4</div>
+        </div>
+        <h3 class="pod-name">제주바람가르기</h3>
+        <p class="pod-meta">Model Y RWD · 강원·제주</p>
+        <div class="pod-eff"><span class="big">8.11</span><span class="un">km/kWh</span></div>
+        <div class="pod-stats">
+          <div><div class="k">격차</div><div class="v">+0.31</div></div>
+          <div><div class="k">주행</div><div class="v">512 km</div></div>
+          <div><div class="k">연속</div><div class="v">41일</div></div>
+        </div>
+      </article>
+
+      <article class="pod p3">
+        <svg class="pod-car" viewBox="0 0 260 82" aria-hidden="true" focusable="false">
+          <path d="M8 62 L13 50 Q20 42 46 39 L86 20 Q112 12 146 13 Q178 14 200 26 L232 38 Q250 42 252 52 L253 62 Z" fill="none" stroke="#FF7A1A" stroke-width="2.4"/>
+          <circle cx="62" cy="62" r="12" fill="none" stroke="#FF7A1A" stroke-width="2.4"/>
+          <circle cx="200" cy="62" r="12" fill="none" stroke="#FF7A1A" stroke-width="2.4"/>
+        </svg>
+        <div class="pod-top">
+          <div class="pod-rank num">3</div>
+          <div class="pod-tag">▼1</div>
+        </div>
+        <h3 class="pod-name">노란번호판형</h3>
+        <p class="pod-meta">Model 3 하이랜드 · 영남 · Genesis 1기</p>
+        <div class="pod-eff"><span class="big">7.96</span><span class="un">km/kWh</span></div>
+        <div class="pod-stats">
+          <div><div class="k">격차</div><div class="v">+0.46</div></div>
+          <div><div class="k">주행</div><div class="v">446 km</div></div>
+          <div><div class="k">연속</div><div class="v">12일</div></div>
+        </div>
+      </article>
+    </div>
+
+    <!-- TIMING TOWER -->
+    <div class="tower-shell">
+      <div class="tower-cap">
+        <span class="chip live">● 실시간</span>
+        <h2>전체 순위 · 주간 평균 전비 기준</h2>
+        <span class="sub">60초마다 갱신 · 오도미터 검증</span>
+      </div>
+
+      <div class="grid-row thead" role="row">
+        <div role="columnheader">POS</div>
+        <div role="columnheader">Δ</div>
+        <div role="columnheader">드라이버</div>
+        <div class="hide-s" role="columnheader">지역</div>
+        <div class="col-r" role="columnheader">전비</div>
+        <div class="col-r" role="columnheader">격차</div>
+        <div class="col-r hide-s" role="columnheader">주행</div>
+        <div class="col-r" role="columnheader">DRV</div>
+        <div class="col-r hide-s" role="columnheader">연속</div>
+      </div>
+
+      <div id="tower" role="rowgroup" aria-live="off" aria-label="4위부터 12위까지 순위"></div>
+
+      <p class="gapmark">134명 생략</p>
+
+      <!-- ===== THE GHOST SLOT ===== -->
+      <div class="ghost">
+        <div class="grid-row trow ghost-row">
+          <div class="c-pos num" aria-hidden="true">??</div>
+          <div class="c-delta" aria-hidden="true">—</div>
+          <div class="c-drv-name">
+            <div class="nm">당신 자리 <span class="gbadge">비어 있음</span></div>
+            <div class="tr">테슬라 계정 1회 연결 → 다음 주부터 이 줄에 이름이 박힙니다</div>
+          </div>
+          <div class="ghost-cta"><a class="btn" href="#genesis">내 순위 열기 →</a></div>
+        </div>
+      </div>
+    </div>
+    <p class="scrollhint">※ 좁은 화면에서는 지역·주행·연속 항목이 숨겨집니다.</p>
+  </div>
+</section>
+
+<!-- ================= REGIONS ================= -->
+<section class="band" id="regions" aria-labelledby="h-reg">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="secnum">02 / 지역전</span>
+      <h2 id="h-reg">수도권 4주 연속.<br>영남이 0.7점 차로 따라붙었습니다.</h2>
+      <p class="sub">지역 점수 = 소속 드라이버 주간 평균 전비 × 참가율. 매주 일요일 자정 리셋.</p>
+    </div>
+
+    <div class="battlebar" role="img" aria-label="지역별 참가 비중: 수도권 41.2퍼센트, 영남 22.6퍼센트, 충청 14.4퍼센트, 호남 12.3퍼센트, 강원제주 9.5퍼센트">
+      <div class="bb1" style="flex:41.2"><span class="rn">수도권</span><span class="rp">41.2%</span></div>
+      <div class="bb2" style="flex:22.6"><span class="rn">영남</span><span class="rp">22.6%</span></div>
+      <div class="bb3" style="flex:14.4"><span class="rn">충청</span><span class="rp">14.4%</span></div>
+      <div class="bb4" style="flex:12.3"><span class="rn">호남</span><span class="rp">12.3%</span></div>
+      <div class="bb5" style="flex:9.5"><span class="rn">강원·제주</span><span class="rp">9.5%</span></div>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <caption>32주차 지역 순위 · 08.06 08:12 기준</caption>
+        <thead>
+          <tr>
+            <th scope="col">순위</th>
+            <th scope="col">지역</th>
+            <th class="n" scope="col">참가</th>
+            <th class="n" scope="col">평균 전비</th>
+            <th class="n" scope="col">총 주행</th>
+            <th class="n" scope="col">지역 점수</th>
+            <th class="n" scope="col">변동</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="n">1</td><td class="rlead">수도권</td><td class="n">5,294</td><td class="n">6.84</td><td class="n">1,842,310 km</td><td class="n">94.2</td><td class="n tag-fl">—</td></tr>
+          <tr><td class="n">2</td><td>영남</td><td class="n">2,903</td><td class="n">6.91</td><td class="n">1,014,772 km</td><td class="n">93.5</td><td class="n tag-up">▲1</td></tr>
+          <tr><td class="n">3</td><td>충청</td><td class="n">1,849</td><td class="n">6.77</td><td class="n">702,441 km</td><td class="n">88.1</td><td class="n tag-dn">▼1</td></tr>
+          <tr><td class="n">4</td><td>호남</td><td class="n">1,580</td><td class="n">6.72</td><td class="n">596,208 km</td><td class="n">86.4</td><td class="n tag-fl">—</td></tr>
+          <tr><td class="n">5</td><td>강원·제주</td><td class="n">1,221</td><td class="n">7.08</td><td class="n">431,995 km</td><td class="n">85.9</td><td class="n tag-up">▲2</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="scrollhint">← 표를 옆으로 밀어서 보세요</p>
+  </div>
+</section>
+
+<!-- ================= QUESTS ================= -->
+<section class="band" id="quests" aria-labelledby="h-q" style="padding-top:0">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="secnum">03 / 주간 퀘스트</span>
+      <h2 id="h-q">달리기만 해도 쌓입니다.<br>잘 달리면 더 쌓입니다.</h2>
+    </div>
+
+    <div class="qwrap">
+      <div class="qlist">
+        <article class="quest">
+          <div class="q-top">
+            <div class="q-ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+            </div>
+            <div>
+              <h3 class="q-name">전비 7.0 돌파</h3>
+              <p class="q-desc">이번 주 평균 7.0 km/kWh 이상 · 에어컨 켜고도 해내면 진짜</p>
+            </div>
+            <div class="q-pay"><div class="v">+300</div><div class="k">DRV</div></div>
+          </div>
+          <div class="q-bar"><i style="width:38%"></i></div>
+          <div class="q-foot"><span>도전 1,284명</span><span>달성 38%</span></div>
+        </article>
+
+        <article class="quest">
+          <div class="q-top">
+            <div class="q-ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+            </div>
+            <div>
+              <h3 class="q-name">V4 슈퍼차저 체크인</h3>
+              <p class="q-desc">전국 V4 아무 데나 1회 · 기흥 · 하남 · 동대구 인기</p>
+            </div>
+            <div class="q-pay"><div class="v">+80</div><div class="k">DRV</div></div>
+          </div>
+          <div class="q-bar"><i style="width:61%"></i></div>
+          <div class="q-foot"><span>도전 2,061명</span><span>달성 61%</span></div>
+        </article>
+
+        <article class="quest">
+          <div class="q-top">
+            <div class="q-ic" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s4 4.2 4 8a4 4 0 0 1-8 0c0-3.8 4-8 4-8z"/><path d="M8.5 13.5C7 15 6 16.6 6 18a6 6 0 0 0 12 0c0-1.4-1-3-2.5-4.5"/></svg>
+            </div>
+            <div>
+              <h3 class="q-name">7일 연속 주행 스트릭</h3>
+              <p class="q-desc">하루도 안 쉬고 · 주차만 해둔 날은 인정 안 됩니다</p>
+            </div>
+            <div class="q-pay"><div class="v">+250</div><div class="k">DRV</div></div>
+          </div>
+          <div class="q-bar"><i style="width:19%"></i></div>
+          <div class="q-foot"><span>도전 940명</span><span>달성 19%</span></div>
+        </article>
+      </div>
+
+      <aside class="feed" aria-label="실시간 활동 피드">
+        <div class="feed-h">
+          <span class="chip live">●</span>
+          <span class="t">지금 아레나에서</span>
+          <span class="c" id="onlineN">1,204명 접속</span>
+        </div>
+        <ul id="feedList">
+          <li><span class="ts">방금</span><span class="bd"><b>판교M3P</b> 8.19 기록 · 5위 <span class="up">→ 4위</span></span></li>
+          <li><span class="ts">2분</span><span class="bd">기흥 V4 체크인 <b>흰둥이오너</b> <span class="drv">+80 DRV</span></span></li>
+          <li><span class="ts">6분</span><span class="bd"><b>제주바람가르기</b> 41일 연속 주행 달성</span></li>
+          <li><span class="ts">11분</span><span class="bd">소프트웨어 <b>2026.20.4</b> 국내 배포 시작 · 댓글 342</span></li>
+          <li><span class="ts">18분</span><span class="bd"><b>세종충전요정</b> 오늘 상한 <span class="drv">500 DRV</span> 도달</span></li>
+          <li><span class="ts">24분</span><span class="bd"><b>대구달구벌</b> Genesis 1기 합류 · 남은 자리 173</span></li>
+          <li><span class="ts">31분</span><span class="bd"><b>야간충전러</b> 심야 충전 3회 퀘스트 완료</span></li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ================= RULES ================= -->
+<section class="band" id="rules" aria-labelledby="h-r" style="padding-top:0">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="secnum">04 / 레이스 규정</span>
+      <h2 id="h-r">짧습니다. 이게 전부예요.</h2>
+      <p class="sub">복잡한 백서 없습니다. 달린 만큼, 검증된 만큼.</p>
+    </div>
+
+    <dl class="rulegrid">
+      <div class="rule"><dt>판정 기준</dt><dd>주행거리는 <b>오도미터</b>로만 셉니다. GPS는 조작할 수 있지만 오도미터는 되돌아가지 않습니다.</dd></div>
+      <div class="rule"><dt>데이터</dt><dd>차가 <b>움직이는 동안만</b> 60초마다 4개 — 위도 · 경도 · 속도 · 오도미터. <span class="no">주차 중엔 아무것도 안 보냅니다.</span></dd></div>
+      <div class="rule"><dt>배점</dt><dd><span class="hi">1 km = 10 DRV</span></dd></div>
+      <div class="rule"><dt>일일 상한</dt><dd><span class="hi">500 DRV</span> <span class="no">(= 하루 50 km까지)</span></dd></div>
+      <div class="rule"><dt>Genesis 배율</dt><dd><span class="hi">× 1.5</span> <span class="no">1기 500명 한정, 영구 적용</span></dd></div>
+      <div class="rule"><dt>교환</dt><dd><span class="hi">1,000 DRV ≈ 500원</span> 상당의 실물</dd></div>
+      <div class="rule"><dt>쓰는 곳</dt><dd>슈퍼차저 크레딧 · 기프티콘 · 세차 쿠폰</dd></div>
+      <div class="rule"><dt>TSLM</dt><dd>총 <b>1억 개 고정 발행</b>. DRV를 락업하거나 제대로 된 기술 글을 쓰면 받습니다. 투표권 + 광고 게재권.</dd></div>
+      <div class="rule"><dt>연결</dt><dd>테슬라 <b>공식 OAuth 1회</b>. 개발자 계정 필요 없고, Fleet API 비용은 teslam.io가 냅니다. <span class="no">오너가 낼 돈 없음.</span></dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ================= GENESIS ================= -->
+<section class="band" id="genesis" aria-labelledby="h-g" style="padding-top:0">
+  <div class="wrap">
+    <div class="gen">
+      <svg class="gen-car" viewBox="0 0 260 82" aria-hidden="true" focusable="false">
+        <path d="M8 62 L13 50 Q20 42 46 39 L86 20 Q112 12 146 13 Q178 14 200 26 L232 38 Q250 42 252 52 L253 62 Z" fill="none" stroke="#CCFF00" stroke-width="1.8"/>
+        <path d="M62 38 L92 22 Q114 16 142 17 L160 34 Z" fill="none" stroke="#CCFF00" stroke-width="1.2"/>
+        <circle cx="62" cy="62" r="12" fill="none" stroke="#CCFF00" stroke-width="1.8"/>
+        <circle cx="200" cy="62" r="12" fill="none" stroke="#CCFF00" stroke-width="1.8"/>
+      </svg>
+      <div class="gen-grid">
+        <div>
+          <p class="kicker"><span class="dot" aria-hidden="true"></span>1기 · 선착순 500명</p>
+          <h2 id="h-g">제네시스 <span>500</span></h2>
+          <p class="p">여기 딱 <b>500명</b>만 들어옵니다. 1기 번호는 다시 안 열려요. 토크노믹스를 어떻게 굴릴지도 <b>1기가 투표로</b> 정합니다.</p>
+          <ul class="perks">
+            <li><div class="v">× 1.5</div><div class="k">DRV 보상 영구 배율</div></li>
+            <li><div class="v">1기</div><div class="k">프로필 · 순위표 마크</div></li>
+            <li><div class="v">VOTE</div><div class="k">토크노믹스 의결권</div></li>
+            <li><div class="v">#001–500</div><div class="k">영구 고정 번호</div></li>
+          </ul>
+          <div class="cta-row">
+            <a class="btn btn-lg" href="#genesis">테슬라 계정 연결하고 1기 등록</a>
+            <p class="cta-note">공식 OAuth 1분 · 카드 정보 안 받습니다</p>
+          </div>
+        </div>
+
+        <div class="slotpanel">
+          <div class="slot-top">
+            <span class="slot-big num" id="slotN">327</span>
+            <span class="slot-of num">/ 500</span>
+            <span class="slot-left"><span class="k">남은 자리</span><br><span class="v num" id="slotLeft">173</span></span>
+          </div>
+          <div class="slotgrid" id="slotGrid" aria-hidden="true"></div>
+          <div class="slot-leg">
+            <span><b style="background:var(--lime-d)"></b>합류 완료</span>
+            <span><b style="background:var(--line)"></b>남은 자리</span>
+            <span><b style="border:1px solid var(--lime)"></b>당신 자리</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-in">
+      <a class="brand" href="#top">
+        <span class="brand-mk" aria-hidden="true"></span>
+        <span class="brand-tx">teslam<b>.io</b></span>
+      </a>
+      <nav class="foot-nav" aria-label="푸터 메뉴">
+        <a href="#leaderboard">순위표</a>
+        <a href="#regions">지역전</a>
+        <a href="#quests">퀘스트</a>
+        <a href="#rules">규정</a>
+        <a href="#genesis">Genesis 500</a>
+      </nav>
+    </div>
+    <div class="disc">
+      <p>teslam.io는 Tesla, Inc.와 제휴하거나 후원받는 관계가 아닌 독립 커뮤니티 프로젝트입니다.</p>
+      <p>Tesla, Model 3, Model Y, Model S, Model X, Supercharger는 Tesla, Inc.의 상표입니다. 순위표에 표시된 기록과 닉네임은 서비스 소개를 위한 예시 데이터입니다. DRV·TSLM은 커뮤니티 활동 리워드이며 투자 상품이 아닙니다.</p>
+      <p>© 2026 teslam.io</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- ticker: duplicate content so translateX(-50%) loops seamlessly ---------- */
+  var track = document.getElementById('tickerTrack');
+  if(track && !reduce){
+    var orig = Array.prototype.slice.call(track.children);
+    orig.forEach(function(el){
+      var c = el.cloneNode(true);
+      c.setAttribute('aria-hidden','true');
+      track.appendChild(c);
+    });
+  }
+
+  /* ---------- DATA (ranks 4-12) ---------- */
+  var LEADER = 8.42;
+  var rows = [
+    {n:'하남스타필드러', t:'Model Y Long Range', r:'수도권', e:7.74, km:402, drv:'3,420', st:9,  g:false, d:'▲2'},
+    {n:'판교M3P',       t:'Model 3 Performance', r:'수도권', e:7.68, km:521, drv:'5,250', st:31, g:true,  d:'▲1'},
+    {n:'흰둥이오너',     t:'Model 3 하이랜드',   r:'충청',   e:7.61, km:388, drv:'3,280', st:5,  g:false, d:'▼2'},
+    {n:'대구달구벌P',    t:'Model Y Performance', r:'영남',  e:7.55, km:455, drv:'3,500', st:17, g:true,  d:'—'},
+    {n:'킬로와트도사',   t:'Model S Plaid',      r:'수도권', e:7.48, km:361, drv:'4,710', st:44, g:true,  d:'▲3'},
+    {n:'야간충전러',     t:'Model 3 Long Range', r:'호남',   e:7.42, km:344, drv:'3,110', st:2,  g:false, d:'▼1'},
+    {n:'광안리롱레인지', t:'Model Y RWD',        r:'영남',   e:7.36, km:419, drv:'3,440', st:13, g:false, d:'▲1'},
+    {n:'세종충전요정',   t:'Model 3 RWD',        r:'충청',   e:7.31, km:297, drv:'2,860', st:7,  g:false, d:'▼3'},
+    {n:'서해안고속도로', t:'Model X Long Range', r:'호남',   e:7.24, km:466, drv:'3,500', st:21, g:false, d:'—'}
+  ];
+
+  var tower = document.getElementById('tower');
+  if(!tower) return;
+
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  function rowHTML(d, pos){
+    var dc = d.d.indexOf('▲')===0 ? 'up' : (d.d.indexOf('▼')===0 ? 'dn' : '');
+    return ''+
+      '<div class="c-pos num">'+pos+'</div>'+
+      '<div class="c-delta '+dc+'">'+d.d+'</div>'+
+      '<div class="c-drv-name">'+
+        '<div class="nm">'+esc(d.n)+(d.g?'<span class="gbadge">G</span>':'')+'</div>'+
+        '<div class="tr">'+esc(d.t)+'</div>'+
+      '</div>'+
+      '<div class="c-reg hide-s">'+esc(d.r)+'</div>'+
+      '<div class="c-eff">'+d.e.toFixed(2)+'</div>'+
+      '<div class="c-gap">+'+(LEADER-d.e).toFixed(2)+'</div>'+
+      '<div class="c-km hide-s">'+d.km+'</div>'+
+      '<div class="c-drv">'+d.drv+'</div>'+
+      '<div class="c-st hide-s">'+d.st+'일</div>';
+  }
+
+  function render(){
+    var frag = document.createDocumentFragment();
+    rows.forEach(function(d,i){
+      var el = document.createElement('div');
+      el.className = 'grid-row trow';
+      el.setAttribute('role','row');
+      el.innerHTML = rowHTML(d, i+4);
+      frag.appendChild(el);
+    });
+    tower.textContent = '';
+    tower.appendChild(frag);
+  }
+  render();
+
+  function repaint(){
+    var kids = tower.children;
+    for(var i=0;i<kids.length;i++){ kids[i].innerHTML = rowHTML(rows[i], i+4); }
+  }
+
+  /* ---------- FLIP rank swap ---------- */
+  var swapping = false;
+  function swapAt(i){
+    if(swapping) return;
+    var kids = Array.prototype.slice.call(tower.children);
+    if(!kids[i] || !kids[i+1]) return;
+
+    var upper = rows[i], lower = rows[i+1];
+    var ceil = (i === 0) ? 7.96 - 0.01 : rows[i-1].e - 0.01;   // never pass the row above
+    var target = Math.min(upper.e + 0.01 + Math.random()*0.03, ceil);
+    if(target <= upper.e + 0.004) return;                       // no room, skip
+    lower.e = Math.round(target*100)/100;
+
+    swapping = true;
+    var first = kids.map(function(el){ return el.getBoundingClientRect().top; });
+
+    // swap data + delta marks
+    rows[i] = lower; rows[i+1] = upper;
+    rows[i].d = '▲1'; rows[i+1].d = '▼1';
+
+    // swap DOM nodes
+    tower.insertBefore(kids[i+1], kids[i]);
+    repaint();
+
+    var now = Array.prototype.slice.call(tower.children);
+    now.forEach(function(el){
+      var idx = kids.indexOf(el);
+      var dy = first[idx] - el.getBoundingClientRect().top;
+      if(!dy) return;
+      el.style.transition = 'none';
+      el.style.transform = 'translateY('+dy+'px)';
+    });
+    // force reflow
+    void tower.offsetHeight;
+    now.forEach(function(el){
+      el.style.transition = 'transform .5s cubic-bezier(.22,.85,.25,1)';
+      el.style.transform = '';
+    });
+
+    var risen = tower.children[i], fell = tower.children[i+1];
+    if(risen){ risen.classList.remove('hot'); void risen.offsetWidth; risen.classList.add('hot'); }
+    if(fell){ fell.classList.remove('cold'); void fell.offsetWidth; fell.classList.add('cold'); }
+
+    setTimeout(function(){
+      now.forEach(function(el){ el.style.transition=''; el.style.transform=''; });
+      if(risen) risen.classList.remove('hot');
+      if(fell) fell.classList.remove('cold');
+      swapping = false;
+    }, 1800);
+  }
+
+  /* ---------- countdown ---------- */
+  var cd = document.getElementById('countdown');
+  function pad(n){ return n<10 ? '0'+n : ''+n; }
+  function tick(){
+    if(!cd) return;
+    var now = new Date();
+    var end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    var addDays = (7 - now.getDay()) % 7;           // next Sunday 23:59:59
+    end.setDate(end.getDate() + addDays);
+    var s = Math.max(0, Math.floor((end - now)/1000));
+    var d = Math.floor(s/86400); s -= d*86400;
+    var h = Math.floor(s/3600);  s -= h*3600;
+    var m = Math.floor(s/60);    s -= m*60;
+    cd.innerHTML = d + '<span class="u">일</span> ' + pad(h)+':'+pad(m)+':'+pad(s);
+  }
+  tick(); setInterval(tick, 1000);
+
+  /* ---------- Genesis slot grid ---------- */
+  var filled = 327, TOTAL = 500;
+  var grid = document.getElementById('slotGrid');
+  function paintGrid(){
+    if(!grid) return;
+    var html = '';
+    for(var k=0;k<TOTAL;k++){
+      if(k < filled) html += '<i class="f"></i>';
+      else if(k === filled) html += '<i class="me"></i>';
+      else html += '<i></i>';
+    }
+    grid.innerHTML = html;
+  }
+  function paintCounts(){
+    var a = document.getElementById('slotN'), b = document.getElementById('slotLeft'), c = document.getElementById('slotMiniN');
+    if(a) a.textContent = filled;
+    if(b) b.textContent = (TOTAL - filled);
+    if(c) c.textContent = filled;
+  }
+  paintGrid(); paintCounts();
+
+  /* ---------- feed ---------- */
+  var feedPool = [
+    ['방금','<b>광교전비장인</b> 회생제동 구간 갱신 · 전비 <span class="up">+0.04</span>'],
+    ['방금','<b>하남스타필드러</b> 오늘 상한 <span class="drv">500 DRV</span> 도달'],
+    ['방금','<b>킬로와트도사</b> 44일 연속 주행 · 전체 1위 스트릭'],
+    ['방금','동대구 V4 체크인 <b>대구달구벌P</b> <span class="drv">+80 DRV</span>'],
+    ['방금','<b>광안리롱레인지</b> 10위 <span class="up">→ 9위</span>'],
+    ['방금','신규 Genesis 1기 합류 · <b>#328</b> 확정']
+  ];
+  var feedList = document.getElementById('feedList');
+  var fi = 0;
+  function pushFeed(){
+    if(!feedList) return;
+    var item = feedPool[fi++ % feedPool.length];
+    var li = document.createElement('li');
+    li.className = 'new';
+    li.innerHTML = '<span class="ts">'+item[0]+'</span><span class="bd">'+item[1]+'</span>';
+    feedList.insertBefore(li, feedList.firstChild);
+    var olds = feedList.querySelectorAll('li');
+    for(var k=7;k<olds.length;k++){ olds[k].parentNode.removeChild(olds[k]); }
+    var stamps = feedList.querySelectorAll('li .ts');
+    var labels = ['방금','1분','3분','7분','12분','19분','26분'];
+    for(var j=1;j<stamps.length;j++){ stamps[j].textContent = labels[Math.min(j, labels.length-1)]; }
+  }
+
+  /* ---------- online counter ---------- */
+  var online = 1204, onEl = document.getElementById('onlineN');
+  function jitterOnline(){
+    online += Math.floor(Math.random()*17) - 7;
+    if(online < 1150) online = 1150;
+    if(online > 1320) online = 1320;
+    if(onEl) onEl.textContent = online.toLocaleString('ko-KR') + '명 접속';
+  }
+
+  /* ---------- record flash on P1 ---------- */
+  var rec = document.getElementById('recFlash'), p1 = document.getElementById('p1eff');
+  function flashRecord(){
+    if(!rec || !p1) return;
+    LEADER = Math.round((LEADER + 0.01 + Math.random()*0.02)*100)/100;
+    p1.textContent = LEADER.toFixed(2);
+    repaint();
+    rec.classList.remove('on'); void rec.offsetWidth; rec.classList.add('on');
+  }
+
+  /* ---------- schedulers (motion-gated) ---------- */
+  if(!reduce){
+    var seq = 0;
+    setInterval(function(){
+      if(document.hidden) return;
+      var i = Math.floor(Math.random()*(rows.length-1)); // 0..7 -> ranks 4..12
+      swapAt(i);
+    }, 3800);
+
+    setInterval(function(){ if(!document.hidden) pushFeed(); }, 6500);
+    setInterval(function(){ if(!document.hidden) jitterOnline(); }, 4200);
+    setInterval(function(){ if(!document.hidden) flashRecord(); }, 15500);
+    setInterval(function(){
+      if(document.hidden) return;
+      if(filled < 340 && seq++ % 2 === 0){ filled++; paintGrid(); paintCounts(); }
+    }, 21000);
+  }
+
+  /* ---------- smooth anchor scroll ---------- */
+  document.addEventListener('click', function(e){
+    var a = e.target.closest ? e.target.closest('a[href^="#"]') : null;
+    if(!a) return;
+    var id = a.getAttribute('href');
+    if(id === '#' || id.length < 2) return;
+    var t = document.querySelector(id);
+    if(!t) return;
+    e.preventDefault();
+    t.scrollIntoView({behavior: reduce ? 'auto' : 'smooth', block:'start'});
+  });
+})();
+</script>
+</body>
+</html>

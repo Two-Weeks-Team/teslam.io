@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
     return [
       { source: "/index.md", destination: "/api/md/ko" },
       { source: "/en/index.md", destination: "/api/md/en" },
+
+      // Design directions under review. Each is a single self-contained file in
+      // `public/`, deliberately outside the app so an experiment cannot reach
+      // the shipped page's stylesheet — or be reached by it. `/alt` is the
+      // index. These are temporary; they go away once a direction is chosen.
+      { source: "/alt", destination: "/alt.html" },
+      ...Array.from({ length: 10 }, (_, i) => ({
+        source: `/alt${i + 1}`,
+        destination: `/alt${i + 1}.html`,
+      })),
     ];
   },
 

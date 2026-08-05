@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>teslam.io — 우리는 테슬람이다 · Genesis 500 모집중</title>
+<meta name="description" content="대한민국 테슬라 오너 성지. 달린 만큼 DRV로 받는다. Genesis 500 — 1기 모집중.">
+<style>
+  :root{
+    --ink:#0d0d0d;
+    --ink2:#181818;
+    --paper:#f4efe2;
+    --white:#fffdf6;
+    --volt:#d6ff2e;
+    --volt-deep:#b7e30a;
+    --pink:#ff2f7e;
+    --blue:#2f5cff;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --hard:6px 6px 0 var(--ink);
+    --hard-sm:4px 4px 0 var(--ink);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html,body{overflow-x:clip}
+  body{
+    font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    background:var(--ink);
+    color:var(--white);
+    word-break:keep-all;
+    overflow-wrap:break-word;
+    line-height:1.5;
+  }
+  ::selection{background:var(--pink);color:var(--white)}
+  a{color:inherit}
+  :focus-visible{outline:3px solid var(--volt);outline-offset:3px;border-radius:2px}
+  .skip{
+    position:absolute;left:-999px;top:0;background:var(--volt);color:var(--ink);
+    padding:.6rem 1rem;font-weight:800;z-index:99;
+  }
+  .skip:focus{left:8px;top:8px}
+
+  /* ───────── marquee tickers ───────── */
+  .ticker{
+    overflow:hidden;border-bottom:3px solid var(--ink);
+    background:var(--volt);color:var(--ink);
+    font-weight:900;font-size:clamp(.82rem,2vw,1rem);
+    letter-spacing:.02em;
+  }
+  .ticker--pink{background:var(--pink);color:var(--white);border-top:3px solid var(--ink)}
+  .ticker__track{
+    display:inline-flex;white-space:nowrap;will-change:transform;
+    animation:tickL 26s linear infinite;
+    padding:.55rem 0;
+  }
+  .ticker--pink .ticker__track{animation:tickR 34s linear infinite}
+  .ticker__track span{padding:0 .9rem}
+  .ticker__track em{font-style:normal;opacity:.55;padding:0 .2rem}
+  @keyframes tickL{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @keyframes tickR{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+
+  /* ───────── header ───────── */
+  header.site{
+    position:sticky;top:0;z-index:50;
+    background:var(--ink);border-bottom:3px solid var(--volt);
+    display:flex;align-items:center;justify-content:space-between;gap:1rem;
+    padding:.7rem clamp(1rem,4vw,2.4rem);
+  }
+  .logo{
+    font-weight:900;font-size:1.25rem;letter-spacing:-.02em;text-decoration:none;
+    background:var(--volt);color:var(--ink);padding:.2rem .6rem;
+    transform:rotate(-2deg);display:inline-block;box-shadow:var(--hard-sm);
+    border:3px solid var(--ink);
+  }
+  .logo small{font-size:.62em;font-weight:800;opacity:.75}
+  nav.main{display:flex;gap:.2rem;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  nav.main a{
+    text-decoration:none;font-weight:800;font-size:.86rem;padding:.45rem .7rem;color:var(--paper);
+  }
+  nav.main a:hover{background:var(--ink2);color:var(--volt)}
+  nav.main a.cta{
+    background:var(--pink);color:var(--white);border:3px solid var(--white);
+    box-shadow:var(--hard-sm);margin-left:.4rem;transform:rotate(1.5deg);
+  }
+  nav.main a.cta:hover{transform:rotate(0) scale(1.04);color:var(--white)}
+  @media(max-width:720px){nav.main a:not(.cta){display:none}}
+
+  /* ───────── hero ───────── */
+  .hero{
+    position:relative;overflow:clip;
+    padding:clamp(3rem,8vw,6rem) clamp(1rem,5vw,3rem) clamp(2.5rem,6vw,4.5rem);
+    background:
+      radial-gradient(1200px 500px at 85% -10%,rgba(47,92,255,.28),transparent 60%),
+      radial-gradient(900px 420px at -10% 110%,rgba(255,47,126,.22),transparent 60%),
+      var(--ink);
+  }
+  .hero__eyebrow{
+    display:inline-block;font-weight:900;font-size:clamp(.8rem,2vw,1rem);
+    background:var(--white);color:var(--ink);padding:.3rem .8rem;border:3px solid var(--ink);
+    box-shadow:var(--hard-sm);transform:rotate(-1.2deg);margin-bottom:1.2rem;
+  }
+  .hero h1{
+    font-size:clamp(3.1rem,13.5vw,9.5rem);
+    line-height:.95;letter-spacing:-.04em;font-weight:900;
+    text-transform:uppercase;
+  }
+  .hero h1 .l1{display:block;color:var(--white)}
+  .hero h1 .l2{display:block;color:var(--volt);text-shadow:6px 6px 0 rgba(255,47,126,.55)}
+  @supports(-webkit-text-stroke:2px black){
+    .hero h1 .l1{color:transparent;-webkit-text-stroke:2.5px var(--white)}
+  }
+  .hero__sub{
+    max-width:34rem;margin-top:1.6rem;font-size:clamp(1rem,2.4vw,1.2rem);
+    color:var(--paper);font-weight:600;
+  }
+  .hero__sub strong{color:var(--volt)}
+  .hero__cta-row{display:flex;gap:.9rem;margin-top:2rem;flex-wrap:wrap;align-items:center}
+  .btn{
+    display:inline-block;text-decoration:none;font-weight:900;
+    border:3px solid var(--ink);box-shadow:var(--hard);cursor:pointer;
+    padding:.95rem 1.5rem;font-size:1.05rem;font-family:inherit;
+    transition:transform .12s ease,box-shadow .12s ease;
+  }
+  .btn:hover{transform:translate(-2px,-2px);box-shadow:8px 8px 0 var(--ink)}
+  .btn:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+  .btn--volt{background:var(--volt);color:var(--ink)}
+  .btn--ghost{background:transparent;color:var(--white);border-color:var(--white);box-shadow:6px 6px 0 rgba(255,255,255,.25)}
+  .btn--pink{background:var(--pink);color:var(--white);border-color:var(--white)}
+
+  /* stickers scattered in hero */
+  .sticker{
+    position:absolute;font-weight:900;border:3px solid var(--ink);
+    padding:.45rem .8rem;box-shadow:var(--hard-sm);white-space:nowrap;
+    font-size:clamp(.72rem,1.6vw,.95rem);z-index:3;
+  }
+  .sticker--1{top:9%;right:6%;background:var(--pink);color:var(--white);transform:rotate(7deg)}
+  .sticker--2{top:34%;right:14%;background:var(--white);color:var(--ink);transform:rotate(-6deg)}
+  .sticker--3{bottom:30%;right:4%;background:var(--blue);color:var(--white);transform:rotate(-3deg)}
+  .sticker--4{bottom:12%;right:22%;background:var(--volt);color:var(--ink);transform:rotate(4deg)}
+  @media(max-width:900px){
+    .sticker--2{display:none}
+    .sticker--1{top:4%;right:3%}
+    .sticker--3{bottom:44%;right:2%}
+    .sticker--4{display:none}
+  }
+
+  /* car + road */
+  .road{margin-top:2.6rem;position:relative}
+  .road svg{display:block;width:min(560px,86%);height:auto}
+  .roadline{stroke:var(--paper);stroke-width:4;stroke-dasharray:26 20;animation:dash 1.1s linear infinite}
+  @keyframes dash{to{stroke-dashoffset:-46}}
+
+  /* hero stat strip */
+  .statstrip{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    border:3px solid var(--ink);background:var(--white);color:var(--ink);
+    box-shadow:var(--hard);margin-top:2.6rem;max-width:64rem;
+  }
+  .statstrip>div{padding:1rem 1.2rem;border-right:3px solid var(--ink)}
+  .statstrip>div:last-child{border-right:0}
+  .statstrip b{display:block;font-family:var(--mono);font-size:clamp(1.15rem,3.4vw,1.9rem);font-weight:800;letter-spacing:-.02em}
+  .statstrip span{font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;opacity:.65}
+  .statstrip .hot b{color:var(--pink)}
+  @media(max-width:640px){
+    .statstrip{grid-template-columns:1fr}
+    .statstrip>div{border-right:0;border-bottom:3px solid var(--ink)}
+    .statstrip>div:last-child{border-bottom:0}
+  }
+
+  /* ───────── shared section bits ───────── */
+  section{padding:clamp(3rem,7vw,5.5rem) clamp(1rem,5vw,3rem)}
+  .stamp{
+    display:inline-block;font-weight:900;font-size:clamp(1.5rem,4.6vw,2.6rem);
+    letter-spacing:-.03em;border:4px solid currentColor;padding:.25rem 1rem;
+    transform:rotate(-1.6deg);margin-bottom:.6rem;
+  }
+  .kicker{font-family:var(--mono);font-weight:700;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;display:block;margin-bottom:.9rem;opacity:.7}
+  .sec-note{font-weight:600;max-width:38rem;margin-top:.6rem}
+
+  /* ───────── league (scoreboard) ───────── */
+  .league{background:var(--paper);color:var(--ink)}
+  .league .stamp{color:var(--ink);background:var(--volt);box-shadow:var(--hard-sm)}
+  .tablewrap{overflow-x:auto;margin-top:1.8rem;border:3px solid var(--ink);box-shadow:var(--hard);background:var(--white)}
+  table.board{width:100%;border-collapse:collapse;min-width:600px;font-variant-numeric:tabular-nums}
+  table.board caption{position:absolute;left:-9999px}
+  table.board th{
+    text-align:left;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;
+    background:var(--ink);color:var(--volt);padding:.6rem .9rem;
+  }
+  table.board td{padding:.75rem .9rem;border-top:3px solid var(--ink);font-weight:700}
+  table.board .rank{font-family:var(--mono);font-weight:800;width:3.2rem;font-size:1.05rem}
+  table.board .eff,table.board .drv{font-family:var(--mono);font-weight:800}
+  table.board .drv{color:var(--blue)}
+  table.board tr.first td{background:var(--volt)}
+  table.board tr.first .rank::after{content:" 👑"}
+  table.board .car{font-size:.82rem;opacity:.7;font-weight:700}
+  .badge{
+    display:inline-block;font-size:.66rem;font-weight:900;padding:.1rem .45rem;
+    border:2px solid var(--ink);margin-left:.4rem;vertical-align:2px;background:var(--pink);color:var(--white);
+    transform:rotate(-2deg)
+  }
+  .badge--g{background:var(--ink);color:var(--volt)}
+  .league__foot{margin-top:1rem;font-weight:700;font-size:.9rem}
+  .league__foot code{font-family:var(--mono);background:var(--ink);color:var(--volt);padding:.1rem .45rem;font-size:.85em}
+
+  /* ───────── how it works ───────── */
+  .how{background:var(--ink)}
+  .how .stamp{color:var(--volt)}
+  .how__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem;margin-top:2rem}
+  @media(max-width:860px){.how__grid{grid-template-columns:1fr}}
+  .how__card{
+    border:3px solid var(--white);background:var(--ink2);padding:1.5rem 1.4rem 1.7rem;
+    box-shadow:8px 8px 0 rgba(214,255,46,.25);position:relative;
+  }
+  .how__card:nth-child(2){transform:rotate(.6deg)}
+  .how__card:nth-child(3){transform:rotate(-.6deg)}
+  .how__num{
+    position:absolute;top:-1.1rem;left:1rem;font-family:var(--mono);font-weight:800;
+    background:var(--pink);color:var(--white);border:3px solid var(--white);
+    padding:.1rem .6rem;font-size:1.05rem;transform:rotate(-4deg);
+  }
+  .how__card h3{font-size:1.35rem;font-weight:900;margin:.4rem 0 .7rem;color:var(--volt)}
+  .how__card p{color:var(--paper);font-weight:600;font-size:.95rem}
+  .how__card p+p{margin-top:.6rem}
+  .how__card .punch{color:var(--pink);font-weight:900}
+  .signal{
+    display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.9rem;
+  }
+  .signal span{
+    font-family:var(--mono);font-size:.72rem;font-weight:700;
+    border:2px solid var(--volt);color:var(--volt);padding:.15rem .5rem;
+  }
+
+  /* ───────── tokens ───────── */
+  .tokens{background:var(--blue);color:var(--white)}
+  .tokens .stamp{color:var(--white)}
+  .tok__grid{display:grid;grid-template-columns:1fr 1fr;gap:1.6rem;margin-top:2rem;align-items:stretch}
+  @media(max-width:860px){.tok__grid{grid-template-columns:1fr}}
+  .tok{
+    border:4px solid var(--ink);padding:1.7rem 1.5rem;box-shadow:var(--hard);position:relative;
+  }
+  .tok--drv{background:var(--volt);color:var(--ink);transform:rotate(-.8deg)}
+  .tok--tslm{background:var(--ink);color:var(--white);transform:rotate(.8deg)}
+  .tok h3{font-size:clamp(1.9rem,5vw,2.7rem);font-weight:900;letter-spacing:-.03em;font-family:var(--mono)}
+  .tok .tag{font-weight:900;font-size:.95rem;display:block;margin:.2rem 0 1rem}
+  .tok--tslm .tag{color:var(--pink)}
+  .tok ul{list-style:none;margin-top:.4rem}
+  .tok li{font-weight:700;padding:.5rem 0;border-top:2px dashed currentColor;font-size:.95rem}
+  .tok li b{font-family:var(--mono)}
+  .tok__corner{
+    position:absolute;top:-1rem;right:-.8rem;background:var(--pink);color:var(--white);
+    border:3px solid var(--ink);font-weight:900;font-size:.78rem;padding:.3rem .7rem;
+    transform:rotate(6deg);box-shadow:var(--hard-sm);
+  }
+  .coupons{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
+  .coupon{
+    border:2px dashed var(--ink);background:var(--white);color:var(--ink);
+    font-weight:800;font-size:.78rem;padding:.35rem .7rem;transform:rotate(-1deg);
+  }
+  .coupon:nth-child(2){transform:rotate(1.5deg)}
+  .coupon:nth-child(3){transform:rotate(-2deg)}
+
+  /* ───────── quests ───────── */
+  .quests{background:var(--ink)}
+  .quests .stamp{color:var(--pink)}
+  .quest__row{display:grid;grid-template-columns:repeat(3,1fr);gap:1.3rem;margin-top:2rem}
+  @media(max-width:860px){.quest__row{grid-template-columns:1fr}}
+  .quest{
+    border:3px solid var(--volt);padding:1.3rem 1.2rem;background:var(--ink2);
+    position:relative;
+  }
+  .quest .qtype{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;color:var(--pink);font-weight:800}
+  .quest h3{font-weight:900;font-size:1.2rem;margin:.4rem 0 .6rem}
+  .quest p{color:var(--paper);font-size:.9rem;font-weight:600}
+  .quest .reward{
+    margin-top:.9rem;display:inline-block;font-family:var(--mono);font-weight:800;font-size:.85rem;
+    background:var(--volt);color:var(--ink);padding:.2rem .6rem;border:2px solid var(--white);
+    transform:rotate(-1.5deg);
+  }
+  .qbar{height:10px;border:2px solid var(--volt);margin-top:.9rem;background:var(--ink)}
+  .qbar i{display:block;height:100%;background:var(--pink)}
+
+  /* ───────── community wall ───────── */
+  .wall{background:var(--paper);color:var(--ink)}
+  .wall .stamp{color:var(--ink);background:var(--pink);color:var(--white);box-shadow:var(--hard-sm)}
+  .wall__grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:2rem}
+  @media(max-width:800px){.wall__grid{grid-template-columns:1fr}}
+  .post{
+    background:var(--white);border:3px solid var(--ink);padding:1rem 1.1rem;
+    box-shadow:var(--hard-sm);display:flex;flex-direction:column;gap:.45rem;
+    transition:transform .12s ease;
+  }
+  .post:hover{transform:rotate(-.7deg) translate(-2px,-2px)}
+  .post .cat{font-size:.68rem;font-weight:900;align-self:flex-start;padding:.12rem .5rem;border:2px solid var(--ink)}
+  .cat--info{background:var(--blue);color:var(--white)}
+  .cat--brag{background:var(--volt)}
+  .cat--q{background:var(--white)}
+  .cat--talk{background:var(--pink);color:var(--white)}
+  .post h3{font-size:1.02rem;font-weight:800;line-height:1.35}
+  .post .meta{font-size:.76rem;font-weight:700;opacity:.6;font-family:var(--mono)}
+  .post .tslm-earn{
+    align-self:flex-start;font-size:.7rem;font-weight:900;background:var(--ink);color:var(--volt);
+    padding:.15rem .5rem;transform:rotate(-1.5deg);
+  }
+
+  /* ───────── manifesto ───────── */
+  .manifesto{
+    background:var(--pink);color:var(--white);
+    border-top:4px solid var(--ink);border-bottom:4px solid var(--ink);
+  }
+  .manifesto .kicker{opacity:.85}
+  .manifesto h2{
+    font-size:clamp(2.2rem,7vw,4.5rem);font-weight:900;letter-spacing:-.04em;line-height:1.02;
+    text-transform:uppercase;margin-bottom:1.8rem;
+  }
+  .manifesto ol{list-style:none;counter-reset:mf;max-width:46rem}
+  .manifesto li{
+    counter-increment:mf;font-size:clamp(1.15rem,3.2vw,1.7rem);font-weight:900;
+    padding:1rem 0;border-top:3px solid rgba(255,255,255,.5);display:flex;gap:1rem;align-items:baseline;
+  }
+  .manifesto li::before{
+    content:counter(mf,decimal-leading-zero);font-family:var(--mono);font-size:.8em;
+    background:var(--ink);color:var(--volt);padding:.1rem .5rem;flex:none;transform:rotate(-3deg);
+  }
+  .manifesto li em{font-style:normal;background:var(--ink);color:var(--volt);padding:0 .3rem}
+
+  /* ───────── genesis ───────── */
+  .genesis{
+    background:
+      repeating-linear-gradient(-45deg,var(--ink) 0 26px,var(--ink2) 26px 52px);
+    border-bottom:4px solid var(--volt);
+  }
+  .genesis__box{
+    max-width:62rem;margin:0 auto;background:var(--volt);color:var(--ink);
+    border:4px solid var(--ink);box-shadow:12px 12px 0 var(--pink);
+    padding:clamp(1.6rem,4vw,3rem);position:relative;transform:rotate(-.5deg);
+  }
+  .genesis__box .roundel{
+    position:absolute;top:-2.4rem;right:clamp(.5rem,4vw,2.5rem);width:6.4rem;height:6.4rem;border-radius:50%;
+    background:var(--ink);color:var(--volt);display:flex;align-items:center;justify-content:center;
+    text-align:center;font-weight:900;font-size:.8rem;line-height:1.2;border:4px solid var(--white);
+    transform:rotate(10deg);box-shadow:var(--hard-sm);
+    animation:spinback 14s linear infinite;
+  }
+  @keyframes spinback{from{transform:rotate(10deg)}50%{transform:rotate(-6deg)}to{transform:rotate(10deg)}}
+  .genesis h2{font-size:clamp(2.1rem,6.4vw,4rem);font-weight:900;letter-spacing:-.04em;line-height:1;text-transform:uppercase}
+  .genesis h2 span{background:var(--ink);color:var(--pink);padding:0 .35rem;display:inline-block;transform:rotate(-1deg)}
+  .genesis p.lead{font-weight:800;margin-top:1rem;max-width:36rem;font-size:1.05rem}
+  .perks{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1.3rem}
+  .perk{
+    background:var(--ink);color:var(--white);font-weight:900;font-size:.85rem;
+    padding:.45rem .8rem;border:3px solid var(--ink);transform:rotate(-1deg);
+  }
+  .perk:nth-child(2){transform:rotate(1.4deg);background:var(--pink)}
+  .perk:nth-child(3){transform:rotate(-2deg);background:var(--blue)}
+  .gprog{margin-top:1.8rem}
+  .gprog__label{display:flex;justify-content:space-between;font-family:var(--mono);font-weight:800;font-size:.95rem}
+  .gprog__bar{height:26px;border:3px solid var(--ink);background:var(--white);margin-top:.4rem;position:relative;overflow:hidden}
+  .gprog__bar i{
+    display:block;height:100%;width:87.4%;
+    background:repeating-linear-gradient(-45deg,var(--pink) 0 14px,var(--ink) 14px 28px);
+  }
+  .genesis__cta{margin-top:1.8rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+  .btn--mega{font-size:clamp(1.05rem,3vw,1.4rem);padding:1.1rem 2rem;background:var(--ink);color:var(--volt);border-color:var(--ink);box-shadow:8px 8px 0 var(--white)}
+  .btn--mega:hover{box-shadow:11px 11px 0 var(--white)}
+  .gtoast{font-weight:900;font-size:.95rem;display:none}
+  .gtoast.on{display:inline-block;animation:pop .3s ease}
+  @keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+  .gfine{margin-top:1.2rem;font-size:.8rem;font-weight:700;opacity:.75}
+
+  /* ───────── footer ───────── */
+  footer.site{
+    padding:2.5rem clamp(1rem,5vw,3rem) 3rem;background:var(--ink);color:var(--paper);
+  }
+  footer .frow{display:flex;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;align-items:flex-start}
+  footer .flogo{font-weight:900;font-size:1.3rem;color:var(--volt)}
+  footer nav{display:flex;gap:1.1rem;flex-wrap:wrap}
+  footer nav a{font-weight:700;font-size:.85rem;text-decoration:none;opacity:.8}
+  footer nav a:hover{opacity:1;color:var(--volt)}
+  footer .legal{margin-top:2rem;font-size:.74rem;opacity:.55;max-width:44rem;font-weight:600}
+  footer .legal p+p{margin-top:.4rem}
+
+  /* ───────── reduced motion ───────── */
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation:none!important;transition:none!important}
+    .ticker__track{white-space:normal;padding:.55rem 1rem}
+    .ticker__track[aria-hidden="true"]{display:none}
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+
+<!-- top ticker -->
+<div class="ticker" role="presentation">
+  <div class="ticker__track">
+    <span>우리는 테슬람이다 <em>★</em></span><span>달린 만큼 받는다 <em>★</em></span><span>GENESIS 500 — 남은 자리 63 <em>★</em></span><span>전비는 실력이다 <em>★</em></span><span>GPS는 속여도 계기판은 못 속인다 <em>★</em></span><span>주유소가 어디였더라 <em>★</em></span><span>오늘도 안전운전, 오늘도 풀캡 <em>★</em></span>
+    <span aria-hidden="true">우리는 테슬람이다 <em>★</em></span><span aria-hidden="true">달린 만큼 받는다 <em>★</em></span><span aria-hidden="true">GENESIS 500 — 남은 자리 63 <em>★</em></span><span aria-hidden="true">전비는 실력이다 <em>★</em></span><span aria-hidden="true">GPS는 속여도 계기판은 못 속인다 <em>★</em></span><span aria-hidden="true">주유소가 어디였더라 <em>★</em></span><span aria-hidden="true">오늘도 안전운전, 오늘도 풀캡 <em>★</em></span>
+  </div>
+</div>
+
+<header class="site">
+  <a class="logo" href="#top">테슬람<small>.io</small></a>
+  <nav class="main" aria-label="주요 메뉴">
+    <a href="#league">전비 리그</a>
+    <a href="#how">작동 방식</a>
+    <a href="#token">토큰</a>
+    <a href="#quest">퀘스트</a>
+    <a href="#community">게시판</a>
+    <a class="cta" href="#genesis">GENESIS 500</a>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- ═══════════ HERO ═══════════ -->
+  <section class="hero" id="top" aria-labelledby="hero-h">
+    <span class="sticker sticker--1">🔥 1.5x 부스트 — 1기 한정</span>
+    <span class="sticker sticker--2">10 DRV / km</span>
+    <span class="sticker sticker--3">500명. 그게 다다.</span>
+    <span class="sticker sticker--4">2026.20.6 OTA 후기 12개 ↑</span>
+
+    <p class="hero__eyebrow">대한민국 테슬라 오너 성지 — TESLAM.IO</p>
+    <h1 id="hero-h"><span class="l1">우리는</span><span class="l2">테슬람이다</span></h1>
+
+    <p class="hero__sub">
+      테슬라 계정 <strong>딱 한 번</strong> 연결하면 끝. 개발자 계정? 없다.
+      API 요금? <strong>그건 우리가 낸다.</strong> 당신은 그냥 달려라 —
+      <strong>1km에 10 DRV</strong>, 하루 50km까지. 주차하면 아무것도 안 본다.
+    </p>
+
+    <div class="hero__cta-row">
+      <a class="btn btn--volt" href="#genesis">Genesis 1기 합류하기 →</a>
+      <a class="btn btn--ghost" href="#how">이게 뭔데 (30초 설명)</a>
+    </div>
+
+    <div class="road" aria-hidden="true">
+      <svg viewBox="0 0 560 130" role="img" aria-label="">
+        <!-- car body -->
+        <path fill="var(--volt)" stroke="var(--ink)" stroke-width="4"
+          d="M40 88 C40 78 52 72 70 69 L120 62 C150 34 200 22 262 22 C324 22 372 38 402 62 L470 70 C492 73 506 79 506 88 L502 96 L44 96 Z"/>
+        <!-- windows -->
+        <path fill="var(--ink)" d="M150 60 C176 40 216 31 258 31 L262 60 Z"/>
+        <path fill="var(--ink)" d="M276 31 C322 32 360 44 386 60 L276 60 Z"/>
+        <!-- wheels -->
+        <circle cx="140" cy="96" r="22" fill="var(--ink)" stroke="var(--pink)" stroke-width="5"/>
+        <circle cx="140" cy="96" r="7" fill="var(--pink)"/>
+        <circle cx="412" cy="96" r="22" fill="var(--ink)" stroke="var(--pink)" stroke-width="5"/>
+        <circle cx="412" cy="96" r="7" fill="var(--pink)"/>
+        <!-- road -->
+        <line class="roadline" x1="0" y1="124" x2="560" y2="124"/>
+      </svg>
+    </div>
+
+    <div class="statstrip" role="group" aria-label="실시간 커뮤니티 현황">
+      <div class="hot">
+        <b><span id="drvToday" data-target="1284730">0</span> DRV</b>
+        <span>오늘 전국에서 적립됨 · LIVE</span>
+      </div>
+      <div>
+        <b><span data-countup data-target="2841">0</span>명</b>
+        <span>이번 주 전비 리그 참가</span>
+      </div>
+      <div>
+        <b><span data-countup data-target="437">0</span> / 500</b>
+        <span>Genesis 1기 — 남은 자리 63</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- live feed ticker -->
+  <div class="ticker ticker--pink" role="presentation">
+    <div class="ticker__track">
+      <span>방금 ⚡ 회생제동장인 님 +327 DRV</span><span>1분 전 ⚡ 성수차징러 님 강남 V4 슈퍼차저 체크인 ✓</span><span>3분 전 ⚡ 판교_스텔스그레이 님 오늘 풀캡(500 DRV) 달성</span><span>7분 전 ⚡ [정보] 2026.20.6 숨은 기능 글 → TSLM 보상 지급됨</span><span>12분 전 ⚡ 제주도민2호 님 전비 7.18 갱신, 리그 2위 등극</span><span>15분 전 ⚡ 신규 오너 배터리날씨앱 님 계정 연결 완료 — 어서오세요</span>
+      <span aria-hidden="true">방금 ⚡ 회생제동장인 님 +327 DRV</span><span aria-hidden="true">1분 전 ⚡ 성수차징러 님 강남 V4 슈퍼차저 체크인 ✓</span><span aria-hidden="true">3분 전 ⚡ 판교_스텔스그레이 님 오늘 풀캡(500 DRV) 달성</span><span aria-hidden="true">7분 전 ⚡ [정보] 2026.20.6 숨은 기능 글 → TSLM 보상 지급됨</span><span aria-hidden="true">12분 전 ⚡ 제주도민2호 님 전비 7.18 갱신, 리그 2위 등극</span><span aria-hidden="true">15분 전 ⚡ 신규 오너 배터리날씨앱 님 계정 연결 완료 — 어서오세요</span>
+    </div>
+  </div>
+
+  <!-- ═══════════ LEAGUE ═══════════ -->
+  <section class="league" id="league" aria-labelledby="league-h">
+    <span class="kicker">WEEKLY EFFICIENCY LEAGUE — 32주차</span>
+    <h2 class="stamp" id="league-h">이번 주 전비 리그</h2>
+    <p class="sec-note">전비는 곧 실력이고, 실력은 순위표에 남는다. 매주 월요일 0시 리셋. 계기판이 증인이다.</p>
+
+    <div class="tablewrap" tabindex="0" role="region" aria-label="전비 리그 순위표 (좌우 스크롤 가능)">
+      <table class="board">
+        <caption>이번 주 전비 리그 상위 6명</caption>
+        <thead>
+          <tr><th scope="col">순위</th><th scope="col">닉네임</th><th scope="col">차량</th><th scope="col">전비 (km/kWh)</th><th scope="col">이번 주 적립</th></tr>
+        </thead>
+        <tbody>
+          <tr class="first">
+            <td class="rank">1</td>
+            <td>판교_스텔스그레이 <span class="badge badge--g">GENESIS 1기</span></td>
+            <td class="car">Model 3 RWD ’24</td>
+            <td class="eff">7.42</td>
+            <td class="drv">+3,480 DRV</td>
+          </tr>
+          <tr>
+            <td class="rank">2</td>
+            <td>제주도민2호</td>
+            <td class="car">Model Y Long Range</td>
+            <td class="eff">7.18</td>
+            <td class="drv">+3,120 DRV</td>
+          </tr>
+          <tr>
+            <td class="rank">3</td>
+            <td>회생제동장인 <span class="badge badge--g">GENESIS 1기</span></td>
+            <td class="car">Model 3 Long Range</td>
+            <td class="eff">7.05</td>
+            <td class="drv">+2,955 DRV</td>
+          </tr>
+          <tr>
+            <td class="rank">4</td>
+            <td>성수차징러 <span class="badge">뉴비</span></td>
+            <td class="car">Model Y RWD ’25</td>
+            <td class="eff">6.91</td>
+            <td class="drv">+2,730 DRV</td>
+          </tr>
+          <tr>
+            <td class="rank">5</td>
+            <td>오토파일럿과나</td>
+            <td class="car">Model 3 Performance</td>
+            <td class="eff">6.64</td>
+            <td class="drv">+2,410 DRV</td>
+          </tr>
+          <tr>
+            <td class="rank">6</td>
+            <td>배터리날씨앱</td>
+            <td class="car">Model S Dual Motor</td>
+            <td class="eff">6.12</td>
+            <td class="drv">+2,180 DRV</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="league__foot">※ 순위는 주행 검증된 구간만 반영. 에어컨 끄고 명상 주행하는 <code>7점대 클럽</code>은 별도 채팅방이 있다는 소문.</p>
+  </section>
+
+  <!-- ═══════════ HOW ═══════════ -->
+  <section class="how" id="how" aria-labelledby="how-h">
+    <span class="kicker">HOW IT WORKS — 감시 아님, 스코어보드임</span>
+    <h2 class="stamp" id="how-h">30초 설명</h2>
+
+    <div class="how__grid">
+      <article class="how__card">
+        <span class="how__num">01</span>
+        <h3>연결한다</h3>
+        <p>테슬라 공식 OAuth로 계정 연결 한 번. 앱 설치도, 개발자 등록도, 카드 등록도 없다.</p>
+        <p><span class="punch">Fleet API 비용은 테슬람이 전부 낸다.</span> 오너 부담 0원. 이게 우리가 성지를 운영하는 방식.</p>
+      </article>
+      <article class="how__card">
+        <span class="how__num">02</span>
+        <h3>달린다</h3>
+        <p>차가 <span class="punch">달릴 때만</span> 60초에 한 번, 딱 4개 신호가 온다. 주차하면 침묵. 어디 주차했는지 우리는 모른다.</p>
+        <div class="signal" aria-label="수집되는 4개 신호">
+          <span>위도</span><span>경도</span><span>속도</span><span>주행거리</span>
+        </div>
+        <p style="margin-top:.9rem">검증은 <span class="punch">계기판(odometer)</span> 기준. GPS는 속여도 계기판은 뒤로 안 돈다.</p>
+      </article>
+      <article class="how__card">
+        <span class="how__num">03</span>
+        <h3>받는다</h3>
+        <p><span class="punch">1km = 10 DRV.</span> 하루 상한 500 DRV(50km). 출퇴근만 해도 스코어가 쌓인다.</p>
+        <p>1,000 DRV ≈ 500원어치 실물 — 슈퍼차저 크레딧, 기프트카드, 세차 쿠폰. 그림의 떡 아니고 진짜 떡.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ═══════════ TOKENS ═══════════ -->
+  <section class="tokens" id="token" aria-labelledby="tok-h">
+    <span class="kicker">TWO TOKENS, ONE SHRINE</span>
+    <h2 class="stamp" id="tok-h">달려서 벌고, 글로 지배한다</h2>
+
+    <div class="tok__grid">
+      <article class="tok tok--drv">
+        <span class="tok__corner">주행 보상</span>
+        <h3>DRV</h3>
+        <span class="tag">바퀴가 굴러야 나오는 월급</span>
+        <ul>
+          <li>적립 — <b>10 DRV / km</b>, 계기판 검증 주행만</li>
+          <li>일일 상한 — <b>500 DRV</b> (풀캡 찍는 맛이 있다)</li>
+          <li>교환 — <b>1,000 DRV ≈ ₩500</b> 실물 보상</li>
+        </ul>
+        <div class="coupons" aria-label="교환 가능한 보상 예시">
+          <span class="coupon">⚡ 슈퍼차저 크레딧</span>
+          <span class="coupon">🎁 기프트카드</span>
+          <span class="coupon">🫧 세차 쿠폰</span>
+        </div>
+      </article>
+
+      <article class="tok tok--tslm">
+        <span class="tok__corner">거버넌스</span>
+        <h3>TSLM</h3>
+        <span class="tag">성지의 지분 — 총 1억 개, 끝. 더 안 찍는다</span>
+        <ul>
+          <li>획득 ① — DRV를 <b>락업</b>하면 나온다 (존버는 승리한다)</li>
+          <li>획득 ② — <b>좋은 기술글</b>을 쓰면 나온다 (글이 곧 채굴)</li>
+          <li>권한 — <b>투표권</b> + 커뮤니티 광고 슬롯 점유</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- ═══════════ QUESTS ═══════════ -->
+  <section class="quests" id="quest" aria-labelledby="quest-h">
+    <span class="kicker">SIDE QUESTS — 이번 주 도전과제</span>
+    <h2 class="stamp" id="quest-h">퀘스트 게시판</h2>
+
+    <div class="quest__row">
+      <article class="quest">
+        <span class="qtype">WEEKLY ★ 전비 챌린지</span>
+        <h3>이번 주 전비 7.0 km/kWh 돌파</h3>
+        <p>에어컨과의 타협, 회생제동과의 우정. 7점대는 아무나 가는 곳이 아니다.</p>
+        <div class="qbar" role="img" aria-label="참가자 중 달성률 31%"><i style="width:31%"></i></div>
+        <span class="reward">보너스 DRV + 리그 가중치</span>
+      </article>
+      <article class="quest">
+        <span class="qtype">CHECK-IN ★ 성지순례</span>
+        <h3>V4 슈퍼차저 체크인</h3>
+        <p>새로 열린 V4 찍고 인증하면 끝. 하남·강남·제주 신규 오픈 반영됨.</p>
+        <div class="qbar" role="img" aria-label="참가자 중 달성률 58%"><i style="width:58%"></i></div>
+        <span class="reward">순례자 뱃지 + DRV</span>
+      </article>
+      <article class="quest">
+        <span class="qtype">DAILY ★ 국룰</span>
+        <h3>오늘 풀캡 찍기 — 50km</h3>
+        <p>출퇴근이 곧 파밍이다. 500 DRV 꽉 채우고 퇴근하는 그 기분.</p>
+        <div class="qbar" role="img" aria-label="참가자 중 달성률 74%"><i style="width:74%"></i></div>
+        <span class="reward">일일 풀캡 500 DRV</span>
+      </article>
+    </div>
+  </section>
+
+  <!-- ═══════════ COMMUNITY WALL ═══════════ -->
+  <section class="wall" id="community" aria-labelledby="wall-h">
+    <span class="kicker">NOW SCROLLING — 실시간 게시판</span>
+    <h2 class="stamp" id="wall-h">성지 게시판</h2>
+    <p class="sec-note">좋은 글은 채굴이다. [정보] 글이 커뮤니티 추천을 받으면 TSLM이 지급된다.</p>
+
+    <div class="wall__grid">
+      <article class="post">
+        <span class="cat cat--info">정보</span>
+        <h3>2026.20.6 숨은 기능 3개 정리 — 이건 릴리즈 노트에 없다</h3>
+        <span class="meta">회생제동장인 · 32분 전 · 댓글 128</span>
+        <span class="tslm-earn">+TSLM 지급된 글</span>
+      </article>
+      <article class="post">
+        <span class="cat cat--brag">자랑</span>
+        <h3>오늘 전비 8.1 나옴. 에어컨 끄고 명상 주행한 썰</h3>
+        <span class="meta">판교_스텔스그레이 · 1시간 전 · 댓글 42</span>
+      </article>
+      <article class="post">
+        <span class="cat cat--q">질문</span>
+        <h3>히트펌프 소리 원래 이럼? 고장임 정상임?</h3>
+        <span class="meta">뉴비Y오너 · 2시간 전 · 댓글 57</span>
+      </article>
+      <article class="post">
+        <span class="cat cat--brag">자랑</span>
+        <h3>Genesis 1기 뱃지 받았다. 프사 바꿈. 부러우면 오너 해</h3>
+        <span class="meta">성수차징러 · 3시간 전 · 댓글 89</span>
+      </article>
+      <article class="post">
+        <span class="cat cat--info">정보</span>
+        <h3>하남 스타필드 V4 슈퍼차저 오픈 — 체크인 퀘스트 대상 확인</h3>
+        <span class="meta">배터리날씨앱 · 5시간 전 · 댓글 33</span>
+        <span class="tslm-earn">+TSLM 지급된 글</span>
+      </article>
+      <article class="post">
+        <span class="cat cat--talk">잡담</span>
+        <h3>FSD 한국 출시 존버 5년차 근황.jpg</h3>
+        <span class="meta">오토파일럿과나 · 6시간 전 · 댓글 201</span>
+      </article>
+    </div>
+  </section>
+
+  <!-- ═══════════ MANIFESTO ═══════════ -->
+  <section class="manifesto" aria-labelledby="mf-h">
+    <span class="kicker">THE TESLAM MANIFESTO</span>
+    <h2 id="mf-h">테슬람 선언</h2>
+    <ol>
+      <li>우리는 주유소를 모른다. 알았던 적도 없는 척한다.</li>
+      <li>전비는 실력이고, 실력은 <em>순위표</em>에 남는다.</li>
+      <li>GPS는 속여도 <em>계기판</em>은 못 속인다.</li>
+      <li>좋은 글은 채굴이다. 키보드도 <em>마이닝 장비</em>다.</li>
+      <li>500명이 먼저 간다. 나머지는 따라온다.</li>
+    </ol>
+  </section>
+
+  <!-- ═══════════ GENESIS 500 ═══════════ -->
+  <section class="genesis" id="genesis" aria-labelledby="gen-h">
+    <div class="genesis__box">
+      <div class="roundel" aria-hidden="true">GENESIS<br>1기<br>★500★</div>
+      <span class="kicker">FOUNDING COHORT — 지금 모집중</span>
+      <h2 id="gen-h">GENESIS <span>500</span></h2>
+      <p class="lead">
+        성지의 주춧돌 500명. 두 번 다시 안 뽑는 첫 기수다.
+        먼저 온 사람이 더 받고, 더 오래 자랑한다.
+      </p>
+      <div class="perks">
+        <span class="perk">⚡ 적립 1.5배 부스트</span>
+        <span class="perk">🏷️ Genesis 1기 마크 — 영구</span>
+        <span class="perk">🗳️ 토크노믹스 투표권</span>
+      </div>
+      <div class="gprog">
+        <div class="gprog__label"><span>437 / 500 합류</span><span>남은 자리 63</span></div>
+        <div class="gprog__bar" role="img" aria-label="Genesis 500 모집 진행률 87퍼센트"><i></i></div>
+      </div>
+      <div class="genesis__cta">
+        <button class="btn btn--mega" type="button" id="genesisBtn">지금 계정 연결하고 1기 되기 →</button>
+        <span class="gtoast" id="genesisToast" role="status">대기열 <b>#438</b> 등록 완료 ✓ — 오픈되면 여기서 제일 먼저 알려준다.</span>
+      </div>
+      <p class="gfine">테슬라 공식 OAuth 1회 연결 · 오너 비용 0원 · 주차 중 데이터 수집 없음 · 언제든 연결 해제 가능</p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site">
+  <div class="frow">
+    <div>
+      <div class="flogo">테슬람.io</div>
+      <p style="font-size:.85rem;font-weight:700;opacity:.7;margin-top:.3rem">달린 만큼 받는다. 우리는 테슬람이다.</p>
+    </div>
+    <nav aria-label="푸터 메뉴">
+      <a href="#league">전비 리그</a>
+      <a href="#quest">퀘스트</a>
+      <a href="#community">게시판</a>
+      <a href="#genesis">Genesis 500</a>
+    </nav>
+  </div>
+  <div class="legal">
+    <p>teslam.io는 Tesla, Inc.와 제휴하거나 후원받는 관계가 아닌 독립 커뮤니티 프로젝트입니다.</p>
+    <p>DRV·TSLM은 커뮤니티 활동 보상 및 거버넌스 참여를 위한 포인트로, 표시된 수치와 순위·게시글은 서비스 소개를 위한 예시입니다. Tesla 및 관련 상표는 각 소유자의 자산입니다.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var fmt = function(n){ return Math.round(n).toLocaleString("ko-KR"); };
+
+  /* count-up for stat strip */
+  function countUp(el, target, dur){
+    if (reduced) { el.textContent = fmt(target); return; }
+    var start = null;
+    function step(ts){
+      if (!start) start = ts;
+      var p = Math.min((ts - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(target * eased);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  var nodes = document.querySelectorAll("[data-countup], #drvToday");
+  var fired = false;
+  function fire(){
+    if (fired) return; fired = true;
+    nodes.forEach(function(el){
+      countUp(el, parseInt(el.getAttribute("data-target"), 10) || 0, 1400);
+    });
+  }
+  if ("IntersectionObserver" in window){
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if (e.isIntersecting) fire(); });
+    }, {threshold:.3});
+    nodes.forEach(function(el){ io.observe(el); });
+    setTimeout(fire, 2500); /* fallback */
+  } else { fire(); }
+
+  /* live DRV total keeps ticking (content update, no animation when reduced) */
+  var live = document.getElementById("drvToday");
+  var total = parseInt(live.getAttribute("data-target"), 10);
+  setInterval(function(){
+    if (!fired) return;
+    total += 40 + Math.floor(Math.random() * 300);
+    live.textContent = fmt(total);
+  }, 5000);
+
+  /* genesis waitlist toast */
+  var btn = document.getElementById("genesisBtn");
+  var toast = document.getElementById("genesisToast");
+  btn.addEventListener("click", function(){
+    toast.classList.add("on");
+    btn.textContent = "대기열 등록됨 ✓ (1기 존버 시작)";
+    btn.disabled = true;
+    btn.style.opacity = ".85";
+  });
+})();
+</script>
+</body>
+</html>

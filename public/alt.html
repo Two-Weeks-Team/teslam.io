@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>teslam.io — 디자인 방향 10안 비교</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  :root { color-scheme: dark; }
+  body {
+    margin: 0;
+    background: #0b0c0d;
+    color: #f0f2f1;
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont,
+      "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 82rem; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+  header { border-bottom: 1px solid #23262a; padding-bottom: 2rem; }
+  .kicker {
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: .75rem; letter-spacing: .16em; text-transform: uppercase;
+    color: #cbff3c; margin: 0;
+  }
+  h1 { font-size: clamp(1.75rem, 4vw, 2.75rem); letter-spacing: -.03em; margin: .75rem 0 0; line-height: 1.1; }
+  .lede { max-width: 46rem; color: #a8aeb2; margin: 1rem 0 0; }
+  .note { max-width: 46rem; color: #7d858a; font-size: .875rem; margin: 1.25rem 0 0; }
+
+  .grid { display: grid; gap: 1.25rem; margin-top: 2.5rem; }
+  @media (min-width: 46rem) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 72rem) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+  .card {
+    border: 1px solid #23262a; border-radius: 3px; background: #121416;
+    overflow: hidden; display: flex; flex-direction: column;
+    transition: border-color .15s, transform .15s;
+    text-decoration: none; color: inherit;
+  }
+  .card:hover { border-color: #cbff3c; transform: translateY(-2px); }
+  .card:focus-visible { outline: 2px solid #cbff3c; outline-offset: 2px; }
+
+  /* Live thumbnail: the real page, rendered at 1440px then scaled down.
+     pointer-events:none so the whole card stays one click target. */
+  .shot { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: #000; border-bottom: 1px solid #23262a; }
+  .shot iframe {
+    position: absolute; top: 0; left: 0;
+    width: 1440px; height: 900px; border: 0;
+    transform-origin: 0 0; pointer-events: none;
+  }
+  .meta { padding: 1rem 1.1rem 1.2rem; }
+  .row { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
+  .id {
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: .72rem; letter-spacing: .1em; color: #cbff3c;
+  }
+  .model {
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-size: .66rem; letter-spacing: .06em; color: #7d858a;
+    border: 1px solid #2c3036; border-radius: 2px; padding: .05rem .35rem;
+  }
+  .name { font-size: 1.0625rem; font-weight: 700; letter-spacing: -.02em; margin: .5rem 0 0; }
+  .desc { font-size: .85rem; color: #8e9498; margin: .4rem 0 0; line-height: 1.65; }
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #23262a; color: #5b6167; font-size: .78rem; }
+  @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="kicker">teslam.io — 검토용 초안</p>
+    <h1>테슬람 성지, 10가지 방향</h1>
+    <p class="lede">
+      같은 제품, 같은 보상 규칙(1km = 10 DRV · 일 500 DRV 상한 · Genesis 500)으로
+      만든 서로 다른 10개의 첫 화면입니다. 카드를 누르면 실제 페이지가 열립니다.
+    </p>
+    <p class="note">
+      전부 실사 사진 없이 CSS와 SVG만으로 그렸습니다. 방향을 고르신 뒤 실제 차량
+      사진을 넣으면 완성도가 한 단계 올라갑니다. 이 페이지들은 색인 제외(noindex)
+      상태이며, 하나가 선택되면 나머지는 정리됩니다.
+    </p>
+  </header>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>
+    teslam.io는 Tesla, Inc.와 제휴하거나 후원받는 관계가 아닌 독립 커뮤니티 프로젝트입니다.
+  </footer>
+</div>
+
+<script>
+const ALTS = [
+  [1,  "리더보드 아레나", "전비 랭킹이 첫 화면. 지역 대결과 순위 변동을 F1 타이밍 스크린처럼 보여준다. 들어오자마자 '내 순위는?'이 궁금해지는 구조."],
+  [2,  "내 차고", "내 차가 주인공. 출고 D+, VIN 일부 공개, 누적 주행, 배지를 모은 수집형 명패. 남에게 보여주고 싶은 프로필."],
+  [3,  "라이브 맵", "전국 실시간 관제실. 지금 몇 대가 달리는지, 어디서 충전 중인지 지도 위에 찍힌다. '우리 이렇게 많다'는 감각."],
+  [4,  "커뮤니티 피드", "게시판이 곧 첫 화면. 인증샷·업데이트 떡밥·핫글. 실제 성지가 생긴 모습에 가장 가깝다."],
+  [5,  "퀘스트 보드", "게임 UI. 일일·주간 퀘스트, 티어 사다리, 연속 출석. 50km 주행이 지표가 아니라 목표가 된다."],
+  [6,  "시네마틱 프리미엄", "유일한 라이트 테마. 거대한 타이포와 여백으로 미는 브랜드 페이지. 공식처럼 보이는 쪽."],
+  [7,  "레트로 계기판", "80년대 CRT 계기판. 아날로그 게이지와 7세그먼트, 스캔라인. 10안 중 가장 눈에 박히는 화면."],
+  [8,  "매거진", "에디토리얼. 오너 인터뷰와 칼럼으로 문화를 다룬다. 보상 프로그램조차 기사로 취급."],
+  [9,  "리워드 지갑", "토스풍 핀테크. 큰 잔액, 적립 내역, 교환 상품 진열대. 돈이 진짜로 느껴지게 만드는 쪽."],
+  [10, "컬트 / 밈", "맥시멀리즘. '우리는 테슬람이다' 선언문, 스티커, 마퀴. 스크린샷 찍어 퍼뜨리고 싶은 화면."],
+];
+const FABLE = new Set([6, 7, 10]);
+
+document.getElementById("grid").innerHTML = ALTS.map(([n, name, desc]) => `
+  <a class="card" href="/alt${n}">
+    <div class="shot"><iframe src="/alt${n}" loading="lazy" tabindex="-1" title="${name} 미리보기" scrolling="no"></iframe></div>
+    <div class="meta">
+      <div class="row">
+        <span class="id">ALT${n}</span>
+        ${FABLE.has(n) ? '<span class="model">Fable 5</span>' : ""}
+      </div>
+      <p class="name">${name}</p>
+      <p class="desc">${desc}</p>
+    </div>
+  </a>`).join("");
+
+// Scale each 1440px-wide thumbnail to whatever width its card ended up.
+function fit() {
+  document.querySelectorAll(".shot").forEach((box) => {
+    const f = box.querySelector("iframe");
+    if (f) f.style.transform = "scale(" + box.clientWidth / 1440 + ")";
+  });
+}
+addEventListener("resize", fit);
+addEventListener("load", fit);
+fit();
+</script>
+</body>
+</html>

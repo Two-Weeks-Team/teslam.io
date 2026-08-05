@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>teslam.io — 오늘의 퀘스트 보드 | 테슬라 오너 주행 퀘스트</title>
+<meta name="description" content="핸들 잡는 순간 퀘스트 시작. 테슬라 오너를 위한 주행 퀘스트 보드 — 일일/주간 퀘스트, 티어 승급, 연속 출석, 전비 랭킹. 제네시스 500 모집 중.">
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --ink:#0A0D12;
+  --ink2:#0E131A;
+  --panel:#151C26;
+  --panel2:#1C2532;
+  --panel3:#242F3E;
+  --line:#2C3949;
+  --txt:#E9F0F8;
+  --dim:#94A7BE;
+  --dim2:#6B7D93;
+
+  --lime:#C6FF3D;
+  --gold:#FFB524;
+  --pink:#FF3D7F;
+  --cyan:#35D0FF;
+  --grass:#4ADE80;
+
+  --r-common:#8FA3BA;
+  --r-uncommon:#4ADE80;
+  --r-rare:#35D0FF;
+  --r-epic:#FF3D7F;
+  --r-legend:#FFB524;
+  --r-myth:#C6FF3D;
+
+  --sh:0 6px 0 rgba(0,0,0,.55);
+  --sh-sm:0 4px 0 rgba(0,0,0,.5);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+  word-break:keep-all;
+  overflow-wrap:break-word;
+  background:var(--ink);
+  color:var(--txt);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+body::before{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(900px 520px at 12% -6%, rgba(198,255,61,.13), transparent 62%),
+    radial-gradient(760px 480px at 92% 4%, rgba(255,61,127,.11), transparent 60%),
+    radial-gradient(1000px 700px at 50% 108%, rgba(53,208,255,.09), transparent 66%);
+}
+body::after{
+  content:"";
+  position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.028) 1px, transparent 1px);
+  background-size:44px 44px;
+  mask-image:linear-gradient(180deg,#000,transparent 92%);
+  -webkit-mask-image:linear-gradient(180deg,#000,transparent 92%);
+}
+main,header,footer{position:relative;z-index:1}
+img{max-width:100%}
+h1,h2,h3,h4{line-height:1.18;margin:0;letter-spacing:-.02em;font-weight:900}
+p{margin:0}
+a{color:inherit}
+button{font:inherit;color:inherit}
+
+:focus-visible{outline:3px solid var(--cyan);outline-offset:3px;border-radius:8px}
+
+.wrap{width:100%;max-width:1200px;margin:0 auto;padding:0 18px}
+.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.scrollx::-webkit-scrollbar{height:8px}
+.scrollx::-webkit-scrollbar-thumb{background:var(--panel3);border-radius:99px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+/* ============ HUD ============ */
+.hud{
+  position:sticky;top:0;z-index:60;
+  background:linear-gradient(180deg,rgba(10,13,18,.97),rgba(10,13,18,.88));
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-bottom:2px solid var(--line);
+}
+.hud-in{display:flex;align-items:center;gap:12px;padding:9px 18px;max-width:1200px;margin:0 auto;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:9px;text-decoration:none;flex:0 0 auto}
+.brand-mark{
+  width:34px;height:34px;border-radius:11px;flex:0 0 auto;
+  background:linear-gradient(160deg,var(--lime),#7FD400);
+  display:grid;place-items:center;box-shadow:0 3px 0 #4E8A00;
+}
+.brand-mark svg{width:20px;height:20px;display:block}
+.brand-name{font-weight:900;font-size:16px;letter-spacing:-.03em}
+.brand-name span{color:var(--lime)}
+.brand-sub{font-size:10px;color:var(--dim2);letter-spacing:.14em;font-weight:800;margin-top:-3px}
+
+.lvl{
+  display:flex;align-items:center;gap:7px;flex:0 0 auto;
+  background:var(--panel2);border:2px solid var(--line);border-radius:12px;
+  padding:4px 10px 5px;box-shadow:var(--sh-sm);
+}
+.lvl b{font-size:15px;color:var(--gold);font-family:var(--mono)}
+.lvl small{font-size:10px;color:var(--dim2);font-weight:800;letter-spacing:.1em}
+
+.odo{flex:1 1 260px;min-width:200px}
+.odo-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:11px;font-weight:800;color:var(--dim);letter-spacing:.02em}
+.odo-top .q{color:var(--txt)}
+.odo-top .val{font-family:var(--mono);color:var(--lime);font-size:12.5px;font-weight:800}
+.track{
+  position:relative;height:16px;margin-top:4px;
+  background:#070A0E;border:2px solid var(--line);border-radius:99px;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.8);
+  overflow:visible;
+}
+.track-fill{
+  position:absolute;left:2px;top:2px;bottom:2px;width:0%;
+  border-radius:99px;
+  background:linear-gradient(90deg,#7FD400,var(--lime));
+  box-shadow:0 0 14px rgba(198,255,61,.5);
+  transition:width .12s linear;
+}
+.track-fill::after{
+  content:"";position:absolute;inset:0;border-radius:99px;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.22) 0 8px,transparent 8px 18px);
+  animation:slide 1.1s linear infinite;
+}
+@keyframes slide{to{background-position:36px 0}}
+.car{
+  position:absolute;top:50%;left:0;transform:translate(-50%,-52%);
+  width:30px;height:auto;transition:left .12s linear;filter:drop-shadow(0 2px 3px rgba(0,0,0,.7))
+}
+.car svg{display:block;width:100%;height:auto}
+.hud-chest{flex:0 0 auto;width:30px;height:30px;display:grid;place-items:center;position:relative}
+.hud-chest svg{width:26px;height:26px}
+.hud-chest.open{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.35) rotate(-7deg)}100%{transform:scale(1)}}
+.hud-cta{
+  flex:0 0 auto;text-decoration:none;font-weight:900;font-size:13px;
+  background:linear-gradient(180deg,var(--gold),#E8930A);color:#22160A;
+  border:2px solid #FFD37A;border-radius:12px;padding:7px 14px;
+  box-shadow:0 4px 0 #8F5A00;white-space:nowrap;
+}
+.hud-cta:hover{transform:translateY(1px);box-shadow:0 3px 0 #8F5A00}
+@media (max-width:640px){
+  .hud-in{padding:8px 14px;gap:9px}
+  .brand-sub{display:none}
+  .lvl{display:none}
+  .odo{flex:1 1 100%;order:3}
+  .hud-cta{padding:7px 11px;font-size:12px}
+}
+
+/* ============ SHARED PIECES ============ */
+.section{padding:64px 0 8px}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:11px;font-weight:900;letter-spacing:.18em;color:var(--ink);
+  background:var(--lime);padding:4px 10px;border-radius:8px;text-transform:uppercase;
+  box-shadow:0 3px 0 #5F8F00;
+}
+.eyebrow.pink{background:var(--pink);color:#210812;box-shadow:0 3px 0 #99093F}
+.eyebrow.gold{background:var(--gold);color:#221604;box-shadow:0 3px 0 #8F5A00}
+.eyebrow.cyan{background:var(--cyan);color:#03202B;box-shadow:0 3px 0 #0A7CA3}
+h2.sec{font-size:clamp(24px,4.6vw,38px);margin-top:12px}
+.sec-note{color:var(--dim);font-size:14px;max-width:52ch}
+
+.card{
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:2px solid var(--line);border-radius:20px;box-shadow:var(--sh);
+}
+.pill{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:900;letter-spacing:.04em;
+  padding:3px 9px;border-radius:99px;border:2px solid;
+}
+
+/* rarity */
+.q-common{--rc:var(--r-common)}
+.q-uncommon{--rc:var(--r-uncommon)}
+.q-rare{--rc:var(--r-rare)}
+.q-epic{--rc:var(--r-epic)}
+.q-legend{--rc:var(--r-legend)}
+.q-myth{--rc:var(--r-myth)}
+
+/* ============ HERO ============ */
+.hero{padding:38px 0 10px}
+.hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:30px;align-items:start}
+@media (max-width:940px){.hero-grid{grid-template-columns:1fr;gap:24px}}
+
+.tag-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-size:clamp(34px,8.2vw,68px);letter-spacing:-.045em;line-height:1.02}
+h1 .hl{
+  position:relative;display:inline-block;color:var(--ink);
+  background:linear-gradient(180deg,var(--lime),#9BE800);
+  padding:0 .12em;border-radius:12px;transform:rotate(-1.4deg);
+  box-shadow:0 5px 0 #56800A;
+}
+.hero-sub{margin-top:20px;font-size:clamp(15px,2.1vw,18px);color:var(--dim);max-width:44ch}
+.hero-sub b{color:var(--txt)}
+
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+.btn{
+  display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+  font-weight:900;font-size:15px;padding:13px 20px;border-radius:15px;border:2px solid;cursor:pointer;
+  transition:transform .08s ease, box-shadow .08s ease;
+}
+.btn-primary{background:linear-gradient(180deg,var(--lime),#9DE500);color:#0D1704;border-color:#DEFF8E;box-shadow:0 6px 0 #4E7A05}
+.btn-primary:hover{transform:translateY(2px);box-shadow:0 4px 0 #4E7A05}
+.btn-primary:active{transform:translateY(5px);box-shadow:0 1px 0 #4E7A05}
+.btn-ghost{background:var(--panel2);color:var(--txt);border-color:var(--line);box-shadow:var(--sh-sm)}
+.btn-ghost:hover{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.5);border-color:var(--dim2)}
+
+.hero-stats{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+.hstat{background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:9px 13px;box-shadow:var(--sh-sm);min-width:104px}
+.hstat b{display:block;font-family:var(--mono);font-size:20px;font-weight:800;letter-spacing:-.02em}
+.hstat span{font-size:11px;color:var(--dim2);font-weight:800;letter-spacing:.04em}
+
+/* main quest card */
+.mainquest{padding:0;overflow:hidden;border-color:#4A3A12;box-shadow:0 8px 0 rgba(0,0,0,.6), 0 0 0 4px rgba(255,181,36,.09)}
+.mq-top{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:11px 16px;background:linear-gradient(90deg,rgba(255,181,36,.22),rgba(255,181,36,.05));
+  border-bottom:2px solid #3A2E10;
+}
+.mq-top .lbl{font-size:11px;font-weight:900;letter-spacing:.16em;color:var(--gold)}
+.mq-timer{font-family:var(--mono);font-size:13px;font-weight:800;color:var(--txt);background:#0A0D12;border:2px solid var(--line);border-radius:9px;padding:2px 8px}
+.mq-body{padding:18px 16px 20px}
+.mq-title{font-size:clamp(21px,3.6vw,27px)}
+.mq-desc{color:var(--dim);font-size:13.5px;margin-top:8px}
+.bigbar{
+  position:relative;height:34px;margin-top:18px;
+  background:#070A0E;border:3px solid var(--line);border-radius:14px;
+  box-shadow:inset 0 3px 8px rgba(0,0,0,.85);overflow:hidden;
+}
+.bigbar i{
+  position:absolute;left:0;top:0;bottom:0;width:0;
+  background:linear-gradient(90deg,#E8930A,var(--gold));
+  box-shadow:0 0 22px rgba(255,181,36,.45);
+  animation:grow 1.7s cubic-bezier(.16,.9,.3,1) .25s forwards;
+}
+.bigbar i::after{
+  content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.24) 0 10px,transparent 10px 22px);
+  animation:slide 1.1s linear infinite;
+}
+@keyframes grow{to{width:65.2%}}
+.bigbar em{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-style:normal;font-family:var(--mono);font-weight:800;font-size:14px;
+  color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9);letter-spacing:.02em;
+}
+.rewards{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.rw{
+  display:inline-flex;align-items:center;gap:6px;font-weight:900;font-size:12.5px;
+  background:#0B1017;border:2px solid var(--line);border-radius:11px;padding:6px 10px;
+}
+.rw svg{width:15px;height:15px}
+.rw.drv{color:var(--lime);border-color:#3E5A12}
+.rw.xp{color:var(--cyan);border-color:#12475C}
+.rw.tslm{color:var(--pink);border-color:#5C1233}
+.rw.badge{color:var(--gold);border-color:#5C4312}
+.mq-foot{
+  display:flex;align-items:center;gap:9px;padding:11px 16px;border-top:2px solid var(--line);
+  background:#0C1119;font-size:12px;color:var(--dim2);font-weight:700;
+}
+.dot-live{width:8px;height:8px;border-radius:99px;background:var(--grass);box-shadow:0 0 0 0 rgba(74,222,128,.6);animation:ping 1.8s ease-out infinite;flex:0 0 auto}
+@keyframes ping{70%{box-shadow:0 0 0 9px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+
+/* ============ TABS + QUEST GRID ============ */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tab{
+  background:var(--panel);border:2px solid var(--line);border-radius:13px;
+  padding:9px 16px;font-weight:900;font-size:14px;cursor:pointer;color:var(--dim);
+  box-shadow:var(--sh-sm);transition:transform .08s ease;
+}
+.tab:hover{color:var(--txt);transform:translateY(1px)}
+.tab[aria-selected="true"]{
+  background:linear-gradient(180deg,var(--panel3),var(--panel2));
+  color:var(--txt);border-color:var(--lime);box-shadow:0 4px 0 #3E5A12, inset 0 0 0 1px rgba(198,255,61,.18)
+}
+.tab small{display:block;font-size:10px;color:var(--dim2);letter-spacing:.08em;font-weight:800}
+
+.qgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
+.quest{
+  position:relative;padding:15px 15px 14px;border-radius:18px;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:2px solid var(--line);box-shadow:var(--sh);
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+.quest::before{
+  content:"";position:absolute;left:-2px;top:14px;bottom:14px;width:5px;border-radius:99px;background:var(--rc);
+  box-shadow:0 0 14px color-mix(in srgb, var(--rc) 60%, transparent);
+}
+.quest:hover{transform:translateY(-3px);box-shadow:0 9px 0 rgba(0,0,0,.55);border-color:var(--rc)}
+.q-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.q-icon{
+  width:40px;height:40px;flex:0 0 auto;border-radius:13px;display:grid;place-items:center;
+  background:#0A0E14;border:2px solid var(--rc);
+  box-shadow:inset 0 0 16px color-mix(in srgb, var(--rc) 26%, transparent);
+}
+.q-icon svg{width:22px;height:22px;color:var(--rc)}
+.q-meta{min-width:0}
+.q-rarity{font-size:10px;font-weight:900;letter-spacing:.16em;color:var(--rc)}
+.q-name{font-size:16px;font-weight:900;letter-spacing:-.02em}
+.q-desc{font-size:12.5px;color:var(--dim);margin-top:2px}
+.q-bar{
+  position:relative;height:12px;margin-top:12px;background:#070A0E;
+  border:2px solid var(--line);border-radius:99px;overflow:hidden;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,.8);
+}
+.q-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--rc);border-radius:99px;box-shadow:0 0 12px color-mix(in srgb, var(--rc) 55%, transparent)}
+.q-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap}
+.q-prog{font-family:var(--mono);font-size:12px;font-weight:800;color:var(--dim)}
+.q-prog b{color:var(--txt)}
+.quest.done{border-color:#2F5A38}
+.quest.done::before{background:var(--grass)}
+.stamp{
+  position:absolute;right:10px;top:10px;
+  font-size:11px;font-weight:900;letter-spacing:.1em;color:#0B1A0F;
+  background:var(--grass);border-radius:8px;padding:3px 8px;transform:rotate(6deg);
+  box-shadow:0 3px 0 #217B41;
+}
+.locked{opacity:.62}
+.locked .q-icon{border-color:var(--dim2)}
+.locked .q-icon svg{color:var(--dim2)}
+
+/* ============ TIER LADDER ============ */
+.ladder{display:flex;gap:12px;min-width:760px;padding:6px 2px 14px}
+.tier{
+  flex:1 1 0;min-width:142px;padding:16px 13px 15px;border-radius:18px;text-align:center;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));border:2px solid var(--line);box-shadow:var(--sh);
+  position:relative;
+}
+.tier.cur{border-color:var(--gold);box-shadow:0 6px 0 rgba(0,0,0,.55), 0 0 0 4px rgba(255,181,36,.14)}
+.tier.cur::after{
+  content:"현재 위치";position:absolute;top:-11px;left:50%;transform:translateX(-50%);
+  font-size:10px;font-weight:900;letter-spacing:.12em;background:var(--gold);color:#221604;
+  padding:2px 9px;border-radius:99px;box-shadow:0 3px 0 #8F5A00;white-space:nowrap;
+}
+.tier .shield{width:52px;height:52px;margin:0 auto 9px}
+.tier .shield svg{width:100%;height:100%;display:block}
+.tier h3{font-size:16px}
+.tier .req{font-family:var(--mono);font-size:11.5px;color:var(--dim2);margin-top:3px;font-weight:800}
+.tier ul{list-style:none;padding:0;margin:11px 0 0;font-size:12px;color:var(--dim);text-align:left}
+.tier li{position:relative;padding-left:14px;margin-top:5px}
+.tier li::before{content:"";position:absolute;left:0;top:8px;width:6px;height:6px;border-radius:2px;background:var(--tc,var(--dim2))}
+.tier.final{border-color:var(--lime);background:linear-gradient(180deg,rgba(198,255,61,.12),var(--panel))}
+
+/* ============ STREAK ============ */
+.streak-wrap{display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;padding:18px}
+@media (max-width:760px){.streak-wrap{grid-template-columns:1fr}}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day{
+  aspect-ratio:1/1.12;border-radius:14px;display:grid;place-items:center;gap:2px;
+  background:#0B1017;border:2px solid var(--line);position:relative;box-shadow:var(--sh-sm);
+  text-align:center;padding:4px;
+}
+.day .n{font-size:10px;font-weight:900;color:var(--dim2);letter-spacing:.06em}
+.day .v{font-family:var(--mono);font-size:12px;font-weight:800;color:var(--dim)}
+.day.on{background:linear-gradient(180deg,rgba(198,255,61,.2),rgba(198,255,61,.05));border-color:#5E8A16}
+.day.on .v{color:var(--lime)}
+.day.on .n{color:var(--lime)}
+.day.today{border-color:var(--gold);box-shadow:0 4px 0 rgba(0,0,0,.5),0 0 0 3px rgba(255,181,36,.18)}
+.day.today .n{color:var(--gold)}
+.day.chest{border-color:var(--pink);background:linear-gradient(180deg,rgba(255,61,127,.16),rgba(255,61,127,.03))}
+.day.chest svg{width:24px;height:24px}
+.streak-num{text-align:center;padding:0 6px}
+.streak-num b{display:block;font-family:var(--mono);font-size:52px;font-weight:800;line-height:1;color:var(--gold)}
+.streak-num span{font-size:12px;color:var(--dim);font-weight:800}
+.flame{width:34px;height:34px;margin:0 auto 4px}
+
+/* ============ LEADERBOARD ============ */
+.lbcard{padding:0;overflow:hidden}
+.lb-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 16px;border-bottom:2px solid var(--line);background:#0C1119;flex-wrap:wrap}
+.lb-head h3{font-size:16px}
+.lb-head .note{font-size:11.5px;color:var(--dim2);font-weight:700}
+table{border-collapse:collapse;width:100%;min-width:660px;font-size:13.5px}
+thead th{
+  text-align:left;font-size:10.5px;letter-spacing:.14em;color:var(--dim2);font-weight:900;
+  padding:9px 14px;background:#0C1119;border-bottom:2px solid var(--line);white-space:nowrap;
+}
+tbody td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap}
+tbody tr:hover{background:rgba(255,255,255,.028)}
+.rank{font-family:var(--mono);font-weight:800;font-size:15px;color:var(--dim2);width:52px}
+.rank.r1{color:var(--gold)}.rank.r2{color:#D6DEE8}.rank.r3{color:#E08B4B}
+.who{display:flex;align-items:center;gap:9px}
+.av{width:28px;height:28px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;font-weight:900;font-size:12px;color:#0A0D12}
+.nick{font-weight:800}
+.trim{color:var(--dim2);font-size:12px}
+.eff{font-family:var(--mono);font-weight:800;color:var(--lime)}
+.km{font-family:var(--mono);color:var(--dim)}
+.drv{font-family:var(--mono);font-weight:800;color:var(--gold)}
+.badge-mini{font-size:10px;font-weight:900;padding:2px 7px;border-radius:99px;border:2px solid;letter-spacing:.04em}
+
+/* ============ FEED ============ */
+.feed{padding:14px;max-height:none}
+.feed ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.feed li{
+  display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:13px;
+  background:#0B1017;border:2px solid var(--line);font-size:13px;
+}
+.feed li.new{animation:slidein .45s cubic-bezier(.2,1,.3,1)}
+@keyframes slidein{from{opacity:0;transform:translateY(-9px) scale(.985)}to{opacity:1;transform:none}}
+.feed .t{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim2);flex:0 0 auto}
+.feed .u{font-weight:900}
+.feed .ico{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto;background:#111A24}
+.feed .ico svg{width:15px;height:15px}
+
+/* ============ HOW / STEPS ============ */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:860px){.steps{grid-template-columns:1fr}}
+.step{padding:18px;border-radius:18px;position:relative;overflow:hidden}
+.step .num{
+  font-family:var(--mono);font-size:44px;font-weight:800;line-height:1;
+  color:transparent;-webkit-text-stroke:2px var(--line);
+  position:absolute;right:12px;top:8px;
+}
+.step h3{font-size:17px;margin-bottom:8px;padding-right:52px}
+.step p{font-size:13.5px;color:var(--dim)}
+.step .chip{display:inline-block;margin-top:11px;font-size:11.5px;font-weight:900;color:var(--cyan);background:rgba(53,208,255,.1);border:2px solid #12475C;border-radius:9px;padding:4px 9px}
+
+/* ============ SHOP ============ */
+.shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(226px,1fr));gap:14px}
+.item{padding:16px;text-align:center;border-radius:18px}
+.item .art{height:82px;display:grid;place-items:center;margin-bottom:10px}
+.item .art svg{width:66px;height:66px}
+.item h3{font-size:15px}
+.item .sub{font-size:12px;color:var(--dim2);margin-top:3px}
+.price{
+  margin-top:12px;display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);
+  font-weight:800;font-size:14px;color:var(--lime);background:#0B1017;
+  border:2px solid #3E5A12;border-radius:11px;padding:6px 12px;
+}
+
+/* ============ TSLM ============ */
+.tslm-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+@media (max-width:860px){.tslm-grid{grid-template-columns:1fr}}
+.tslm-box{padding:20px}
+.tslm-supply{font-family:var(--mono);font-size:clamp(30px,6vw,46px);font-weight:800;color:var(--pink);letter-spacing:-.03em;line-height:1}
+.routes{display:grid;gap:10px;margin-top:14px}
+.route{display:flex;gap:11px;align-items:flex-start;padding:12px;background:#0B1017;border:2px solid var(--line);border-radius:14px}
+.route .k{width:30px;height:30px;border-radius:9px;flex:0 0 auto;display:grid;place-items:center;background:rgba(255,61,127,.12);border:2px solid #5C1233}
+.route .k svg{width:16px;height:16px;color:var(--pink)}
+.route b{font-size:14px;display:block}
+.route span{font-size:12.5px;color:var(--dim)}
+
+/* ============ GENESIS ============ */
+.gen{
+  padding:26px 22px 24px;border-radius:24px;position:relative;overflow:hidden;
+  background:
+    radial-gradient(700px 300px at 18% 0%, rgba(198,255,61,.16), transparent 60%),
+    radial-gradient(600px 320px at 88% 100%, rgba(255,61,127,.14), transparent 62%),
+    linear-gradient(180deg,var(--panel2),var(--panel));
+  border:3px solid #3D4C36;box-shadow:0 10px 0 rgba(0,0,0,.6);
+}
+.gen-grid{display:grid;grid-template-columns:1fr 1fr;gap:26px;align-items:center}
+@media (max-width:900px){.gen-grid{grid-template-columns:1fr;gap:20px}}
+.gen h2{font-size:clamp(26px,5.2vw,42px)}
+.gen p.lead{color:var(--dim);margin-top:12px;font-size:15px;max-width:42ch}
+.perks{list-style:none;padding:0;margin:18px 0 0;display:grid;gap:9px}
+.perks li{display:flex;gap:10px;align-items:center;font-size:14px;font-weight:700}
+.perks svg{width:19px;height:19px;flex:0 0 auto;color:var(--lime)}
+.slots{
+  display:grid;grid-template-columns:repeat(25,1fr);gap:3px;padding:14px;
+  background:#070A0E;border:2px solid var(--line);border-radius:16px;box-shadow:inset 0 3px 10px rgba(0,0,0,.8);
+}
+@media (min-width:900px){.slots{grid-template-columns:repeat(25,1fr)}}
+.slot{aspect-ratio:1;border-radius:3px;background:#18202B}
+.slot.f{background:linear-gradient(160deg,var(--lime),#7FD400)}
+.slot.you{background:var(--pink);animation:blink 1.15s steps(2,end) infinite}
+@keyframes blink{50%{opacity:.25}}
+.slot-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11.5px;color:var(--dim2);font-weight:800}
+.slot-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
+.gen-count{font-family:var(--mono);font-size:clamp(38px,9vw,64px);font-weight:800;line-height:1;letter-spacing:-.04em}
+.gen-count small{font-size:.34em;color:var(--dim2);letter-spacing:.06em}
+
+/* ============ CHEST TOAST ============ */
+.toast{
+  position:fixed;left:50%;bottom:22px;transform:translate(-50%,140%);
+  z-index:80;width:min(430px,calc(100vw - 28px));
+  background:linear-gradient(180deg,#20293A,#141B26);
+  border:3px solid var(--gold);border-radius:20px;padding:16px 16px 15px;
+  box-shadow:0 12px 34px rgba(0,0,0,.65), 0 0 0 5px rgba(255,181,36,.14);
+  transition:transform .5s cubic-bezier(.2,1.3,.4,1);
+}
+.toast.show{transform:translate(-50%,0)}
+.toast-in{display:flex;gap:13px;align-items:center}
+.toast .cs{width:52px;height:52px;flex:0 0 auto}
+.toast b{display:block;font-size:16px;color:var(--gold)}
+.toast p{font-size:13px;color:var(--dim);margin-top:3px}
+.toast .close{
+  margin-left:auto;background:#0B1017;border:2px solid var(--line);border-radius:10px;
+  width:30px;height:30px;cursor:pointer;font-weight:900;line-height:1;flex:0 0 auto;color:var(--dim)
+}
+.toast .rewards{margin-top:12px}
+.conf{position:fixed;inset:0;pointer-events:none;z-index:79;overflow:hidden}
+.conf span{position:absolute;width:9px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{
+  0%{transform:translateY(-12vh) rotate(0);opacity:1}
+  100%{transform:translateY(108vh) rotate(760deg);opacity:.05}
+}
+
+/* ============ FOOTER ============ */
+footer{margin-top:70px;border-top:2px solid var(--line);background:#080B10;padding:34px 0 42px}
+.f-grid{display:flex;gap:22px;flex-wrap:wrap;justify-content:space-between;align-items:flex-start}
+.f-links{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--dim)}
+.f-links a{text-decoration:none}
+.f-links a:hover{color:var(--lime)}
+.legal{margin-top:24px;font-size:11.5px;color:var(--dim2);line-height:1.7;max-width:78ch}
+.legal strong{color:var(--dim);font-weight:800}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;scroll-behavior:auto !important;
+  }
+  .bigbar i{width:65.2%}
+  .track-fill::after{animation:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== HUD ===================== -->
+<header class="hud" aria-label="플레이어 상태 바">
+  <div class="hud-in">
+    <a class="brand" href="#top" aria-label="teslam.io 홈">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="#12240A"/></svg>
+      </span>
+      <span>
+        <span class="brand-name">teslam<span>.io</span></span>
+        <span class="brand-sub">QUEST BOARD</span>
+      </span>
+    </a>
+
+    <span class="lvl" title="현재 레벨">
+      <small>LV</small><b id="hudLv">7</b>
+    </span>
+
+    <div class="odo">
+      <div class="odo-top">
+        <span class="q">일일 퀘스트 · 오늘 50km 달리기</span>
+        <span class="val"><span id="odoKm" class="mono">0.0</span> / 50.0 km · <span id="odoDrv" class="mono">0</span> DRV</span>
+      </div>
+      <div class="track" role="progressbar" aria-valuemin="0" aria-valuemax="50" aria-valuenow="0" aria-label="오늘 주행 진행도" id="odoBar">
+        <span class="track-fill" id="odoFill"></span>
+        <span class="car" id="odoCar" aria-hidden="true">
+          <svg viewBox="0 0 64 26" fill="none">
+            <path d="M3 19h58c.4-3.2-1-5.3-4.2-5.9l-8.2-1.4-6.6-5.4C40.7 5.2 39.2 4.6 37.6 4.6H25.4c-1.8 0-3.4.7-4.7 1.9L15 12.2 6.6 13.6C3.6 14.1 2.5 16 3 19z" fill="#C6FF3D" stroke="#0A0D12" stroke-width="1.6" stroke-linejoin="round"/>
+            <circle cx="18.5" cy="19.6" r="4.4" fill="#0A0D12"/><circle cx="47.5" cy="19.6" r="4.4" fill="#0A0D12"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+
+    <span class="hud-chest" id="hudChest" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none">
+        <rect x="2.5" y="9.5" width="19" height="11" rx="2.4" fill="#8A5A16" stroke="#0A0D12" stroke-width="1.6"/>
+        <path d="M2.5 12c0-3.6 4-6.5 9.5-6.5S21.5 8.4 21.5 12" fill="#FFB524" stroke="#0A0D12" stroke-width="1.6"/>
+        <rect x="10" y="10.5" width="4" height="6" rx="1.2" fill="#0A0D12"/>
+      </svg>
+    </span>
+
+    <a class="hud-cta" href="#genesis">제네시스 500</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero" aria-labelledby="h1">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="tag-row">
+          <span class="eyebrow">시즌 1 · 봄 주행</span>
+          <span class="eyebrow cyan">서버 상태 정상</span>
+        </div>
+
+        <h1 id="h1">핸들 잡는 순간,<br><span class="hl">퀘스트 시작</span></h1>
+
+        <p class="hero-sub">
+          출근길 18km도, 주말 강원도 왕복 320km도 전부 퀘스트입니다.
+          <b>테슬라 계정 한 번만 연결</b>하면 오늘부터 보드가 채워져요.
+          기록은 GPS가 아니라 <b>오도미터</b>가 증언합니다.
+        </p>
+
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#genesis">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="#0D1704"/></svg>
+            제네시스 500 자리 잡기
+          </a>
+          <a class="btn btn-ghost" href="#quests">이번 주 퀘스트 먼저 보기</a>
+        </div>
+
+        <div class="hero-stats">
+          <div class="hstat"><b style="color:var(--lime)" class="mono" id="ctrKm">1,284,930</b><span>커뮤니티 누적 km</span></div>
+          <div class="hstat"><b style="color:var(--gold)" class="mono">2,417</b><span>오늘 클리어된 퀘스트</span></div>
+          <div class="hstat"><b style="color:var(--pink)" class="mono">137</b><span>제네시스 남은 자리</span></div>
+        </div>
+      </div>
+
+      <!-- MAIN QUEST CARD -->
+      <div class="card mainquest">
+        <div class="mq-top">
+          <span class="lbl">◆ 오늘의 메인 퀘스트</span>
+          <span class="mq-timer" id="qTimer" aria-label="퀘스트 남은 시간">06:12:44</span>
+        </div>
+        <div class="mq-body">
+          <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:10px">
+            <span class="pill" style="color:var(--r-legend);border-color:#5C4312;background:rgba(255,181,36,.09)">LEGENDARY</span>
+            <span class="pill" style="color:var(--dim);border-color:var(--line);background:#0B1017">주행</span>
+          </div>
+          <h2 class="mq-title">하루 50km, 상한선까지 채우기</h2>
+          <p class="mq-desc">
+            1km = 10 DRV. 하루 최대 500 DRV까지 쌓입니다.
+            주행 중에만 60초 간격으로 기록되고, <b style="color:var(--txt)">주차 중엔 아무것도 안 보냅니다.</b>
+          </p>
+
+          <div class="bigbar" role="img" aria-label="오늘의 메인 퀘스트 진행도 65.2 퍼센트, 32.6 km 중 50 km">
+            <i></i><em>32.6 / 50.0 km · 65%</em>
+          </div>
+
+          <div class="rewards">
+            <span class="rw drv">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M9 8h4a3 3 0 0 1 0 6H9v3M9 11h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              +500 DRV
+            </span>
+            <span class="rw xp">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="currentColor"/></svg>
+              +120 XP
+            </span>
+            <span class="rw badge">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.6 20 6v6c0 4.6-3.3 8-8 9.4C7.3 20 4 16.6 4 12V6l8-3.4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+              풀 클리어 도장
+            </span>
+          </div>
+        </div>
+        <div class="mq-foot">
+          <span class="dot-live" aria-hidden="true"></span>
+          지금 <b class="mono" style="color:var(--lime)">418</b>명이 도로 위에서 이 퀘스트 진행 중
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== QUESTS ===================== -->
+  <section class="section" id="quests" aria-labelledby="quests-h">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow gold">Quest Board</span>
+          <h2 class="sec" id="quests-h">이번 주 퀘스트</h2>
+          <p class="sec-note">매주 월요일 오전 4시에 갈립니다. 히든 퀘스트는 조건을 만족하는 순간 알아서 열려요.</p>
+        </div>
+        <div class="mono" style="color:var(--dim2);font-size:12px;font-weight:800">
+          RESET IN <span style="color:var(--gold)" id="wkTimer">3d 06:12:44</span>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="퀘스트 종류">
+        <button class="tab" role="tab" id="tab-daily" aria-controls="panel-daily" aria-selected="true">일일<small>6개 · 3 완료</small></button>
+        <button class="tab" role="tab" id="tab-weekly" aria-controls="panel-weekly" aria-selected="false" tabindex="-1">주간<small>8개 · 2 완료</small></button>
+        <button class="tab" role="tab" id="tab-season" aria-controls="panel-season" aria-selected="false" tabindex="-1">시즌<small>4개 · 장기전</small></button>
+      </div>
+
+      <!-- DAILY -->
+      <div class="qgrid" role="tabpanel" id="panel-daily" aria-labelledby="tab-daily">
+        <article class="quest q-uncommon done">
+          <span class="stamp">CLEAR</span>
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">UNCOMMON · 출석</div><div class="q-name">오늘의 첫 시동</div></div>
+          </div>
+          <p class="q-desc">아무 데나 가도 됩니다. 시동만 걸어주세요.</p>
+          <div class="q-bar"><i style="width:100%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>1</b> / 1</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+20 DRV</span></div>
+        </article>
+
+        <article class="quest q-uncommon done">
+          <span class="stamp">CLEAR</span>
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 18h18M6 18V9m5 9V5m5 13v-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">UNCOMMON · 주행</div><div class="q-name">오늘 10km 달리기</div></div>
+          </div>
+          <p class="q-desc">동네 한 바퀴면 끝나는 워밍업.</p>
+          <div class="q-bar"><i style="width:100%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>10.0</b> / 10.0 km</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+100 DRV</span></div>
+        </article>
+
+        <article class="quest q-legend">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2.2"/><path d="M12 7.4V12l3.2 2" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">LEGENDARY · 주행</div><div class="q-name">일일 상한 50km 채우기</div></div>
+          </div>
+          <p class="q-desc">오늘의 메인. 여기까지 오면 오늘 몫은 다 챙긴 겁니다.</p>
+          <div class="q-bar"><i style="width:65%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>32.6</b> / 50.0 km</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+500 DRV</span></div>
+        </article>
+
+        <article class="quest q-rare">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="currentColor"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">RARE · 전비</div><div class="q-name">6.5 km/kWh로 20km</div></div>
+          </div>
+          <p class="q-desc">가속 페달을 조금만 살살. 회생제동은 친구예요.</p>
+          <div class="q-bar"><i style="width:74%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>14.8</b> / 20.0 km · 현재 6.71</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+180 DRV</span></div>
+        </article>
+
+        <article class="quest q-common done">
+          <span class="stamp">CLEAR</span>
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.4" stroke="currentColor" stroke-width="2.2"/><path d="M7.5 9h9M7.5 13h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">COMMON · 커뮤니티</div><div class="q-name">기술 글 1개 읽기</div></div>
+          </div>
+          <p class="q-desc">오늘의 추천: 「2025.44.25 업데이트, 뭐가 바뀌었나」</p>
+          <div class="q-bar"><i style="width:100%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>1</b> / 1</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+30 DRV</span></div>
+        </article>
+
+        <article class="quest q-epic">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.2 14.7 9l6.3.8-4.6 4.4 1.2 6.3L12 17.5 6.4 20.5l1.2-6.3L3 9.8 9.3 9 12 3.2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">EPIC · 히든</div><div class="q-name">새벽 5시 전에 시동</div></div>
+          </div>
+          <p class="q-desc">새벽러너만 아는 조용한 도로. 이번 주 3회 중 1회 완료.</p>
+          <div class="q-bar"><i style="width:33%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>1</b> / 3 회</span><span class="rw badge" style="padding:4px 8px;font-size:11.5px">뱃지 · 새벽러너</span></div>
+        </article>
+      </div>
+
+      <!-- WEEKLY -->
+      <div class="qgrid" role="tabpanel" id="panel-weekly" aria-labelledby="tab-weekly" hidden>
+        <article class="quest q-epic">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="currentColor"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">EPIC · 전비</div><div class="q-name">7.0 km/kWh 돌파</div></div>
+          </div>
+          <p class="q-desc">이번 주 평균 전비 7.0 넘기기. 히터 끄고 창문 닫고 각오하세요.</p>
+          <div class="q-bar"><i style="width:91%"></i></div>
+          <div class="q-foot"><span class="q-prog">현재 <b>6.42</b> / 7.00 km/kWh</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+300 DRV</span></div>
+        </article>
+
+        <article class="quest q-rare">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.6" fill="currentColor"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">RARE · 탐험</div><div class="q-name">V4 슈퍼차저 체크인</div></div>
+          </div>
+          <p class="q-desc">전국 V4 사이트 아무 곳이나. 도장 찍고 인증샷은 자유.</p>
+          <div class="q-bar"><i style="width:0%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>0</b> / 1 곳</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+200 DRV</span></div>
+        </article>
+
+        <article class="quest q-uncommon">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 18h18M6 18V9m5 9V5m5 13v-6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">UNCOMMON · 주행</div><div class="q-name">주간 누적 300km</div></div>
+          </div>
+          <p class="q-desc">출퇴근만 해도 슬금슬금 차오릅니다.</p>
+          <div class="q-bar"><i style="width:61%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>184</b> / 300 km</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+400 DRV</span></div>
+        </article>
+
+        <article class="quest q-legend">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5.5 4.5v16M5.5 5.5h11l-2 3.4 2 3.4h-11" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">LEGENDARY · 아카이브</div><div class="q-name">기술 글 1편 쓰기</div></div>
+          </div>
+          <p class="q-desc">업데이트 후기, 숨은 기능, 정비 기록. 추천 많이 받으면 TSLM이 나옵니다.</p>
+          <div class="q-bar"><i style="width:0%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>0</b> / 1 편</span><span class="rw tslm" style="padding:4px 8px;font-size:11.5px">+TSLM</span></div>
+        </article>
+
+        <article class="quest q-rare">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19v-1.5a4 4 0 0 1 4-4h2a4 4 0 0 1 4 4V19" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="9" cy="7.5" r="3.2" stroke="currentColor" stroke-width="2.2"/><path d="M17 8.5v5M14.5 11h5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">RARE · 길드</div><div class="q-name">오너 3명 데려오기</div></div>
+          </div>
+          <p class="q-desc">단톡방에 링크 하나면 끝. 데려온 사람 주행에서도 지분이 붙어요.</p>
+          <div class="q-bar"><i style="width:33%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>1</b> / 3 명</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+450 DRV</span></div>
+        </article>
+
+        <article class="quest q-rare">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 13.5h18M6.5 13.5 8 7.6C8.3 6.6 9.2 6 10.2 6h3.6c1 0 1.9.6 2.2 1.6l1.5 5.9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 13.5V18h15v-4.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">RARE · 주행</div><div class="q-name">고속도로 무정차 100km</div></div>
+          </div>
+          <p class="q-desc">한 번에 쭉. 휴게소는 다음에.</p>
+          <div class="q-bar"><i style="width:47%"></i></div>
+          <div class="q-foot"><span class="q-prog">최고 기록 <b>47</b> / 100 km</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+250 DRV</span></div>
+        </article>
+
+        <article class="quest q-myth">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3v18M6 4h11l-2.4 3.6L17 11H6" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="18" cy="17" r="3" stroke="currentColor" stroke-width="2.2"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">MYTHIC · 탐험</div><div class="q-name">도서·제주 지역 도장</div></div>
+          </div>
+          <p class="q-desc">배 타고 건너간 사람만 가질 수 있는 마크. 시즌당 1회.</p>
+          <div class="q-bar"><i style="width:0%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>0</b> / 1 곳</span><span class="rw badge" style="padding:4px 8px;font-size:11.5px">뱃지 · 섬 넘은 자</span></div>
+        </article>
+
+        <article class="quest q-common locked">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2" stroke="currentColor" stroke-width="2.2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="currentColor" stroke-width="2.2"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">??? · 히든</div><div class="q-name">잠긴 퀘스트</div></div>
+          </div>
+          <p class="q-desc">실버 티어부터 열립니다. 조건은 열리면 알게 돼요.</p>
+          <div class="q-bar"><i style="width:0%"></i></div>
+          <div class="q-foot"><span class="q-prog">LOCKED</span><span class="rw" style="padding:4px 8px;font-size:11.5px;color:var(--dim2)">? ? ?</span></div>
+        </article>
+      </div>
+
+      <!-- SEASON -->
+      <div class="qgrid" role="tabpanel" id="panel-season" aria-labelledby="tab-season" hidden>
+        <article class="quest q-legend">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8.4" stroke="currentColor" stroke-width="2.2"/><path d="M12 4.2v3M12 16.8v3M4.2 12h3M16.8 12h3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">LEGENDARY · 시즌</div><div class="q-name">시즌 누적 1,000km</div></div>
+          </div>
+          <p class="q-desc">시즌 1은 5월 31일까지. 지금 페이스면 여유롭습니다.</p>
+          <div class="q-bar"><i style="width:41%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>412</b> / 1,000 km</span><span class="rw drv" style="padding:4px 8px;font-size:11.5px">+2,000 DRV</span></div>
+        </article>
+
+        <article class="quest q-epic">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.6" fill="currentColor"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">EPIC · 탐험</div><div class="q-name">슈퍼차저 5곳 순례</div></div>
+          </div>
+          <p class="q-desc">서로 다른 사이트 5곳. 같은 곳 다섯 번은 안 쳐줍니다.</p>
+          <div class="q-bar"><i style="width:60%"></i></div>
+          <div class="q-foot"><span class="q-prog"><b>3</b> / 5 곳</span><span class="rw badge" style="padding:4px 8px;font-size:11.5px">뱃지 · 순례자</span></div>
+        </article>
+
+        <article class="quest q-myth">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="currentColor"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">MYTHIC · 전비</div><div class="q-name">단 한 번, 7.5 km/kWh</div></div>
+          </div>
+          <p class="q-desc">30km 이상 구간에서 딱 한 번만 찍으면 됩니다. 딱 한 번이요.</p>
+          <div class="q-bar"><i style="width:86%"></i></div>
+          <div class="q-foot"><span class="q-prog">최고 <b>7.12</b> / 7.50</span><span class="rw badge" style="padding:4px 8px;font-size:11.5px">뱃지 · 전비 장인</span></div>
+        </article>
+
+        <article class="quest q-rare">
+          <div class="q-head">
+            <span class="q-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19h16M7 19V9.5M12 19V5.5M17 19v-6.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+            <div class="q-meta"><div class="q-rarity">RARE · 랭킹</div><div class="q-name">전비 랭킹 상위 10%</div></div>
+          </div>
+          <p class="q-desc">시즌 종료 시점 기준. 현재 상위 18.4%, 조금만 더요.</p>
+          <div class="q-bar"><i style="width:55%"></i></div>
+          <div class="q-foot"><span class="q-prog">상위 <b>18.4</b>% → 10%</span><span class="rw tslm" style="padding:4px 8px;font-size:11.5px">+TSLM</span></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TIER LADDER ===================== -->
+  <section class="section" aria-labelledby="tier-h">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow cyan">Tier Ladder</span>
+          <h2 class="sec" id="tier-h">브론즈에서 테슬람까지</h2>
+          <p class="sec-note">누적 검증 주행거리로만 올라갑니다. 돈으로 못 삽니다. 그게 포인트예요.</p>
+        </div>
+      </div>
+
+      <div class="scrollx" tabindex="0" aria-label="티어 사다리 가로 스크롤 영역">
+        <div class="ladder">
+          <div class="tier" style="--tc:#B08D57">
+            <div class="shield">
+              <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4 40 10v11c0 9.4-6.7 16.4-16 19-9.3-2.6-16-9.6-16-19V10l16-6z" fill="#4A3A22" stroke="#B08D57" stroke-width="3" stroke-linejoin="round"/><path d="M24 16v14M18 23h12" stroke="#B08D57" stroke-width="3.4" stroke-linecap="round"/></svg>
+            </div>
+            <h3 style="color:#B08D57">브론즈</h3>
+            <div class="req">0 km ~</div>
+            <ul><li>일일 퀘스트 개방</li><li>DRV 적립 시작</li></ul>
+          </div>
+
+          <div class="tier" style="--tc:#C9D4E0">
+            <div class="shield">
+              <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4 40 10v11c0 9.4-6.7 16.4-16 19-9.3-2.6-16-9.6-16-19V10l16-6z" fill="#2E3A48" stroke="#C9D4E0" stroke-width="3" stroke-linejoin="round"/><path d="M17 22l5 5 9-10" stroke="#C9D4E0" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <h3 style="color:#C9D4E0">실버</h3>
+            <div class="req">500 km ~</div>
+            <ul><li>히든 퀘스트 해금</li><li>주간 퀘스트 +2칸</li></ul>
+          </div>
+
+          <div class="tier cur" style="--tc:#FFB524">
+            <div class="shield">
+              <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4 40 10v11c0 9.4-6.7 16.4-16 19-9.3-2.6-16-9.6-16-19V10l16-6z" fill="#4A3A12" stroke="#FFB524" stroke-width="3" stroke-linejoin="round"/><path d="M24 13l3 6.4 7 .9-5.1 4.9L30.2 32 24 28.7 17.8 32l1.3-6.8L14 20.3l7-.9L24 13z" fill="#FFB524"/></svg>
+            </div>
+            <h3 style="color:#FFB524">골드</h3>
+            <div class="req">2,000 km ~</div>
+            <ul><li>보상 1.15배</li><li>랭킹 뱃지 표시</li><li>상점 한정 상품</li></ul>
+          </div>
+
+          <div class="tier" style="--tc:#35D0FF">
+            <div class="shield">
+              <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4 40 10v11c0 9.4-6.7 16.4-16 19-9.3-2.6-16-9.6-16-19V10l16-6z" fill="#12303B" stroke="#35D0FF" stroke-width="3" stroke-linejoin="round"/><path d="M24 12l8 8-8 8-8-8 8-8z" fill="#35D0FF"/></svg>
+            </div>
+            <h3 style="color:#35D0FF">플래티넘</h3>
+            <div class="req">5,000 km ~</div>
+            <ul><li>보상 1.3배</li><li>TSLM 락업 우대</li><li>베타 기능 우선 접근</li></ul>
+          </div>
+
+          <div class="tier final" style="--tc:#C6FF3D">
+            <div class="shield">
+              <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 4 40 10v11c0 9.4-6.7 16.4-16 19-9.3-2.6-16-9.6-16-19V10l16-6z" fill="#26380C" stroke="#C6FF3D" stroke-width="3" stroke-linejoin="round"/><path d="M26.6 11 17 25h6.2L23 35l10.2-13.2H27L26.6 11z" fill="#C6FF3D"/></svg>
+            </div>
+            <h3 style="color:#C6FF3D">테슬람</h3>
+            <div class="req">15,000 km ~</div>
+            <ul><li>보상 1.5배</li><li>닉네임 옆 번개 마크</li><li>거버넌스 제안권</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== STREAK ===================== -->
+  <section class="section" aria-labelledby="streak-h">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow pink">Login Streak</span>
+          <h2 class="sec" id="streak-h">연속 출석, 끊기면 아깝습니다</h2>
+          <p class="sec-note">7일째에 상자가 열립니다. 안에 뭐가 들었는지는 열어봐야 알아요.</p>
+        </div>
+      </div>
+
+      <div class="card streak-wrap">
+        <div>
+          <div class="days">
+            <div class="day on"><span class="n">DAY 1</span><span class="v">+20</span></div>
+            <div class="day on"><span class="n">DAY 2</span><span class="v">+30</span></div>
+            <div class="day on"><span class="n">DAY 3</span><span class="v">+40</span></div>
+            <div class="day on"><span class="n">DAY 4</span><span class="v">+50</span></div>
+            <div class="day today"><span class="n">오늘</span><span class="v">+60</span></div>
+            <div class="day"><span class="n">DAY 6</span><span class="v">+80</span></div>
+            <div class="day chest">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <rect x="2.5" y="9.5" width="19" height="11" rx="2.4" fill="#6E1338" stroke="#FF3D7F" stroke-width="1.7"/>
+                <path d="M2.5 12c0-3.6 4-6.5 9.5-6.5S21.5 8.4 21.5 12" fill="#FF3D7F" stroke="#FF3D7F" stroke-width="1.4"/>
+                <rect x="10" y="10.5" width="4" height="6" rx="1.2" fill="#28060F"/>
+              </svg>
+              <span class="n" style="color:var(--pink)">상자</span>
+            </div>
+          </div>
+          <p style="margin-top:14px;font-size:13px;color:var(--dim)">
+            하루라도 시동을 걸면 출석 인정. <b style="color:var(--txt)">주차만 해둔 날은 카운트되지 않습니다</b> — 주차 중엔 차가 아무 신호도 안 보내거든요.
+          </p>
+        </div>
+
+        <div class="streak-num">
+          <div class="flame" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none"><path d="M16 2s2 5-2 8.5C10.5 13.6 8 16.6 8 20a8 8 0 0 0 16 0c0-3.6-2.4-6-4-8.6-1.4-2.4-1.4-4.6-1.4-4.6S18 4.5 16 2z" fill="#FFB524" stroke="#FF7A1A" stroke-width="2" stroke-linejoin="round"/><path d="M16 15s-2.5 2.2-2.5 4.6a2.5 2.5 0 0 0 5 0c0-2-2.5-4.6-2.5-4.6z" fill="#C6FF3D"/></svg>
+          </div>
+          <b class="mono">5</b>
+          <span>일 연속 출석 중</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LEADERBOARD + FEED ===================== -->
+  <section class="section" aria-labelledby="lb-h">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Leaderboard</span>
+          <h2 class="sec" id="lb-h">이번 주 전비 랭킹</h2>
+          <p class="sec-note">누가 더 멀리 갔느냐가 아니라, 누가 더 잘 갔느냐. 30km 이상 주행분만 집계합니다.</p>
+        </div>
+      </div>
+
+      <div class="card lbcard">
+        <div class="lb-head">
+          <h3>TOP 8 · 전비 부문</h3>
+          <span class="note">월요일 04:00 초기화 · 30km 미만 제외</span>
+        </div>
+        <div class="scrollx" tabindex="0" aria-label="랭킹 표 가로 스크롤 영역">
+          <table>
+            <caption class="sr">이번 주 전비 랭킹 상위 8명</caption>
+            <thead>
+              <tr><th scope="col">순위</th><th scope="col">오너</th><th scope="col">전비</th><th scope="col">주행</th><th scope="col">획득</th><th scope="col">지역</th><th scope="col">티어</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="rank r1">1</td>
+                <td><div class="who"><span class="av" style="background:#C6FF3D">김</span><div><div class="nick">김테슬람</div><div class="trim">Model 3 RWD · 2024</div></div></div></td>
+                <td class="eff">8.42</td><td class="km">412 km</td><td class="drv">4,120</td><td style="color:var(--dim)">서울 강남</td>
+                <td><span class="badge-mini" style="color:#C6FF3D;border-color:#5E8A16">테슬람</span></td>
+              </tr>
+              <tr>
+                <td class="rank r2">2</td>
+                <td><div class="who"><span class="av" style="background:#35D0FF">프</span><div><div class="nick">프렁크에김치</div><div class="trim">Model 3 LR · 2023</div></div></div></td>
+                <td class="eff">7.98</td><td class="km">388 km</td><td class="drv">3,880</td><td style="color:var(--dim)">경기 성남</td>
+                <td><span class="badge-mini" style="color:#35D0FF;border-color:#12475C">플래티넘</span></td>
+              </tr>
+              <tr>
+                <td class="rank r3">3</td>
+                <td><div class="who"><span class="av" style="background:#FFB524">회</span><div><div class="nick">회생제동중독</div><div class="trim">Model Y RWD · 2025</div></div></div></td>
+                <td class="eff">7.81</td><td class="km">301 km</td><td class="drv">3,010</td><td style="color:var(--dim)">부산 해운대</td>
+                <td><span class="badge-mini" style="color:#FFB524;border-color:#5C4312">골드</span></td>
+              </tr>
+              <tr>
+                <td class="rank">4</td>
+                <td><div class="who"><span class="av" style="background:#FF3D7F">야</span><div><div class="nick">야탑슈퍼차저지박령</div><div class="trim">Model Y LR · 2024</div></div></div></td>
+                <td class="eff">7.64</td><td class="km">497 km</td><td class="drv">3,500</td><td style="color:var(--dim)">경기 분당</td>
+                <td><span class="badge-mini" style="color:#FFB524;border-color:#5C4312">골드</span></td>
+              </tr>
+              <tr>
+                <td class="rank">5</td>
+                <td><div class="who"><span class="av" style="background:#4ADE80">팬</span><div><div class="nick">팬텀드레인수사대</div><div class="trim">Model S LR · 2022</div></div></div></td>
+                <td class="eff">7.40</td><td class="km">266 km</td><td class="drv">2,660</td><td style="color:var(--dim)">대전 유성</td>
+                <td><span class="badge-mini" style="color:#35D0FF;border-color:#12475C">플래티넘</span></td>
+              </tr>
+              <tr>
+                <td class="rank">6</td>
+                <td><div class="who"><span class="av" style="background:#C9D4E0">흰</span><div><div class="nick">흰둥이Y오너</div><div class="trim">Model Y P · 2025</div></div></div></td>
+                <td class="eff">7.22</td><td class="km">344 km</td><td class="drv">3,440</td><td style="color:var(--dim)">인천 송도</td>
+                <td><span class="badge-mini" style="color:#C9D4E0;border-color:#3C4756">실버</span></td>
+              </tr>
+              <tr>
+                <td class="rank">7</td>
+                <td><div class="who"><span class="av" style="background:#FFB524">F</span><div><div class="nick">FSD기다리다늙음</div><div class="trim">Model X LR · 2021</div></div></div></td>
+                <td class="eff">6.95</td><td class="km">512 km</td><td class="drv">3,500</td><td style="color:var(--dim)">강원 춘천</td>
+                <td><span class="badge-mini" style="color:#FFB524;border-color:#5C4312">골드</span></td>
+              </tr>
+              <tr>
+                <td class="rank">8</td>
+                <td><div class="who"><span class="av" style="background:#35D0FF">판</span><div><div class="nick">판교출퇴근셔틀</div><div class="trim">Model 3 LR · 2024</div></div></div></td>
+                <td class="eff">6.88</td><td class="km">289 km</td><td class="drv">2,890</td><td style="color:var(--dim)">경기 판교</td>
+                <td><span class="badge-mini" style="color:#C9D4E0;border-color:#3C4756">실버</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card feed" style="margin-top:14px" aria-labelledby="feed-h">
+        <div style="display:flex;align-items:center;gap:9px;padding:2px 4px 12px">
+          <span class="dot-live" aria-hidden="true"></span>
+          <h3 id="feed-h" style="font-size:14px">지금 보드에서 벌어지는 일</h3>
+        </div>
+        <ul id="feedList" aria-live="polite" aria-relevant="additions"></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== HOW IT WORKS ===================== -->
+  <section class="section" aria-labelledby="how-h">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow gold">Setup</span>
+          <h2 class="sec" id="how-h">장비 장착은 3분이면 끝</h2>
+          <p class="sec-note">개발자 계정도, API 요금 결제도 필요 없습니다. 그건 teslam.io가 냅니다.</p>
+        </div>
+      </div>
+
+      <div class="steps">
+        <article class="card step">
+          <span class="num" aria-hidden="true">01</span>
+          <h3>테슬라 계정 연결</h3>
+          <p>공식 OAuth로 딱 한 번 연결합니다. 비밀번호를 우리가 보관하지 않고, 언제든 해제할 수 있어요.</p>
+          <span class="chip">개발자 계정 불필요</span>
+        </article>
+        <article class="card step">
+          <span class="num" aria-hidden="true">02</span>
+          <h3>달리면 알아서 기록</h3>
+          <p>차가 <b style="color:var(--txt)">움직이는 동안에만</b> 60초마다 4개 신호를 보냅니다 — 위도, 경도, 속도, 오도미터. 주차 중엔 아무것도 안 보냅니다.</p>
+          <span class="chip">주행 중 60초 간격</span>
+        </article>
+        <article class="card step">
+          <span class="num" aria-hidden="true">03</span>
+          <h3>오도미터가 심판</h3>
+          <p>GPS는 속일 수 있지만 오도미터는 되돌릴 수 없습니다. 그래서 거리 판정은 오도미터로만 합니다. <b style="color:var(--lime)">1km = 10 DRV</b>, 하루 500 DRV까지.</p>
+          <span class="chip">조작 불가 판정</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SHOP ===================== -->
+  <section class="section" aria-labelledby="shop-h">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Reward Shop</span>
+          <h2 class="sec" id="shop-h">DRV는 여기서 씁니다</h2>
+          <p class="sec-note">교환 기준은 고정입니다 — <b style="color:var(--lime)">1,000 DRV ≈ 실물 500원어치</b>. 게임머니처럼 쌓이고, 현실에서 쓰입니다.</p>
+        </div>
+      </div>
+
+      <div class="shop">
+        <article class="card item">
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="14" y="8" width="26" height="48" rx="4" fill="#151C26" stroke="#C6FF3D" stroke-width="3"/>
+              <path d="M40 22h6a4 4 0 0 1 4 4v14a3 3 0 0 0 6 0V28" stroke="#8FA3BA" stroke-width="3" stroke-linecap="round"/>
+              <path d="M29.5 16 21 33h6.5L26 46l11-17h-6.5l-1-13z" fill="#C6FF3D"/>
+            </svg>
+          </div>
+          <h3>슈퍼차저 크레딧</h3>
+          <div class="sub">5,000원 상당</div>
+          <div class="price">10,000 DRV</div>
+        </article>
+
+        <article class="card item">
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              <path d="M8 42h48c0-6-2-10-8-11l-9-2-8-7c-1.6-1.4-3.4-2-5.2-2H22c-2 0-3.8.8-5.2 2.2L11 29l-2 2c-1.6 2-2 6-1 11z" fill="#151C26" stroke="#35D0FF" stroke-width="3" stroke-linejoin="round"/>
+              <circle cx="20" cy="44" r="5" fill="#35D0FF"/><circle cx="46" cy="44" r="5" fill="#35D0FF"/>
+              <path d="M16 16c0-2 3-5 3-5s3 3 3 5a3 3 0 1 1-6 0zM42 12c0-2 3-5 3-5s3 3 3 5a3 3 0 1 1-6 0z" fill="#35D0FF"/>
+            </svg>
+          </div>
+          <h3>손세차 쿠폰</h3>
+          <div class="sub">3,000원 상당 · 제휴 매장</div>
+          <div class="price">6,000 DRV</div>
+        </article>
+
+        <article class="card item">
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="8" y="20" width="48" height="30" rx="4" fill="#151C26" stroke="#FFB524" stroke-width="3"/>
+              <path d="M8 30h48" stroke="#FFB524" stroke-width="3"/>
+              <path d="M32 20v30" stroke="#FFB524" stroke-width="3"/>
+              <path d="M32 20c-4-8-14-8-14-2 0 4 8 4 14 2zm0 0c4-8 14-8 14-2 0 4-8 4-14 2z" fill="#FFB524"/>
+            </svg>
+          </div>
+          <h3>편의점 기프트카드</h3>
+          <div class="sub">10,000원 상당</div>
+          <div class="price">20,000 DRV</div>
+        </article>
+
+        <article class="card item">
+          <div class="art" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none">
+              <rect x="10" y="26" width="44" height="26" rx="5" fill="#3B1226" stroke="#FF3D7F" stroke-width="3"/>
+              <path d="M10 32c0-9 9.8-16 22-16s22 7 22 16" fill="#FF3D7F" stroke="#FF3D7F" stroke-width="3" stroke-linejoin="round"/>
+              <rect x="27" y="28" width="10" height="14" rx="3" fill="#160309"/>
+            </svg>
+          </div>
+          <h3>랜덤 상자</h3>
+          <div class="sub">꽝 없음 · 최고 5만원권</div>
+          <div class="price">7,500 DRV</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TSLM ===================== -->
+  <section class="section" aria-labelledby="tslm-h">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow pink">Guild Share</span>
+          <h2 class="sec" id="tslm-h">TSLM — 이 보드의 규칙을 정하는 표</h2>
+          <p class="sec-note">DRV가 소비재라면 TSLM은 발언권입니다. 퀘스트 난이도도, 보상 비율도 결국 여기서 정해져요.</p>
+        </div>
+      </div>
+
+      <div class="tslm-grid">
+        <div class="card tslm-box">
+          <div style="font-size:11px;font-weight:900;letter-spacing:.16em;color:var(--dim2)">TOTAL SUPPLY · 영원히 고정</div>
+          <div class="tslm-supply">100,000,000</div>
+          <p style="color:var(--dim);font-size:13.5px;margin-top:10px">추가 발행 없음. 나중에 더 찍는 일도 없습니다. 그래서 지금 들어온 사람의 지분이 의미가 있어요.</p>
+
+          <div class="routes">
+            <div class="route">
+              <span class="k" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><rect x="4.5" y="10.5" width="15" height="9.5" rx="2.2" stroke="currentColor" stroke-width="2.2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke="currentColor" stroke-width="2.2"/></svg></span>
+              <span><b>DRV 락업</b><span>모아둔 DRV를 잠그면 기간에 비례해 TSLM으로 전환됩니다.</span></span>
+            </div>
+            <div class="route">
+              <span class="k" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M5.5 4.5v16M5.5 5.5h11l-2 3.4 2 3.4h-11" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg></span>
+              <span><b>좋은 기술 글</b><span>업데이트 분석, 숨은 기능, 정비 삽질기. 커뮤니티가 인정하면 지급됩니다.</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card tslm-box">
+          <h3 style="font-size:17px">TSLM으로 할 수 있는 것</h3>
+          <ul class="perks" style="margin-top:14px">
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true" style="color:var(--pink)"><path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> 토크노믹스 변경안 투표</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true" style="color:var(--pink)"><path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> 신규 퀘스트 제안 및 채택</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true" style="color:var(--pink)"><path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> 보드 내 광고 슬롯 배치권</li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true" style="color:var(--pink)"><path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> 상점 입점 파트너 선정</li>
+          </ul>
+          <p style="margin-top:16px;font-size:12.5px;color:var(--dim2)">
+            제네시스 500은 첫 토크노믹스 투표에 참여합니다. 초기 규칙을 같이 짜는 자리라는 뜻이에요.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== GENESIS 500 ===================== -->
+  <section class="section" id="genesis" aria-labelledby="gen-h">
+    <div class="wrap">
+      <div class="gen">
+        <div class="gen-grid">
+          <div>
+            <span class="eyebrow">한정 · 선착순 500명</span>
+            <h2 id="gen-h" style="margin-top:14px">제네시스 500,<br>1기 명단에 이름 올리기</h2>
+            <p class="lead">
+              보드가 열리기 전에 들어온 500명. 나중에 아무리 많이 달려도 이 자리는 못 삽니다.
+              단 한 번, 지금만 열려 있어요.
+            </p>
+
+            <ul class="perks">
+              <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="currentColor"/></svg> 모든 주행 보상 <b>1.5배</b> — 영구 적용</li>
+              <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2.6 20 6v6c0 4.6-3.3 8-8 9.4C7.3 20 4 16.6 4 12V6l8-3.4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg> 닉네임 옆 <b>'제네시스 1기'</b> 마크</li>
+              <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12l5 5L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg> 첫 <b>토크노믹스 투표권</b></li>
+              <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.2 14.7 9l6.3.8-4.6 4.4 1.2 6.3L12 17.5 6.4 20.5l1.2-6.3L3 9.8 9.3 9 12 3.2z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg> 1기 전용 히든 퀘스트 라인</li>
+            </ul>
+
+            <div class="cta-row">
+              <a class="btn btn-primary" href="#genesis">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="#0D1704"/></svg>
+                지금 자리 잡기
+              </a>
+              <a class="btn btn-ghost" href="#quests">퀘스트 한 번 더 보기</a>
+            </div>
+          </div>
+
+          <div>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+              <div>
+                <div class="gen-count"><span style="color:var(--lime)">363</span><small> / 500</small></div>
+                <div style="font-size:12px;color:var(--dim2);font-weight:800;letter-spacing:.06em;margin-top:4px">채워진 자리</div>
+              </div>
+              <div style="text-align:right">
+                <div class="mono" style="font-size:26px;font-weight:800;color:var(--pink)">137</div>
+                <div style="font-size:12px;color:var(--dim2);font-weight:800">남은 자리</div>
+              </div>
+            </div>
+
+            <div class="slots" id="slots" aria-hidden="true"></div>
+            <p class="sr">전체 500자리 중 363자리가 채워졌고 137자리가 남아 있습니다.</p>
+
+            <div class="slot-legend">
+              <span><i style="background:linear-gradient(160deg,#C6FF3D,#7FD400)"></i>합류 완료</span>
+              <span><i style="background:#FF3D7F"></i>다음 차례</span>
+              <span><i style="background:#18202B"></i>빈 자리</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== TOAST ===================== -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <div class="toast-in">
+    <span class="cs" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none">
+        <path d="M6 22 32 8l26 14-26 12L6 22z" fill="#FFB524" stroke="#0A0D12" stroke-width="3" stroke-linejoin="round"/>
+        <rect x="8" y="26" width="48" height="26" rx="5" fill="#8A5A16" stroke="#0A0D12" stroke-width="3"/>
+        <rect x="27" y="28" width="10" height="15" rx="3" fill="#0A0D12"/>
+        <path d="M32 4v5M46 8l-2 4M18 8l2 4" stroke="#C6FF3D" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </span>
+    <div>
+      <b>일일 퀘스트 클리어!</b>
+      <p>50.0 km 완주 · 오늘 상한선까지 꽉 채웠습니다</p>
+    </div>
+    <button class="close" id="toastClose" aria-label="알림 닫기">✕</button>
+  </div>
+  <div class="rewards">
+    <span class="rw drv">+500 DRV</span>
+    <span class="rw xp">+120 XP</span>
+    <span class="rw badge">풀 클리어 도장</span>
+  </div>
+</div>
+<div class="conf" id="conf" aria-hidden="true"></div>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <div style="display:flex;align-items:center;gap:9px">
+          <span class="brand-mark" aria-hidden="true" style="width:30px;height:30px;border-radius:10px">
+            <svg viewBox="0 0 24 24" fill="none" style="width:18px;height:18px"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="#12240A"/></svg>
+          </span>
+          <strong style="font-size:16px;letter-spacing:-.03em">teslam<span style="color:var(--lime)">.io</span></strong>
+        </div>
+        <p style="font-size:12.5px;color:var(--dim2);margin-top:9px;max-width:34ch">
+          한국 테슬라 오너들이 모이는 퀘스트 보드. 달린 만큼 기록되고, 기록한 만큼 남습니다.
+        </p>
+      </div>
+      <nav class="f-links" aria-label="푸터 메뉴">
+        <a href="#quests">퀘스트</a>
+        <a href="#genesis">제네시스 500</a>
+        <a href="#lb-h">랭킹</a>
+        <a href="#tslm-h">TSLM</a>
+        <a href="#how-h">시작하기</a>
+      </nav>
+    </div>
+
+    <p class="legal">
+      <strong>teslam.io는 Tesla, Inc.와 제휴하거나 후원받는 관계가 아닌 독립 커뮤니티 프로젝트입니다.</strong>
+      Tesla, Model S/3/X/Y, Supercharger는 Tesla, Inc.의 상표입니다.
+      DRV·TSLM은 커뮤니티 활동 보상이며 투자 수익을 약속하지 않습니다.
+      화면에 표시된 닉네임·기록·순위는 서비스 소개를 위한 예시입니다.
+      차량 데이터는 오너가 직접 연결을 승인한 경우에만, 주행 중 4개 항목(위도·경도·속도·오도미터)에 한해 수집되며 언제든 연결 해제할 수 있습니다.
+    </p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+  var rmq = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var reduce = rmq.matches;
+  try{ rmq.addEventListener('change', function(e){ reduce = e.matches; }); }catch(e){}
+
+  /* ---------- 1) SCROLL = ODOMETER (the move) ---------- */
+  var fill  = document.getElementById('odoFill');
+  var car   = document.getElementById('odoCar');
+  var kmEl  = document.getElementById('odoKm');
+  var drvEl = document.getElementById('odoDrv');
+  var barEl = document.getElementById('odoBar');
+  var chest = document.getElementById('hudChest');
+  var lvEl  = document.getElementById('hudLv');
+  var fired = false, ticking = false;
+
+  function draw(){
+    ticking = false;
+    var doc = document.documentElement;
+    var max = (doc.scrollHeight - window.innerHeight);
+    var p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+
+    var km  = p * 50;
+    var drv = Math.min(500, Math.round(km * 10));
+    var pct = p * 100;
+
+    fill.style.width = pct + '%';
+    car.style.left = (pct * 0.985 + 0.7) + '%';
+    kmEl.textContent = km.toFixed(1);
+    drvEl.textContent = drv.toLocaleString('ko-KR');
+    barEl.setAttribute('aria-valuenow', km.toFixed(1));
+    lvEl.textContent = String(7 + Math.floor(p * 3));
+
+    if(p > 0.985 && !fired){ fired = true; clear(); }
+    if(p < 0.90 && fired){ fired = false; }
+  }
+  function onScroll(){ if(!ticking){ ticking = true; requestAnimationFrame(draw); } }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  draw();
+
+  /* ---------- chest clear + confetti ---------- */
+  var toast = document.getElementById('toast');
+  var conf  = document.getElementById('conf');
+  var hideT = null;
+  function clear(){
+    chest.classList.add('open');
+    toast.classList.add('show');
+    if(!reduce) confetti();
+    clearTimeout(hideT);
+    hideT = setTimeout(function(){ toast.classList.remove('show'); }, 6500);
+  }
+  document.getElementById('toastClose').addEventListener('click', function(){
+    toast.classList.remove('show');
+  });
+  function confetti(){
+    var colors = ['#C6FF3D','#FFB524','#FF3D7F','#35D0FF','#4ADE80'];
+    var frag = document.createDocumentFragment();
+    for(var i=0;i<40;i++){
+      var s = document.createElement('span');
+      s.style.left = (Math.random()*100) + 'vw';
+      s.style.background = colors[i % colors.length];
+      s.style.animationDuration = (1.5 + Math.random()*1.5) + 's';
+      s.style.animationDelay = (Math.random()*0.45) + 's';
+      s.style.opacity = '0.95';
+      frag.appendChild(s);
+    }
+    conf.appendChild(frag);
+    setTimeout(function(){ conf.innerHTML = ''; }, 3600);
+  }
+
+  /* ---------- 2) TABS ---------- */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  function select(tab){
+    tabs.forEach(function(t){
+      var on = (t === tab);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      var panel = document.getElementById(t.getAttribute('aria-controls'));
+      if(panel) panel.hidden = !on;
+    });
+  }
+  tabs.forEach(function(t, i){
+    t.addEventListener('click', function(){ select(t); });
+    t.addEventListener('keydown', function(e){
+      var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if(!d) return;
+      e.preventDefault();
+      var next = tabs[(i + d + tabs.length) % tabs.length];
+      next.focus(); select(next);
+    });
+  });
+
+  /* ---------- 3) GENESIS SLOT GRID ---------- */
+  var slots = document.getElementById('slots');
+  if(slots){
+    var f = document.createDocumentFragment();
+    for(var i=0;i<500;i++){
+      var d = document.createElement('span');
+      d.className = 'slot' + (i < 363 ? ' f' : (i === 363 ? ' you' : ''));
+      f.appendChild(d);
+    }
+    slots.appendChild(f);
+  }
+
+  /* ---------- 4) COUNTDOWNS ---------- */
+  function pad(n){ return (n<10?'0':'') + n; }
+  var qTimer = document.getElementById('qTimer');
+  var wkTimer = document.getElementById('wkTimer');
+  function tick(){
+    var now = new Date();
+    var mid = new Date(now); mid.setHours(24,0,0,0);
+    var s = Math.max(0, Math.floor((mid - now)/1000));
+    qTimer.textContent = pad(Math.floor(s/3600)) + ':' + pad(Math.floor(s/60)%60) + ':' + pad(s%60);
+
+    var dow = now.getDay();                    // 0=일
+    var daysToMon = (8 - (dow === 0 ? 7 : dow)) % 7;
+    var reset = new Date(now);
+    reset.setDate(now.getDate() + daysToMon);
+    reset.setHours(4,0,0,0);
+    if(reset <= now) reset.setDate(reset.getDate() + 7);
+    var ws = Math.floor((reset - now)/1000);
+    var wd = Math.floor(ws/86400), wr = ws % 86400;
+    wkTimer.textContent = wd + 'd ' + pad(Math.floor(wr/3600)) + ':' + pad(Math.floor(wr/60)%60) + ':' + pad(wr%60);
+  }
+  tick(); setInterval(tick, 1000);
+
+  /* ---------- 5) COMMUNITY ODOMETER ---------- */
+  var ctr = document.getElementById('ctrKm');
+  var total = 1284930;
+  setInterval(function(){
+    total += Math.floor(Math.random()*26) + 6;
+    ctr.textContent = total.toLocaleString('ko-KR');
+  }, reduce ? 6000 : 1900);
+
+  /* ---------- 6) LIVE FEED ---------- */
+  var ICONS = {
+    quest:'<svg viewBox="0 0 24 24" fill="none"><path d="M4 12l5 5L20 6" stroke="#4ADE80" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    pin:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" stroke="#35D0FF" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.4" fill="#35D0FF"/></svg>',
+    up:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 4v16M6 10l6-6 6 6" stroke="#FFB524" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    gen:'<svg viewBox="0 0 24 24" fill="none"><path d="M13.4 2 4 13.6h6.1L9.9 22 20 10.2h-6.3L13.4 2z" fill="#C6FF3D"/></svg>',
+    pen:'<svg viewBox="0 0 24 24" fill="none"><path d="M4 20l4-1 11-11-3-3L5 16l-1 4z" stroke="#FF3D7F" stroke-width="2.2" stroke-linejoin="round"/></svg>'
+  };
+  var EVENTS = [
+    ['quest','프렁크에김치','[7.0 km/kWh 돌파] 클리어 · <b style="color:#C6FF3D">+300 DRV</b>'],
+    ['pin','야탑슈퍼차저지박령','V4 슈퍼차저 <b>강남</b> 체크인 · <b style="color:#C6FF3D">+200 DRV</b>'],
+    ['up','전비깡패','<b style="color:#FFB524">골드 티어</b> 승급'],
+    ['gen','FSD기다리다늙음','제네시스 <b>363번째</b> 자리 획득'],
+    ['pen','흰둥이Y오너','「2025.44.25 업데이트 뜯어보기」 작성 · <b style="color:#FF3D7F">+40 TSLM</b>'],
+    ['quest','판교출퇴근셔틀','[일일 50km] 클리어 · <b style="color:#C6FF3D">+500 DRV</b>'],
+    ['pin','도로위의고요','V4 슈퍼차저 <b>속초</b> 체크인 · 순례 4/5'],
+    ['up','회생제동중독','연속 출석 <b>21일</b> 달성 · 상자 개봉'],
+    ['quest','팬텀드레인수사대','[고속도로 무정차 100km] 클리어'],
+    ['gen','옆집Model3','제네시스 <b>364번째</b> 자리 획득'],
+    ['pen','오토파일럿예찬','「겨울 전비 방어 셋업 정리」 작성 · 추천 128']
+  ];
+  var list = document.getElementById('feedList');
+  var idx = 0;
+  function fmtAgo(i){ return i === 0 ? '방금' : (i*7 + 3) + '초 전'; }
+  function makeItem(ev, ago){
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="ico">' + ICONS[ev[0]] + '</span>' +
+                   '<span><span class="u">@' + ev[1] + '</span> 님이 ' + ev[2] + '</span>' +
+                   '<span class="t">' + ago + '</span>';
+    return li;
+  }
+  for(var k=0;k<5;k++){
+    list.appendChild(makeItem(EVENTS[k], fmtAgo(k)));
+    idx = k + 1;
+  }
+  setInterval(function(){
+    var ev = EVENTS[idx % EVENTS.length]; idx++;
+    var li = makeItem(ev, '방금');
+    if(!reduce) li.className = 'new';
+    list.insertBefore(li, list.firstChild);
+    while(list.children.length > 5) list.removeChild(list.lastChild);
+    for(var i=1;i<list.children.length;i++){
+      var t = list.children[i].querySelector('.t');
+      if(t) t.textContent = fmtAgo(i);
+    }
+  }, reduce ? 9000 : 3400);
+})();
+</script>
+</body>
+</html>
