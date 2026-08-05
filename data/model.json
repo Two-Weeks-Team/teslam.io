@@ -1,0 +1,43 @@
+{
+  "capturedAt": "2026-08-06",
+
+  "_note": "Inputs only. Every figure shown on the site is computed from this file by lib/economics.ts, so a number on the page can never drift from the number in the model. `given` is the operator's specification. `assumed` has not been validated against a real fleet yet and is labelled as such wherever it is rendered.",
+
+  "given": {
+    "signals": ["latitude", "longitude", "vehicleSpeed", "odometer"],
+    "samplingIntervalSeconds": 60,
+    "assumedDriveHoursPerDay": 1,
+    "pricePerSignalUsd": 0.0001,
+    "daysPerMonth": 30,
+
+    "drvPerKm": 10,
+    "dailyCapDrv": 500,
+    "pegDrv": 1000,
+    "pegKrw": 500,
+
+    "tslmTotalSupply": 100000000,
+
+    "genesisSeats": 500,
+    "genesisRewardMultiplier": 1.5
+  },
+
+  "assumed": {
+    "fxKrwPerUsd": 1390,
+    "avgKmPerMonth": 1200,
+
+    "redemptionMix": {
+      "cashBacked": 0.4,
+      "burnedInApp": 0.35,
+      "stakedToTslm": 0.25
+    },
+
+    "partnerCommissionRate": 0.15
+  },
+
+  "basis": {
+    "fxKrwPerUsd": "Round figure for presentation. Re-quote before any published cost claim.",
+    "avgKmPerMonth": "Korean passenger-car average, ~14,000 km/year. Tesla owners in Korea likely drive more; this is the conservative side for reward cost and the aggressive side for data volume.",
+    "redemptionMix": "Unvalidated. The single most important number in the model — see tests/economics.test.ts, which fails the build if the three shares do not sum to 1.",
+    "partnerCommissionRate": "Placeholder pending a signed partner. No commission has been contracted."
+  }
+}

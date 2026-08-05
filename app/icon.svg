@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <rect width="32" height="32" rx="4" fill="#08090A"/>
+  <!-- The route glyph: the same right-angle drive the hero draws. -->
+  <path d="M5 23 H12 V13 H20 V21 H27"
+        fill="none" stroke="#CBFF3C" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="27" cy="21" r="2.6" fill="#CBFF3C"/>
+</svg>

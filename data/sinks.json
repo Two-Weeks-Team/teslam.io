@@ -1,0 +1,11 @@
+{
+  "_note": "Where DRV leaves circulation. `cash` sinks cost the company money and must be covered by partner commission. `burn` sinks cost nothing and are the only ones that scale for free.",
+  "sinks": [
+    { "id": "charging", "kind": "cash", "partner": true },
+    { "id": "giftcard", "kind": "cash", "partner": true },
+    { "id": "carwash", "kind": "cash", "partner": true },
+    { "id": "cosmetic", "kind": "burn", "partner": false },
+    { "id": "badge", "kind": "burn", "partner": false },
+    { "id": "staking", "kind": "defer", "partner": false }
+  ]
+}

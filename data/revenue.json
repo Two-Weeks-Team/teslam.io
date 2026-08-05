@@ -1,0 +1,9 @@
+{
+  "_note": "The cash-in side. None of these are contracted yet — every line is a target the model must hit, not a figure the company has earned. Rendered on the page under an explicit 'not yet contracted' label.",
+  "lines": [
+    { "id": "commission", "stage": "quests" },
+    { "id": "adverts", "stage": "quests" },
+    { "id": "dataset", "stage": "open" },
+    { "id": "usedcar", "stage": "open" }
+  ]
+}

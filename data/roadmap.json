@@ -1,0 +1,25 @@
+{
+  "phases": [
+    {
+      "id": "genesis",
+      "months": "1–2",
+      "status": "next",
+      "seats": 500,
+      "gate": "선착순 500명 · 폐쇄형 베타"
+    },
+    {
+      "id": "quests",
+      "months": "3–5",
+      "status": "planned",
+      "seats": null,
+      "gate": "퀘스트 · 원클릭 공유 · 첫 광고 계약"
+    },
+    {
+      "id": "open",
+      "months": "6+",
+      "status": "planned",
+      "seats": null,
+      "gate": "월간 리워드 풀 상한제 도입 후 개방"
+    }
+  ]
+}

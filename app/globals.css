@@ -1,0 +1,131 @@
+@import "tailwindcss";
+@import "./layout.css";
+
+/* ---------------------------------------------------------------------------
+   Design tokens — "Instrument Cluster"
+
+   The page is meant to read like the readout of a car that is moving right
+   now, not like a crypto landing page. That gives three hard rules, enforced
+   by tests/no-slop.test.ts:
+
+   - No indigo/violet family (#6366f1 … #8b5cf6). It is the loudest
+     "AI slop" tell in 2026 and this is a project that must not look
+     auto-generated.
+   - No Tesla red (#e82127 and neighbours). This is an independent community
+     project and it must never be mistaken for a first-party Tesla surface.
+     Energy is coded volt-green, which is the EV convention, not the OEM's.
+   - Volt never carries body text. It marks live signal, key figures and the
+     one call to action. Everything else is achromatic.
+--------------------------------------------------------------------------- */
+
+@theme {
+  /* base — achromatic, cool, dashboard-at-night */
+  --color-void: #08090a;
+  --color-panel: #0e1012;
+  --color-panel-2: #131619;
+  --color-line: #1e2226;
+  --color-line-2: #2a2f35;
+  --color-paper: #f2f4f3;
+  --color-chalk: #b9bfc2;
+  --color-mute: #7d858a;
+  --color-dim: #4c5359;
+
+  /* signal — energy and state only */
+  --color-volt: #cbff3c;
+  --color-volt-dim: #7f9c2b;
+  --color-amber: #f2b134;
+  --color-halt: #e2574c;
+
+  /* type */
+  --font-display: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+  /* Korean is the primary reading language, so it leads the body stack.
+     Pretendard is installed on a large share of Korean machines and is by far
+     the best-fitting face here; the rest of the stack is the platform default.
+     No Korean webfont is shipped — a subsetted one is still hundreds of
+     kilobytes, and this page is mostly numbers. */
+  --font-sans:
+    var(--font-archivo), Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+
+  --radius-card: 2px;
+  --spacing-gutter: 1.5rem;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    /* Figures must never reflow as they tick or localise. */
+    font-variant-numeric: tabular-nums;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    /* Korean breaks anywhere by default, which splits words across lines
+       ("그대로" → "그" / "대로") and is the single most obvious sign a Korean
+       page was laid out by someone who does not read it. keep-all restores
+       word-boundary breaking; overflow-wrap keeps a long unbreakable token
+       (a URL, an address) from overflowing its box anyway. */
+    word-break: keep-all;
+    overflow-wrap: break-word;
+    /* Fine horizontal scanlines. An instrument panel has a texture; a flat
+       fill reads as a slide. Kept under 3% so it never fights the type. */
+    background-image: repeating-linear-gradient(
+      to bottom,
+      rgb(255 255 255 / 0.014) 0 1px,
+      transparent 1px 3px
+    );
+  }
+
+  ::selection {
+    background: var(--color-volt);
+    color: var(--color-void);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-volt);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  hr {
+    border: 0;
+    border-block-start: 1px solid var(--color-line);
+  }
+}
