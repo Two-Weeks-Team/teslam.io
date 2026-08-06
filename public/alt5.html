@@ -77,7 +77,10 @@ button{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--cyan);outline-offset:3px;border-radius:8px}
 
 .wrap{width:100%;max-width:1200px;margin:0 auto;padding:0 18px}
-.scrollx{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+/* `min-width:0` is the load-bearing part. A flex/grid child defaults to
+   min-width:auto, so it grows to its content's width and overflow-x never
+   engages — the 760px ladder pushed the whole document sideways at 390px. */
+.scrollx{overflow-x:auto;min-width:0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
 .scrollx::-webkit-scrollbar{height:8px}
 .scrollx::-webkit-scrollbar-thumb{background:var(--panel3);border-radius:99px}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
