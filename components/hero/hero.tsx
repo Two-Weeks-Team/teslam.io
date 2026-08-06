@@ -1,8 +1,8 @@
 import { Cluster } from "@/components/hero/cluster";
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 
 export function Hero({ locale }: { locale: Locale }) {
-  const t = getContent(locale).hero;
+  const t = getModel(locale).hero;
 
   return (
     <header className="hero">

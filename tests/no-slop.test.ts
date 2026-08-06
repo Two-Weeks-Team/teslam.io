@@ -1,23 +1,18 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { getContent } from "@/lib/i18n";
+import { getContent, getModel } from "@/lib/i18n";
+import community from "@/data/community.json";
 
 /**
  * Comments are stripped first. The rules below are documented in the CSS
  * itself, banned hex values and all, and a scan that did not strip them would
  * fail on its own explanation.
  */
-const css = (
-  readFileSync("app/globals.css", "utf8") + readFileSync("app/layout.css", "utf8")
-).replace(/\/\*[\s\S]*?\*\//g, "");
+const css = ["app/globals.css", "app/layout.css", "app/community.css"]
+  .map((f) => readFileSync(f, "utf8"))
+  .join("\n")
+  .replace(/\/\*[\s\S]*?\*\//g, "");
 
-/**
- * Design and positioning rules that a redesign must not quietly undo.
- *
- * The trademark rule is the important one: this project's name is one letter
- * from a car maker's, so nothing in the palette or the copy may imply it is a
- * first-party surface.
- */
 describe("palette", () => {
   it("uses no indigo/violet — the 2026 AI-slop tell", () => {
     const banned = [
@@ -39,34 +34,69 @@ describe("palette", () => {
     }
   });
 
-  it("keeps a single accent declared once", () => {
-    expect(css).toContain("--color-volt: #cbff3c");
+  it("declares each surface's accent exactly once", () => {
+    expect(css, "the model page's accent").toContain("--color-volt: #cbff3c");
+    expect(css, "the community page's accent").toContain("--mint: #00c2a8");
   });
 });
 
 describe("required disclosure", () => {
   for (const locale of ["ko", "en"] as const) {
     it(`${locale}: states it is not affiliated with Tesla`, () => {
-      const d = getContent(locale).footer.disclaimerTrademark.toLowerCase();
-      expect(d).toContain("tesla");
-      expect(
-        d.includes("not affiliated") || d.includes("아닌") || d.includes("아닙"),
-      ).toBe(true);
+      for (const d of [
+        getContent(locale).footer.disclaimerTrademark,
+        getModel(locale).footer.disclaimerTrademark,
+      ]) {
+        const s = d.toLowerCase();
+        expect(s).toContain("tesla");
+        expect(
+          s.includes("not affiliated") || s.includes("아닌") || s.includes("아닙"),
+        ).toBe(true);
+      }
     });
 
     it(`${locale}: states no token has been issued`, () => {
-      const d = getContent(locale).footer.disclaimerFinancial;
-      expect(d).toMatch(/DRV/);
-      expect(d).toMatch(/TSLM/);
+      for (const d of [
+        getContent(locale).footer.disclaimerFinancial,
+        getModel(locale).footer.disclaimerFinancial,
+      ]) {
+        expect(d).toMatch(/DRV/);
+        expect(d).toMatch(/TSLM/);
+      }
     });
   }
 });
 
+/**
+ * The front page currently shows invented posts, ranks and balances. That is
+ * fine as a preview and unacceptable as an unlabelled claim, so the label and
+ * the data are wired to the same flag: turning the sample data on without the
+ * notice — or shipping the notice copy empty — fails the build.
+ */
+describe("sample content is labelled", () => {
+  it("keeps the preview flag and the preview copy in step", () => {
+    if (!community.isPreview) return;
+    for (const locale of ["ko", "en"] as const) {
+      const p = getContent(locale).preview;
+      expect(p.tag.trim().length, `${locale}: preview tag is empty`).toBeGreaterThan(0);
+      expect(p.body.trim().length, `${locale}: preview body is empty`).toBeGreaterThan(20);
+    }
+  });
+
+  it("says in the data file itself that the content is sample", () => {
+    expect(community._note.toLowerCase()).toContain("sample");
+  });
+});
+
 describe("claims", () => {
-  const strings = JSON.stringify([getContent("ko"), getContent("en")]);
+  const strings = JSON.stringify([
+    getContent("ko"),
+    getContent("en"),
+    getModel("ko"),
+    getModel("en"),
+  ]);
 
   it("promises no returns and no guarantees", () => {
-    // Marketing verbs that would turn an operating model into an offer.
     const banned = [
       "guaranteed return",
       "risk-free",
@@ -83,8 +113,10 @@ describe("claims", () => {
   it("hardcodes no won or dollar figures in the copy", () => {
     // Every figure must come from lib/economics. A number typed into a content
     // module is one that can silently disagree with the model.
-    const content = readFileSync("content/ko/home.ts", "utf8");
-    expect(content).not.toMatch(/\d{1,3},\d{3}\s*원/);
-    expect(content).not.toMatch(/\$\d/);
+    for (const f of ["content/ko/home.ts", "content/ko/model.ts"]) {
+      const content = readFileSync(f, "utf8");
+      expect(content, `${f}: hardcoded won figure`).not.toMatch(/\d{1,3},\d{3}\s*원/);
+      expect(content, `${f}: hardcoded dollar figure`).not.toMatch(/\$\d/);
+    }
   });
 });

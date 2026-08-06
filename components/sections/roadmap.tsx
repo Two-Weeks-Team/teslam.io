@@ -1,12 +1,12 @@
 import { Section } from "@/components/sections/section";
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 import { n } from "@/lib/format";
 import roadmapData from "@/data/roadmap.json";
 
-type Phases = ReturnType<typeof getContent>["roadmap"]["phases"];
+type Phases = ReturnType<typeof getModel>["roadmap"]["phases"];
 
 export function Roadmap({ locale }: { locale: Locale }) {
-  const t = getContent(locale).roadmap;
+  const t = getModel(locale).roadmap;
   const phases = t.phases as Phases;
 
   return (

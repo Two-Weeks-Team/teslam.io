@@ -1,4 +1,4 @@
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 import { CONTACT_EMAIL, REPO } from "@/lib/site";
 import { capturedAt } from "@/lib/economics";
 
@@ -10,7 +10,7 @@ import { capturedAt } from "@/lib/economics";
  * same type size as everything else here.
  */
 export function Footer({ locale }: { locale: Locale }) {
-  const t = getContent(locale).footer;
+  const t = getModel(locale).footer;
   const year = 2026;
 
   return (

@@ -1,5 +1,5 @@
 import { Section } from "@/components/sections/section";
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 import { krw, n, usd } from "@/lib/format";
 import {
   apiKrwPerMonth,
@@ -9,7 +9,7 @@ import {
 } from "@/lib/economics";
 
 export function Telemetry({ locale }: { locale: Locale }) {
-  const t = getContent(locale).telemetry;
+  const t = getModel(locale).telemetry;
 
   return (
     <Section id="telemetry" eyebrow={t.eyebrow} h2={t.h2} lede={t.lede}>

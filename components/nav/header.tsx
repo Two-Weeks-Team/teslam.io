@@ -1,4 +1,4 @@
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 import { WAITLIST_URL } from "@/lib/site";
 
 /**
@@ -10,7 +10,7 @@ import { WAITLIST_URL } from "@/lib/site";
  * middleware negotiating on every request.
  */
 export function Header({ locale }: { locale: Locale }) {
-  const t = getContent(locale).nav;
+  const t = getModel(locale).nav;
 
   return (
     <>

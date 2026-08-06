@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { home as ko } from "@/content/ko/home";
-import { home as en } from "@/content/en/home";
+import { home as koHome } from "@/content/ko/home";
+import { home as enHome } from "@/content/en/home";
+import { model as koModel } from "@/content/ko/model";
+import { model as enModel } from "@/content/en/model";
 
 /**
- * TypeScript already guarantees the two locales share a shape. What it cannot
- * catch is a key that was copied across and never translated, or one that was
- * left as an empty string.
+ * TypeScript already guarantees the locales share a shape. What it cannot
+ * catch is a key copied across and never translated, or left empty.
  */
 function walk(
   a: unknown,
@@ -36,32 +37,42 @@ function walk(
   }
 }
 
-describe("locale parity", () => {
+/** Paths where an identical string across locales is correct — proper nouns,
+ *  token tickers, and the one nav label that is a brand name. */
+const SHARED = new Set([
+  "home.nav.cta",
+  "home.footer.rights",
+  // A unit symbol, not prose.
+  "home.league.unit",
+  "model.nav.cta",
+  "model.tokens.drv.name",
+  "model.tokens.tslm.name",
+  "model.tokens.drv.full",
+  "model.tokens.tslm.full",
+  "model.cta.eyebrow",
+  "model.footer.rights",
+  "model.roadmap.phases.genesis.t",
+]);
+
+const MODULES: Array<[string, unknown, unknown]> = [
+  ["home", koHome, enHome],
+  ["model", koModel, enModel],
+];
+
+describe.each(MODULES)("locale parity — %s", (name, ko, en) => {
   it("has no empty strings in either locale", () => {
-    walk(ko, en, "home", (path, k, e) => {
+    walk(ko, en, name, (path, k, e) => {
       expect(k.trim(), `${path}: empty in ko`).not.toBe("");
+      // `nav.people` is a Korean counter word with no English equivalent.
+      if (path.endsWith(".people")) return;
       expect(e.trim(), `${path}: empty in en`).not.toBe("");
     });
   });
 
   it("leaves no Korean prose sitting in the English module", () => {
     const hangul = /[가-힣]/;
-    // Paths where an identical string across locales is correct.
-    const shared = new Set([
-      "home.nav.cta",
-      "home.tokens.drv.name",
-      "home.tokens.tslm.name",
-      "home.tokens.drv.full",
-      "home.tokens.tslm.full",
-      "home.cta.eyebrow",
-      "home.footer.rights",
-      // A proper noun. Translating the cohort's name would make the Korean and
-      // English pages describe two different programmes.
-      "home.roadmap.phases.genesis.t",
-    ]);
-
-    walk(ko, en, "home", (path, _k, e) => {
-      if (shared.has(path)) return;
+    walk(ko, en, name, (path, _k, e) => {
+      if (SHARED.has(path)) return;
       expect(hangul.test(e), `${path}: Korean text left in the en module`).toBe(
         false,
       );
@@ -69,22 +80,9 @@ describe("locale parity", () => {
   });
 
   it("translates every prose string rather than copying it", () => {
-    const shared = new Set([
-      "home.nav.cta",
-      "home.tokens.drv.name",
-      "home.tokens.tslm.name",
-      "home.tokens.drv.full",
-      "home.tokens.tslm.full",
-      "home.cta.eyebrow",
-      "home.footer.rights",
-      // A proper noun. Translating the cohort's name would make the Korean and
-      // English pages describe two different programmes.
-      "home.roadmap.phases.genesis.t",
-    ]);
-
-    walk(ko, en, "home", (path, k, e) => {
-      if (shared.has(path)) return;
-      // Short tokens (codes, digits) legitimately match; prose must not.
+    walk(ko, en, name, (path, k, e) => {
+      if (SHARED.has(path)) return;
+      // Short tokens (codes, digits, tickers) legitimately match; prose must not.
       if (k.length < 6) return;
       expect(k === e, `${path}: identical in both locales — untranslated?`).toBe(
         false,

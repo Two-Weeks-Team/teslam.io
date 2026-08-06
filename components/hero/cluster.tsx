@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ROUTE_D, VIEW_W, VIEW_H } from "@/lib/drive/route";
 import { readoutAt, pointAt, fmt } from "@/lib/drive/readout";
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 
 /** One pass of the drive. Slow enough to read the odometer move. */
 const LOOP_MS = 14_000;
@@ -25,7 +25,7 @@ const GRID_Y = Array.from({ length: 3 }, (_, i) => (VIEW_H / 4) * (i + 1));
  * sixty times a second to change text nodes React does not need to diff.
  */
 export function Cluster({ locale }: { locale: Locale }) {
-  const t = getContent(locale).hero;
+  const t = getModel(locale).hero;
 
   const pathRef = useRef<SVGPathElement>(null);
   const headRef = useRef<SVGCircleElement>(null);

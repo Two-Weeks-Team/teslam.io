@@ -1,11 +1,11 @@
 import { Section } from "@/components/sections/section";
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 import revenueData from "@/data/revenue.json";
 
-type Lines = ReturnType<typeof getContent>["revenue"]["lines"];
+type Lines = ReturnType<typeof getModel>["revenue"]["lines"];
 
 export function Revenue({ locale }: { locale: Locale }) {
-  const t = getContent(locale).revenue;
+  const t = getModel(locale).revenue;
   const lines = t.lines as Lines;
 
   return (

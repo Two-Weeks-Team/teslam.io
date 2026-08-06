@@ -1,0 +1,78 @@
+{
+  "_note": "SAMPLE CONTENT. teslam.io has no members yet — every post, rank and figure below is written to show what the board looks like populated. The UI labels this state explicitly (see `preview` in the content modules); none of it may be presented as real activity. Delete this file and wire the real API when the service opens.",
+
+  "isPreview": true,
+  "capturedAt": "2026-08-06",
+
+  "genesis": { "seats": 500, "taken": 347 },
+
+  "season": { "week": 32, "closesInDays": 3 },
+
+  "wallet": { "balanceDrv": 24860, "earnedTodayDrv": 320, "tslm": 18.4 },
+
+  "onlineNow": 1284,
+
+  "leaderboard": [
+    { "rank": 1, "name": "광교전비장인", "trim": "Model 3 Long Range", "region": "수도권", "eff": 8.42, "km": 487, "drv": 5250, "streak": 23, "delta": 0, "genesis": true },
+    { "rank": 2, "name": "제주바람가르기", "trim": "Model Y RWD", "region": "제주", "eff": 8.11, "km": 512, "drv": 5120, "streak": 41, "delta": 4, "genesis": false },
+    { "rank": 3, "name": "노란번호판형", "trim": "Model 3 하이랜드", "region": "영남", "eff": 7.96, "km": 446, "drv": 4460, "streak": 12, "delta": -1, "genesis": true },
+    { "rank": 4, "name": "하남스타필드러", "trim": "Model Y Long Range", "region": "수도권", "eff": 7.74, "km": 402, "drv": 3420, "streak": 9, "delta": 2, "genesis": false },
+    { "rank": 5, "name": "판교M3P", "trim": "Model 3 퍼포먼스", "region": "수도권", "eff": 7.68, "km": 531, "drv": 5350, "streak": 18, "delta": -2, "genesis": true },
+    { "rank": 6, "name": "초록불차선", "trim": "Model Y Long Range", "region": "충청", "eff": 7.55, "km": 388, "drv": 3110, "streak": 6, "delta": 1, "genesis": false },
+    { "rank": 7, "name": "은하수3", "trim": "Model 3 하이랜드", "region": "대전·충청", "eff": 7.41, "km": 364, "drv": 2980, "streak": 14, "delta": 0, "genesis": false }
+  ],
+
+  "boards": [
+    { "id": "all", "name": "전체글", "count": 9241 },
+    { "id": "software", "name": "소프트웨어", "count": 1420 },
+    { "id": "shots", "name": "인증샷", "count": 3120 },
+    { "id": "fsd", "name": "FSD 후기", "count": 842 },
+    { "id": "charge", "name": "충전·전기", "count": 1108 },
+    { "id": "tire", "name": "타이어·휠", "count": 613 },
+    { "id": "insurance", "name": "보험·사고", "count": 397 },
+    { "id": "used", "name": "중고·시세", "count": 288 }
+  ],
+
+  "regions": [
+    { "id": "capital", "name": "수도권", "count": 2610 },
+    { "id": "busan", "name": "부·울·경", "count": 741 },
+    { "id": "daejeon", "name": "대전·충청", "count": 452 },
+    { "id": "jeju", "name": "제주", "count": 198 }
+  ],
+
+  "posts": [
+    { "id": "p1", "board": "공지·통합", "pinned": true, "title": "【2026.20.7 통합 스레드】한국 순차 배포 시작 — 변경점·버그·롤백 여부 여기 모읍니다", "author": "운영/테슬람반장", "staff": true, "votes": 2100, "comments": 1447, "views": 88203, "ago": "34초 전" },
+    { "id": "p2", "board": "FSD", "title": "FSD v14 한국 도심 400km 타본 솔직 후기 — 회전교차로는 아직, 근데 끼어들기는 나보다 잘함", "author": "양재IC사냥꾼", "genesis": "#007", "trim": "Model 3 Long Range", "votes": 981, "comments": 312, "views": 21447, "ago": "2시간 전" },
+    { "id": "p3", "board": "인증샷", "title": "서울→강릉 무충전 7.6km/kWh 찍고 왔습니다 (에어컨 켜고)", "author": "초록불차선", "trim": "Model Y Long Range", "votes": 764, "comments": 188, "views": 15902, "ago": "4시간 전" },
+    { "id": "p4", "board": "소프트웨어", "title": "숨은 기능 3탄: 히든 세팅 6개 — 서스펜션 프로파일 자동저장 되는 거 아셨나요", "author": "코드파는아저씨", "votes": 508, "comments": 241, "views": 13380, "ago": "6시간 전" },
+    { "id": "p5", "board": "충전·전기", "title": "기흥 V4 8베이, 오늘 250kW 안 나올 때 체크할 것 3가지", "author": "완충맨", "genesis": "#041", "votes": 431, "comments": 96, "views": 9820, "ago": "8시간 전" },
+    { "id": "p6", "board": "타이어·휠", "title": "하이랜드 순정 19인치 3만km 마모 실측 — 앞뒤 편마모 사진 있음", "author": "판교M3P", "trim": "Model 3 퍼포먼스", "votes": 388, "comments": 134, "views": 8611, "ago": "11시간 전" },
+    { "id": "p7", "board": "보험·사고", "title": "전기차 전용 특약, 3사 견적 붙여봤습니다 (표 있음)", "author": "은하수3", "votes": 302, "comments": 88, "views": 7204, "ago": "14시간 전" }
+  ],
+
+  "ledger": [
+    { "id": "l1", "kind": "drive", "title": "주행 적립 · 14.2km", "sub": "오늘 08:41 · 오도 38,214 → 38,228km", "amount": 142, "unit": "DRV" },
+    { "id": "l2", "kind": "quest", "title": "퀘스트 완료 · 7.0km/kWh 돌파", "sub": "오늘 08:39 · 기록 7.34km/kWh", "amount": 150, "unit": "DRV" },
+    { "id": "l3", "kind": "spend", "title": "교환 · 셀프세차 10분 코인", "sub": "어제 21:02 · 성남 분당 세차장", "amount": -4000, "unit": "DRV" },
+    { "id": "l4", "kind": "drive", "title": "주행 적립 · 50.0km", "sub": "어제 18:20 · 일일 상한 달성", "amount": 500, "unit": "DRV" },
+    { "id": "l5", "kind": "post", "title": "글 채택 ·「하이랜드 서스펜션 3개월 후기」", "sub": "어제 14:11 · 추천 214", "amount": 2, "unit": "TSLM" },
+    { "id": "l6", "kind": "checkin", "title": "체크인 · V4 슈퍼차저 (하남)", "sub": "8/4 09:52 · V4 방문 인증 6/10", "amount": 80, "unit": "DRV" }
+  ],
+
+  "shop": [
+    { "id": "s1", "name": "슈퍼차저 충전권 5,000원", "price": 10000, "tag": "인기" },
+    { "id": "s2", "name": "스타벅스 아메리카노 T", "price": 9000, "tag": null },
+    { "id": "s3", "name": "셀프세차 10분 코인", "price": 4000, "tag": null },
+    { "id": "s4", "name": "실내 클리닝 1회", "price": 26000, "tag": "신규" },
+    { "id": "s5", "name": "틴팅 제휴 할인권", "price": 15000, "tag": null }
+  ],
+
+  "live": [
+    { "t": "부산 V4 슈퍼차저 체크인 · 배터리아껴쓰기님", "v": "+500 DRV" },
+    { "t": "울산 완충맨님 오늘 상한 500 DRV 만렙", "v": "MAX" },
+    { "t": "송파에서 판교뉴비님 14km 검증", "v": "+140 DRV" },
+    { "t": "흰색롱레인지님 글 채택 · Model X LR 리뷰", "v": "+120 TSLM" },
+    { "t": "강남언니Y님 8.2km/kWh 달성 · 효율 퀘스트 클리어", "v": "퀘스트" },
+    { "t": "제주에서 판교뉴비님 25km 검증", "v": "+250 DRV" }
+  ]
+}

@@ -1,5 +1,5 @@
 import { Section } from "@/components/sections/section";
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 import { krw, pct } from "@/lib/format";
 import {
   apiKrwPerMonth,
@@ -32,7 +32,7 @@ function Assumed({ label }: { label: string }) {
  * instead of it.
  */
 export function Economics({ locale }: { locale: Locale }) {
-  const t = getContent(locale).economics;
+  const t = getModel(locale).economics;
   const r = t.rows;
 
   return (

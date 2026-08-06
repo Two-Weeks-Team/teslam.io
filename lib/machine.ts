@@ -1,4 +1,4 @@
-import { getContent, pathFor, type Locale } from "@/lib/i18n";
+import { getContent, getModel, modelPathFor, type Locale } from "@/lib/i18n";
 import { SITE, CONTACT_EMAIL, REPO } from "@/lib/site";
 import * as e from "@/lib/economics";
 
@@ -13,7 +13,7 @@ const won = (v: number) => `₩${Math.round(v).toLocaleString("en-US")}`;
 const pc = (v: number) => `${(v * 100).toFixed(1)}%`;
 
 export function renderMarkdown(locale: Locale): string {
-  const t = getContent(locale);
+  const t = getModel(locale);
   const ko = locale === "ko";
   const L = ko
     ? {
@@ -49,7 +49,7 @@ export function renderMarkdown(locale: Locale): string {
 
   h(1, t.meta.title);
   p(t.meta.description);
-  p(`${SITE}${pathFor(locale)}`);
+  p(`${SITE}${modelPathFor(locale)}`);
 
   h(2, t.hero.h1);
   p(t.hero.sub);
@@ -152,15 +152,20 @@ export function renderLlmsTxt(): string {
     "Tesla, Inc. No token has been issued; every figure below is the output of",
     "an operating model, not a result and not an offer.",
     "",
+    "The service has not launched. Posts, rankings and balances shown on the",
+    "front page are sample content illustrating a populated board — they are",
+    "not real activity and must not be reported as such.",
+    "",
     "## Pages",
     "",
     `- [Korean (canonical)](${SITE}/): ${ko.meta.description}`,
     `- [English](${SITE}/en): ${en.meta.description}`,
+    `- [Operating model](${SITE}/model): the cost structure behind the rewards`,
     "",
     "## Machine-readable",
     "",
-    `- [${SITE}/index.md](${SITE}/index.md) — Korean page as Markdown`,
-    `- [${SITE}/en/index.md](${SITE}/en/index.md) — English page as Markdown`,
+    `- [${SITE}/model.md](${SITE}/model.md) — the operating model as Markdown`,
+    `- [${SITE}/en/model.md](${SITE}/en/model.md) — same, in English`,
     `- [${SITE}/model.json](${SITE}/model.json) — the raw model inputs`,
     "",
     "## The model, in four numbers",

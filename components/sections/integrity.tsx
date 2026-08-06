@@ -1,8 +1,8 @@
 import { Section } from "@/components/sections/section";
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 
 export function Integrity({ locale }: { locale: Locale }) {
-  const t = getContent(locale).integrity;
+  const t = getModel(locale).integrity;
 
   return (
     <Section id="integrity" eyebrow={t.eyebrow} h2={t.h2} lede={t.lede}>

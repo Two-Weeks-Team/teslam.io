@@ -1,8 +1,8 @@
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 import { WAITLIST_URL } from "@/lib/site";
 
 export function Cta({ locale }: { locale: Locale }) {
-  const t = getContent(locale).cta;
+  const t = getModel(locale).cta;
 
   return (
     <section className="cta" id="genesis">

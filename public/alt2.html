@@ -100,10 +100,11 @@ button{font:inherit;color:inherit}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 
 .foil-text{
+  /* 가장 어두운 정점도 배경 대비 4.5:1 이상을 유지한다 */
   background:linear-gradient(100deg,
-    var(--foil-shadow) 0%, var(--foil) 16%, var(--foil-hi) 26%,
-    var(--foil-deep) 40%, var(--foil-shadow) 50%, var(--foil) 66%,
-    var(--foil-hi) 76%, var(--foil-deep) 92%, var(--foil-shadow) 100%);
+    #9a7f47 0%, var(--foil) 16%, var(--foil-hi) 26%,
+    var(--foil-deep) 40%, #9a7f47 50%, var(--foil) 66%,
+    var(--foil-hi) 76%, var(--foil-deep) 92%, #9a7f47 100%);
   background-size:220% 100%;
   -webkit-background-clip:text;background-clip:text;
   color:transparent;
@@ -275,7 +276,7 @@ h1 em{display:block;font-style:normal}
   padding:clamp(16px,3vw,24px);
   overflow:hidden;
   background:
-    linear-gradient(168deg,#2a251c 0%,#1a1713 38%,#141210 70%,#1e1a14 100%);
+    linear-gradient(168deg,#252017 0%,#17150f 40%,#111010 72%,#1c1912 100%);
   box-shadow:
     0 0 0 1px rgba(232,213,164,.20),
     0 1px 0 rgba(255,245,217,.14) inset,
@@ -295,19 +296,19 @@ h1 em{display:block;font-style:normal}
 .card-foil{
   position:absolute;inset:0;border-radius:var(--r-lg);pointer-events:none;
   background:
-    radial-gradient(120% 90% at var(--mx,50%) var(--my,30%), rgba(255,245,217,.34), rgba(255,245,217,0) 52%),
+    radial-gradient(90% 70% at var(--mx,50%) var(--my,30%), rgba(255,245,217,.26), rgba(255,245,217,0) 46%),
     conic-gradient(from 180deg at var(--mx,50%) var(--my,30%),
-      rgba(255,154,77,.16), rgba(255,233,168,.20), rgba(111,227,196,.13),
-      rgba(255,208,138,.20), rgba(255,154,77,.16));
+      rgba(255,154,77,.10), rgba(255,233,168,.13), rgba(111,227,196,.09),
+      rgba(255,208,138,.13), rgba(255,154,77,.10));
   mix-blend-mode:screen;
-  opacity:.9;
+  opacity:.62;
   transition:background .12s linear;
 }
 /* 라미네이트 스윕 */
 .card-sweep{
   position:absolute;top:-40%;bottom:-40%;width:34%;left:-45%;
   pointer-events:none;
-  background:linear-gradient(100deg,transparent,rgba(255,245,217,.16) 42%,rgba(255,255,255,.30) 50%,rgba(255,245,217,.12) 60%,transparent);
+  background:linear-gradient(100deg,transparent,rgba(255,245,217,.10) 42%,rgba(255,255,255,.20) 50%,rgba(255,245,217,.07) 60%,transparent);
   transform:rotate(9deg);
   animation:sweep 7.5s 1.2s cubic-bezier(.5,0,.5,1) infinite;
   mix-blend-mode:screen;
@@ -463,9 +464,11 @@ h2.sec{
 }
 .medals{
   list-style:none;margin:0;padding:0;
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));
-  gap:clamp(14px,2.6vw,22px);
+  display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:clamp(16px,2.6vw,24px) clamp(8px,1.6vw,18px);
 }
+@media (max-width:900px){.medals{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:560px){.medals{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .medal{text-align:center}
 .medal .disc{
   width:clamp(62px,12vw,78px);aspect-ratio:1;margin:0 auto 10px;
@@ -497,7 +500,7 @@ h2.sec{
   background:linear-gradient(150deg,#2b2721,#1a1714);
   box-shadow:inset 0 0 0 1px rgba(232,213,164,.12),inset 0 -6px 14px rgba(0,0,0,.5);
 }
-.medal.locked .disc b{color:#4d463a;text-shadow:none}
+.medal.locked .disc b{color:#6e6656;text-shadow:none}
 .medal.locked .disc::after{background:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
 .medal.locked .nm{color:var(--muted)}
 .medal.ember .disc{
@@ -581,7 +584,9 @@ tr.you td a{text-decoration:underline;text-underline-offset:4px;text-decoration-
 .dial p{margin:0;font-size:.84rem;color:var(--muted)}
 .dial.ember .v{color:var(--ember-soft)}
 
-.signals{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-top:18px}
+.signals{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:14px}
+.sig.accent{background:rgba(255,122,69,.08);box-shadow:inset 0 0 0 1px rgba(255,122,69,.3)}
+.sig.accent b{color:var(--ember-soft)}
 .sig{
   border-radius:var(--r-sm);padding:12px 14px;
   background:rgba(255,245,217,.035);
@@ -673,10 +678,10 @@ footer{padding:clamp(36px,5vw,60px) 0 46px;border-top:1px solid var(--line-soft)
 .foot-nav a{color:var(--ink-2)}
 .foot-nav a:hover{color:var(--foil)}
 .legal{
-  margin:26px 0 0;font-size:.72rem;color:#6f6759;line-height:1.75;max-width:70ch;
+  margin:26px 0 0;font-size:.74rem;color:#8a8172;line-height:1.8;max-width:70ch;
 }
 .legal em,.legal span{font-style:normal;display:block;margin-top:6px}
-.legal em{color:#867c6b}
+.legal em{color:#bdb3a0}
 
 /* 리빌 */
 .rv{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
@@ -981,7 +986,9 @@ footer{padding:clamp(36px,5vw,60px) 0 46px;border-top:1px solid var(--line-soft)
         <li class="medal"><span class="disc"><b>05</b></span><span class="nm">새벽 러너</span><span class="dt">25.11.04</span></li>
         <li class="medal ember"><span class="disc"><b>G1</b></span><span class="nm">Genesis 1기</span><span class="dt">한정 500</span></li>
         <li class="medal"><span class="disc"><b>OTA</b></span><span class="nm">업데이트 인싸</span><span class="dt">26.01.22</span></li>
+        <li class="medal"><span class="disc"><b>10K</b></span><span class="nm">만 킬로 클럽</span><span class="dt">25.12.30</span></li>
         <li class="medal locked"><span class="disc"><b>30</b></span><span class="nm">만근 30일</span><span class="dt">잠김 · 22/30</span></li>
+        <li class="medal locked"><span class="disc"><b>TOP</b></span><span class="nm">주간 1위</span><span class="dt">잠김 · 최고 5위</span></li>
         <li class="medal locked"><span class="disc"><b>제주</b></span><span class="nm">제주 원정대</span><span class="dt">잠김</span></li>
         <li class="medal locked"><span class="disc"><b>8.0</b></span><span class="nm">8.0 초인</span><span class="dt">잠김 · 최고 7.4</span></li>
       </ul>
@@ -1117,12 +1124,6 @@ footer{padding:clamp(36px,5vw,60px) 0 46px;border-top:1px solid var(--line-soft)
         <span class="n">STEP 02</span>
         <h3>달릴 때만 신호</h3>
         <p>차가 움직이는 동안에만 60초마다 4개 값이 들어옵니다. 주차 중에는 아무것도 오지 않습니다.</p>
-        <div class="signals">
-          <div class="sig"><b>위도</b><span>latitude</span></div>
-          <div class="sig"><b>경도</b><span>longitude</span></div>
-          <div class="sig"><b>속도</b><span>vehicle speed</span></div>
-          <div class="sig"><b>오도미터</b><span>odometer · 판정 기준</span></div>
-        </div>
       </li>
       <li class="step">
         <span class="n">STEP 03</span>
@@ -1130,6 +1131,13 @@ footer{padding:clamp(36px,5vw,60px) 0 46px;border-top:1px solid var(--line-soft)
         <p>검증된 거리가 DRV로 바뀌어 카드에 반영됩니다. 누적 km, 티어, 배지, 랭킹이 그 자리에서 갱신됩니다.</p>
       </li>
     </ol>
+
+    <div class="signals rv" aria-label="주행 중 60초마다 수신하는 4개 신호">
+      <div class="sig"><b>위도</b><span>latitude</span></div>
+      <div class="sig"><b>경도</b><span>longitude</span></div>
+      <div class="sig"><b>속도</b><span>vehicle speed</span></div>
+      <div class="sig accent"><b>오도미터</b><span>odometer · 판정 기준</span></div>
+    </div>
   </div>
 </section>
 

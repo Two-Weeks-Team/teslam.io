@@ -1,14 +1,14 @@
 import { Section } from "@/components/sections/section";
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 import { pct } from "@/lib/format";
 import { redemptionMix } from "@/lib/economics";
 import sinkData from "@/data/sinks.json";
 
 type Kind = "cash" | "burn" | "defer";
-type Items = ReturnType<typeof getContent>["sinks"]["items"];
+type Items = ReturnType<typeof getModel>["sinks"]["items"];
 
 export function Sinks({ locale }: { locale: Locale }) {
-  const t = getContent(locale).sinks;
+  const t = getModel(locale).sinks;
   const items = t.items as Items;
 
   const byKind = (k: Kind) =>

@@ -1,19 +1,18 @@
 /**
- * Korean is the source of truth for the content shape.
+ * The community front page — Korean is the source of truth for the shape.
  *
- * Deliberately not `as const`: string literals widen to `string`, so
- * `content/en/home.ts` can satisfy `HomeContent` with English values while a
- * missing or misspelled key stays a compile error.
+ * Deliberately not `as const`, so `content/en/home.ts` can satisfy
+ * `HomeContent` with English values while a missing key stays a compile error.
  *
- * No number lives in this file. Every figure the page renders is derived in
- * `lib/economics.ts` from `data/model.json`, so copy and model cannot drift.
+ * The board content itself lives in `data/community.json` and is sample data.
+ * `preview` below is the copy that says so on the page; it is not decoration
+ * and must not be removed while the numbers are invented.
  */
 export const home = {
   meta: {
-    title: "teslam.io — 달린 만큼 쌓이는 테슬라 오너 커뮤니티",
+    title: "teslam.io — 대한민국 테슬라 오너 성지",
     description:
-      "테슬라 Fleet API로 주행을 검증하고 DRV로 보상하는 Drive-to-Earn 플랫폼. 개발자 계정 등록도 API 비용 부담도 없습니다. Genesis 500 사전 등록 중.",
-    ogAlt: "teslam.io — 주행 계기판 위로 적립되는 DRV",
+      "달린 거리가 그대로 쌓이는 테슬라 오너 커뮤니티. 전비 리그, 인증샷, 소프트웨어 떡밥, 그리고 주행 보상 DRV. Genesis 500 모집 중.",
   },
 
   nav: {
@@ -21,272 +20,112 @@ export const home = {
     localeLabel: "EN",
     localeHref: "/en",
     cta: "Genesis 500",
+    model: "운영 모델",
+    online: "접속",
+    people: "명",
+  },
+
+  preview: {
+    tag: "서비스 준비 중",
+    body: "아직 문을 열지 않았습니다. 아래 글·순위·적립 내역은 화면이 채워졌을 때를 보여주는 예시이며, 실제 활동이 아닙니다.",
   },
 
   hero: {
-    eyebrow: "teslam.io — 대한민국 테슬라 오너",
-    h1: "달린 만큼, 그대로 쌓인다.",
-    sub: "개발자 계정을 만들 필요도, API 요금을 낼 일도 없습니다. 테슬라 로그인 한 번이면 주행이 검증되고 DRV가 적립됩니다. Fleet API 비용은 teslam.io가 전액 부담합니다.",
-    stats: [
-      { value: "4", label: "수집 신호" },
-      { value: "60초", label: "전송 주기" },
-      { value: "500", label: "Genesis 좌석" },
+    badge: "대한민국 테슬라 오너 성지",
+    h1: "여기가 테슬람 성지다.",
+    h1b: "달린 거리는 거짓말을 안 한다.",
+    sub: "테슬라 계정 한 번만 연결하면 끝. 주행 중 60초마다 올라오는 오도미터가 당신의 km를 대신 증명하고, 그대로 DRV로 쌓입니다. 개발자 계정도, API 요금도 없습니다.",
+    ctaPrimary: "Genesis 500 합류하기",
+    ctaSecondary: "어떻게 쌓이나요?",
+  },
+
+  genesis: {
+    title: "Genesis 500 — 1기 정원",
+    seatTaken: "찬 자리",
+    seatLeft: "남은 자리",
+    yours: "당신 자리",
+    seatGridLabel: "500석 중 채워진 좌석 현황",
+    perks: [
+      "기본 적립 1.5배 · 영구 적용",
+      "Genesis 1기 프로필 마크",
+      "토크노믹스 변경 투표권",
     ],
-    vizLegend:
-      "주행 중에만 신호가 흐릅니다. 1분마다 네 개 — 위도, 경도, 속도, 누적 주행거리. 오도미터가 늘어난 만큼만 DRV가 적립됩니다.",
-    vizHint: "실시간 예시",
-    live: "수신 중",
-    idle: "주차 · 전송 없음",
+    cta: "지금 자리 잡기",
+    note: "선착순 500대. 등록은 외부 폼에서 진행되며 이 사이트는 개인정보를 저장하지 않습니다.",
   },
 
-  how: {
-    eyebrow: "01 — 어떻게 동작하나",
-    h2: "로그인 한 번. 그 뒤로는 그냥 타면 됩니다.",
-    lede: "차량을 연결하는 순간부터 teslam.io가 테슬라에 직접 요금을 내고 주행 신호를 받습니다. 오너가 개발자 포털에 가입하거나 결제 수단을 등록하는 단계는 아예 없습니다.",
-    steps: [
-      {
-        k: "01",
-        t: "테슬라 계정으로 연결",
-        d: "공식 OAuth를 씁니다. 아이디와 비밀번호는 teslam.io를 거치지 않고, 권한은 언제든 테슬라 계정에서 직접 회수할 수 있습니다.",
-      },
-      {
-        k: "02",
-        t: "움직일 때만 수신",
-        d: "차가 주행 중일 때만 테슬라가 서버로 신호를 보내는 Fleet Telemetry 방식입니다. 주차 중에는 아무것도 오가지 않고, 비용도 발생하지 않습니다.",
-      },
-      {
-        k: "03",
-        t: "검증 후 DRV 적립",
-        d: "누적 주행거리가 늘어나고 속도·경로와 어긋나지 않을 때만 적립합니다. 1km당 10 DRV, 하루 상한 500 DRV.",
-      },
-    ],
-  },
-
-  telemetry: {
-    eyebrow: "02 — 무엇을 수집하나",
-    h2: "네 개의 신호. 그 이상은 요청하지 않습니다.",
-    lede: "수집 범위는 비용 문제이기 전에 신뢰 문제입니다. 주행을 증명하는 데 필요한 최소치만 정의했고, 목록에 없는 항목은 권한 요청 자체를 하지 않습니다.",
-    signalsTitle: "수집하는 것",
-    signals: [
-      { code: "LAT", t: "위도", d: "경로 연속성 교차 검증" },
-      { code: "LNG", t: "경도", d: "경로 연속성 교차 검증" },
-      { code: "SPD", t: "차량 속도", d: "물리적 정합성 판별" },
-      { code: "ODO", t: "누적 주행거리", d: "보상의 유일한 기준" },
-    ],
-    notTitle: "수집하지 않는 것",
-    not: [
-      "카메라 영상 및 오토파일럿 인식 데이터",
-      "탑승자 정보와 연락처",
-      "충전·결제 수단",
-      "도어·공조·주행 등 일체의 차량 제어 권한",
-      "주차 중 위치",
-    ],
-    costTitle: "그래서 한 대당 API 비용은",
-    costFormula: "신호 4개 × 분당 1회 × 1일 1시간 주행",
-    costNote:
-      "초 단위 스트리밍이 아니라 분 단위 샘플링을 고른 이유가 여기 있습니다. 주행 검증에 필요한 해상도는 확보하면서 신호 수는 60분의 1이 됩니다.",
-    perDay: "1일",
-    perMonth: "차량 1대 · 월",
-    signalsPerDayLabel: "1일 시그널",
-  },
-
-  tokens: {
-    eyebrow: "03 — 두 개의 토큰",
-    h2: "버는 토큰과 가지는 토큰을 분리했습니다.",
-    lede: "보상 토큰 하나로 굴리면 채굴량이 늘어날수록 값이 떨어지고, 결국 아무도 받고 싶어 하지 않는 포인트가 됩니다. 그래서 매일 발행되는 유틸리티 토큰과 총량이 고정된 자산 토큰을 나눴습니다.",
-    drv: {
-      tag: "유틸리티 · 보상",
-      name: "DRV",
-      full: "Drive Utility Token",
-      d: "주행으로만 발행됩니다. 무한 발행이지만 거리와 전비 점수에 따라 일일 채굴량이 동적으로 제한됩니다.",
-      rows: [
-        { k: "기본 보상", v: "1km당 10 DRV" },
-        { k: "일일 상한", v: "500 DRV (약 50km)" },
-        { k: "가치 페깅", v: "1,000 DRV = 현물 500원" },
-        { k: "총 발행량", v: "상한 없음 · 일일 캡으로 제어" },
-      ],
+  league: {
+    eyebrow: "전비 리그",
+    title: "이번 주, 당신은 몇 위입니까",
+    sub: "GPS 아니고 오도미터로 검증된 기록만 올라갑니다.",
+    weekLabel: "주차",
+    closesIn: "마감까지",
+    days: "일",
+    cols: {
+      pos: "순위",
+      driver: "드라이버",
+      region: "지역",
+      eff: "전비",
+      km: "주행",
+      drv: "DRV",
+      streak: "연속",
     },
-    tslm: {
-      tag: "거버넌스 · 자산",
-      name: "TSLM",
-      full: "teslam.io Governance Token",
-      d: "주행으로는 나오지 않습니다. DRV를 일정 기간 락업하거나, 커뮤니티에 양질의 기술 글을 쓸 때 배분됩니다.",
-      rows: [
-        { k: "총 발행량", v: "1억 개 고정" },
-        { k: "획득", v: "DRV 락업 · 스테이킹 · 기여" },
-        { k: "권한", v: "광고 집행 · 커뮤니티 투표" },
-        { k: "추가 발행", v: "없음" },
-      ],
-    },
-    flowTitle: "토큰이 흐르는 길",
-    flow: {
-      source: "주행",
-      verify: "데이터 검증",
-      mint: "DRV 채굴",
-      outs: [
-        { t: "현물 교환", d: "기프티콘 · 슈퍼차저 충전권" },
-        { t: "스테이킹", d: "락업 → TSLM 배분" },
-        { t: "인앱 소각", d: "배지 · 차량 커스텀" },
-      ],
-    },
+    omitted: "명 생략",
+    yourRow: "당신 자리 — ??",
+    yourRowNote: "연결하면 여기에 이름이 박힙니다",
+    all: "전체 순위 보기",
+    unit: "km/kWh",
+    dayUnit: "일",
   },
 
-  sinks: {
-    eyebrow: "04 — 토큰은 어디서 사라지나",
-    h2: "출금만 있는 구조는 반드시 무너집니다.",
-    lede: "적립한 토큰이 전부 현금으로 빠져나가면 어떤 보상 모델도 버티지 못합니다. DRV가 유통에서 빠지는 길은 세 종류고, 그중 회사 현금이 실제로 나가는 것은 하나뿐입니다.",
-    kinds: {
-      cash: { t: "현금이 나간다", d: "제휴사 정산이 필요합니다. B2B 수수료로 상쇄하는 것이 유일한 방법입니다." },
-      burn: { t: "비용이 0이다", d: "디지털 재화라 서빙 원가가 없습니다. 유일하게 공짜로 확장되는 소각처입니다." },
-      defer: { t: "나중으로 미룬다", d: "이번 달 현금 지출은 아니지만, 언젠가 갚아야 할 부채입니다." },
-    },
-    items: {
-      charging: { t: "슈퍼차저 충전권", d: "제휴 충전 사업자 정산" },
-      giftcard: { t: "기프티콘", d: "커피·편의점 등 소액 현물" },
-      carwash: { t: "세차 · 틴팅 쿠폰", d: "지역 제휴 매장" },
-      cosmetic: { t: "가상 차량 커스텀", d: "앱 내 디지털 재화" },
-      badge: { t: "디지털 배지", d: "주행 등급 · 한정 표식" },
-      staking: { t: "TSLM 스테이킹", d: "락업 후 거버넌스 배분" },
-    },
-    mixTitle: "가정한 소비 비중",
-    mixNote:
-      "이 세 비율이 이 모델에서 가장 중요하고, 가장 검증되지 않은 숫자입니다. 현물 교환 비중이 올라갈수록 손익분기가 그대로 따라 올라갑니다.",
-    burnLabel: "인앱 소각",
-    cashLabel: "현물 교환",
-    stakeLabel: "스테이킹",
+  feed: {
+    eyebrow: "게시판",
+    title: "지금 올라온 글",
+    tabs: { hot: "인기", latest: "최신", shots: "인증샷", quest: "퀘스트" },
+    pinned: "공지",
+    staff: "운영",
+    newPosts: "새 글",
+    lastHour: "최근 1시간",
+    more: "글 더 보기",
+    views: "조회",
+    comments: "댓글",
   },
 
-  economics: {
-    eyebrow: "05 — 한 대를 굴리는 데 드는 돈",
-    h2: "API 비용은 전체의 3분의 1입니다.",
-    lede: "이 사업의 제약은 테슬라에 내는 요금이 아니라 오너에게 지급하는 보상입니다. 아래 두 숫자는 같은 모델에서 나왔습니다. 하나는 자주 인용되고, 다른 하나는 그렇지 않습니다.",
-    ledgerTitle: "차량 1대 · 월 기준",
-    rows: {
-      api: { k: "Tesla Fleet API 요금", d: "신호 240개/일 × 30일" },
-      issued: { k: "발행한 DRV 액면가", d: "월 평균 주행 기준" },
-      burned: { k: "인앱 소각분", d: "디지털 재화 · 원가 없음" },
-      deferred: { k: "스테이킹 이연분", d: "이번 달 현금 아님" },
-      cash: { k: "현물로 교환된 분", d: "실제 정산 필요" },
-      commission: { k: "제휴 수수료 회수", d: "아직 계약된 건 없음" },
-      net: { k: "순 보상 원가", d: "현물 교환 − 수수료 회수" },
-      total: { k: "대당 월 현금 지출", d: "API + 순 보상 원가" },
-    },
-    shareNote: "전체 현금 지출에서 API 요금이 차지하는 비중",
-    breakevenTitle: "손익분기",
-    breakevenNote:
-      "차량 한 대가 매달 이 금액 이상의 매출을 만들어야 합니다. 데이터 판매, 광고, 제휴 수수료를 전부 합쳐서입니다. 이 선을 넘기는 것이 이 사업의 유일한 조건입니다.",
-    genesisTitle: "Genesis 500을 실제로 굴리면",
-    genesisQuoted: "자주 인용되는 값 · API만",
-    genesisTrue: "보상을 포함한 실제 지출",
-    genesisNote:
-      "Genesis 1기는 기본 보상이 1.5배입니다. API 요금만 세면 월 50만원이지만, 지급하는 보상까지 넣으면 네 배가 됩니다. 초기 규모를 500대로 묶는 이유는 API 비용이 아니라 이 숫자 때문입니다.",
-    assumedTag: "가정값",
-    givenTag: "설계값",
+  side: {
+    boards: "게시판",
+    regions: "지역방",
+    ranking: "랭킹",
+    rankingItems: ["주간 효율", "주간 주행", "명예의 전당"],
   },
 
-  revenue: {
-    eyebrow: "06 — 무엇으로 메우나",
-    h2: "손익분기를 넘길 수 있는 매출은 네 갈래입니다.",
-    lede: "어느 것도 아직 계약되지 않았습니다. 이 목록은 실적이 아니라, 위 손익분기선을 넘기기 위해 반드시 성사시켜야 할 항목입니다.",
-    notContracted: "미계약",
-    lines: {
-      commission: {
-        t: "제휴 정산 수수료",
-        d: "오너가 DRV로 충전권·기프티콘을 교환할 때 제휴사가 지급하는 B2B 수수료. 토큰이 소각되는 지점에서 현금이 들어오므로 지출과 매출의 타이밍이 맞습니다.",
-        stage: "3~5개월 차",
-      },
-      adverts: {
-        t: "지역 광고",
-        d: "세차장, 틴팅 숍, 전기차 부품 몰의 배너 및 토큰 제휴. 구매력이 확인된 오너 트래픽이 상품입니다.",
-        stage: "3~5개월 차",
-      },
-      dataset: {
-        t: "익명화 데이터셋",
-        d: "실주행 전비, 타이어 마모 예측, 지역별 전기차 유동인구. 전기차 보험사와 충전 인프라 사업자가 구매자입니다. 개인 식별 정보는 포함하지 않습니다.",
-        stage: "6개월 차 이후",
-      },
-      usedcar: {
-        t: "인증 중고 데이터 연계",
-        d: "소유 증명과 주행 이력이 확인된 차량이라는 점을 근거로 한 중고차 플랫폼 제휴.",
-        stage: "6개월 차 이후",
-      },
-    },
+  wallet: {
+    title: "내 DRV 지갑",
+    balance: "사용 가능 잔액",
+    worth: "실물 교환가 약",
+    todayCap: "오늘 적립",
+    capNote: "하루 상한 50km까지. 나머지는 내일의 나에게.",
+    ledgerTitle: "적립 내역",
+    ledgerNote: "오도미터로 검증된 구간만 기록됩니다",
+    shopTitle: "바꿀 수 있는 것",
+    shopNote: "교환하면 DRV는 소각되고, 제휴사 수수료가 API 비용을 냅니다.",
+    tslmTitle: "DRV 묶어두기",
+    tslmNote:
+      "DRV를 30일 묶으면 TSLM이 나옵니다. TSLM은 1억 개 고정이고, 광고 집행권과 투표권이 붙습니다.",
+    connect: "테슬라 계정 연결하기",
   },
 
-  roadmap: {
-    eyebrow: "07 — 활성 계획",
-    h2: "한 번에 열지 않습니다.",
-    lede: "중앙에서 비용을 전부 부담하는 구조에서는 가입자가 통제 없이 늘면 성장 그래프와 적자 그래프의 기울기가 같아집니다. 좌석을 세어가며 엽니다.",
-    phases: {
-      genesis: {
-        t: "Genesis 500",
-        d: "테슬라 오너 커뮤니티에서 선착순 500명만 모집해 폐쇄형 베타를 돌립니다. 목적은 성장이 아니라 검증 알고리즘과 정산 파이프라인의 안정성 확인입니다.",
-        bullets: ["기본 보상 1.5배", "Genesis 1기 표식", "토크노믹스 변경 투표권"],
-      },
-      quests: {
-        t: "소유 증명 퀘스트",
-        d: "단순히 달리는 것을 넘어 테슬라만의 특성을 쓰는 퀘스트를 넣습니다. 주행 인증 카드를 커뮤니티에 원클릭으로 공유할 수 있게 만들어, 캡처가 퍼지는 경로로 유입을 만듭니다.",
-        bullets: ["전비 7.0km/kWh 이상 달성", "V4 슈퍼차저 방문 인증", "원클릭 공유 카드"],
-      },
-      open: {
-        t: "오픈 베타",
-        d: "가입 제한을 풀되 월간 총 리워드 풀 상한제를 먼저 도입합니다. 지출 상한을 숫자로 고정한 뒤에만 문을 엽니다.",
-        bullets: ["월간 리워드 풀 상한", "데이터 비즈니스 개시", "중고차 플랫폼 제휴"],
-      },
-    },
-    statusNext: "다음",
-    statusPlanned: "예정",
-    seatsLabel: "좌석",
-  },
-
-  integrity: {
-    eyebrow: "08 — 주행을 어떻게 믿나",
-    h2: "GPS는 조작할 수 있습니다. 오도미터는 어렵습니다.",
-    lede: "보상의 기준을 위치가 아니라 차량이 직접 보고하는 누적 주행거리에 둔 이유입니다. 좌표는 보상 산정이 아니라 교차 검증에만 씁니다.",
-    checks: [
-      {
-        t: "오도미터 단조 증가",
-        d: "누적 주행거리는 줄어들 수 없습니다. 값이 되돌아가거나 비정상적으로 건너뛰면 그 구간 전체를 버립니다.",
-      },
-      {
-        t: "속도 · 거리 정합성",
-        d: "두 샘플 사이의 거리 증분과 보고된 속도가 물리적으로 성립하지 않으면 적립하지 않습니다.",
-      },
-      {
-        t: "경로 연속성",
-        d: "1분 간격 좌표가 도로망 위에서 이어지지 않으면 보류하고 사람이 확인합니다.",
-      },
-      {
-        t: "일일 상한",
-        d: "하루 500 DRV. 검증을 통과하더라도 하루에 가져갈 수 있는 양에 상한이 있습니다.",
-      },
-      {
-        t: "VIN 단일 결속",
-        d: "차량 한 대는 계정 하나에만 붙습니다. 같은 차를 여러 계정으로 중복 적립할 수 없습니다.",
-      },
-    ],
-    privacyTitle: "개인정보",
-    privacyNote:
-      "주행 좌표는 검증이 끝나면 원본을 보관하지 않고 구간 요약으로 대체합니다. B2B로 판매되는 데이터셋에는 개인 식별 정보와 원시 좌표가 들어가지 않습니다. 연결 해제는 테슬라 계정에서 직접, 즉시 가능합니다.",
-  },
-
-  cta: {
-    eyebrow: "Genesis 500",
-    h2: "1기 500명을 먼저 모집합니다.",
-    body: "폐쇄형 베타입니다. 기본 보상 1.5배, Genesis 1기 표식, 그리고 토크노믹스가 바뀔 때 투표에 참여할 권한이 붙습니다.",
-    button: "사전 등록",
-    note: "선착순 500대. 등록은 외부 폼에서 진행되며 이 사이트는 어떤 개인정보도 저장하지 않습니다.",
-  },
+  live: { title: "실시간", auto: "자동 갱신" },
 
   footer: {
     line: "달린 만큼 쌓이는 테슬라 오너 커뮤니티.",
     contactLabel: "문의",
     repoLabel: "이 사이트의 소스",
-    snapshot: "모델 기준일",
+    modelLabel: "운영 모델과 비용 구조",
+    snapshot: "데이터 기준일",
     disclaimerTrademark:
       "teslam.io는 Tesla, Inc.와 제휴하거나 후원받는 관계가 아닌 독립 커뮤니티 프로젝트입니다. Tesla, Supercharger는 Tesla, Inc.의 상표입니다.",
     disclaimerFinancial:
-      "이 페이지의 모든 수치는 운영 모델의 계산 결과이며 투자 권유나 수익 보장이 아닙니다. DRV와 TSLM은 아직 발행되지 않았고, 설계는 변경될 수 있습니다.",
+      "DRV와 TSLM은 아직 발행되지 않았습니다. 이 페이지의 수치는 운영 모델의 계산 또는 예시이며 투자 권유나 수익 보장이 아닙니다.",
     rights: "teslam.io",
   },
 };

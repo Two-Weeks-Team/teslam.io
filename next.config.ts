@@ -11,8 +11,11 @@ const nextConfig: NextConfig = {
   // crawler, an LLM and a person cannot be shown different numbers.
   async rewrites() {
     return [
-      { source: "/index.md", destination: "/api/md/ko" },
-      { source: "/en/index.md", destination: "/api/md/en" },
+      // The Markdown mirrors cover `/model`, not the front page — the board is
+      // sample content, and the operating model is the document worth handing
+      // to a crawler verbatim.
+      { source: "/model.md", destination: "/api/md/ko" },
+      { source: "/en/model.md", destination: "/api/md/en" },
 
       // Design directions under review. Each is a single self-contained file in
       // `public/`, deliberately outside the app so an experiment cannot reach

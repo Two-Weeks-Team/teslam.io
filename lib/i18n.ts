@@ -1,6 +1,9 @@
-import { home as ko } from "@/content/ko/home";
-import { home as en } from "@/content/en/home";
+import { home as koHome } from "@/content/ko/home";
+import { home as enHome } from "@/content/en/home";
+import { model as koModel } from "@/content/ko/model";
+import { model as enModel } from "@/content/en/model";
 import type { HomeContent } from "@/content/ko/home";
+import type { ModelContent } from "@/content/ko/model";
 import { SITE } from "@/lib/site";
 
 export const LOCALES = ["ko", "en"] as const;
@@ -9,15 +12,31 @@ export type Locale = (typeof LOCALES)[number];
 /** Korean is the default: the fleet this is being built for is in Korea. */
 export const DEFAULT_LOCALE: Locale = "ko";
 
-const DICT: Record<Locale, HomeContent> = { ko, en };
+const HOME: Record<Locale, HomeContent> = { ko: koHome, en: enHome };
+const MODEL: Record<Locale, ModelContent> = { ko: koModel, en: enModel };
 
+/** The community front page — the shrine. */
 export function getContent(locale: Locale): HomeContent {
-  return DICT[locale];
+  return HOME[locale];
+}
+
+/**
+ * The operating model, at `/model`. It is a different document for a different
+ * reader — a partner or an insurer, not an owner — so it keeps its own content
+ * module rather than being folded into the front page.
+ */
+export function getModel(locale: Locale): ModelContent {
+  return MODEL[locale];
 }
 
 /** Canonical path for a locale. Korean lives at the root. */
 export function pathFor(locale: Locale): string {
   return locale === "ko" ? "/" : `/${locale}`;
+}
+
+/** Canonical path for the model page in a locale. */
+export function modelPathFor(locale: Locale): string {
+  return locale === "ko" ? "/model" : "/en/model";
 }
 
 /**
@@ -34,6 +53,17 @@ export function alternatesFor(locale: Locale) {
       ko: `${SITE}/`,
       en: `${SITE}/en`,
       "x-default": `${SITE}/`,
+    },
+  };
+}
+
+export function modelAlternatesFor(locale: Locale) {
+  return {
+    canonical: `${SITE}${modelPathFor(locale)}`,
+    languages: {
+      ko: `${SITE}/model`,
+      en: `${SITE}/en/model`,
+      "x-default": `${SITE}/model`,
     },
   };
 }

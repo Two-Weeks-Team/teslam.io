@@ -1,14 +1,32 @@
 # teslam.io
 
-A drive-to-earn proposal for Tesla owners in Korea, as a single page. Korean at
-`/`, English at `/en`.
+A community for Tesla owners in Korea, where distance driven accrues as DRV.
+Korean at `/`, English at `/en`. The operating model behind the rewards lives
+at `/model`.
 
 **This is an independent community project. It is not affiliated with, endorsed
 by, or connected to Tesla, Inc.** Tesla and Supercharger are trademarks of
 Tesla, Inc. No token has been issued; nothing here is an offer or investment
 advice.
 
-## What the page argues
+## The front page is a board, not a document
+
+The first version of this site led with a cost ledger, a break-even figure and
+two disclaimers. That is the right artefact for a partner and the wrong one for
+an owner, who comes for rank, identity and something to brag about.
+
+So the front page is now the community: a live ticker, the Genesis 500 cohort
+drawn as its 500 seats, the weekly efficiency league, the board itself, and a
+DRV wallet in the right rail. Ten alternative directions were built and
+compared under `/alt` before settling on this combination — leaderboard for
+return visits, board for substance, wallet for conversion.
+
+**The board content is sample data.** `data/community.json` invents every post,
+rank and balance so the layout can be judged populated. The page says so in a
+notice at the top, and `tests/no-slop.test.ts` fails the build if that notice
+is missing or empty while `isPreview` is set.
+
+## `/model` — what the rewards actually cost
 
 The operating brief this was built from frames the Tesla Fleet API bill as the
 constraint on the business: about ₩1,000 per vehicle per month, ₩500,000 a month
@@ -57,7 +75,7 @@ There is no `app/layout.tsx`. Each locale is its own root layout under
 `app/(ko)` and `app/(en)`, so `<html lang>` is correct without middleware
 negotiating locale on every request.
 
-## The hero
+## The `/model` hero
 
 An instrument cluster: a route drawing itself across a map grid while four
 signals and a DRV balance tick against it.
@@ -100,8 +118,9 @@ hydrated in.
 ## Machine-readable
 
 - `/llms.txt`
-- `/index.md`, `/en/index.md` — rendered from the same content modules and the
-  same derivations as the HTML, so the two cannot disagree
+- `/model.md`, `/en/model.md` — the operating model, rendered from the same
+  content modules and derivations as the HTML, so the two cannot disagree.
+  The front page has no Markdown mirror on purpose: its content is sample data.
 - `/model.json` — the raw inputs, so the arithmetic is checkable rather than
   merely asserted
 
@@ -111,3 +130,13 @@ The Genesis 500 button points at an external form. This site is fully static and
 stores no personal data — there is no database here to secure and no account
 system. The Fleet API integration, the verifier and the settlement pipeline
 described on the page are a design, not a deployment.
+
+## The ten directions
+
+`/alt` is a gallery of the ten landing-page directions this design was chosen
+from — leaderboard, garage, live map, community feed, quest board, cinematic,
+retro cluster, magazine, wallet, cult. Each is one self-contained file in
+`public/` with no external request and every visual drawn in CSS or SVG.
+
+They are drafts: `robots.ts` disallows `/alt*` so half-finished pages do not get
+indexed under this brand. Delete them once the direction is settled.

@@ -1,8 +1,8 @@
 import { Section } from "@/components/sections/section";
-import { getContent, type Locale } from "@/lib/i18n";
+import { getModel, type Locale } from "@/lib/i18n";
 
 export function Tokens({ locale }: { locale: Locale }) {
-  const t = getContent(locale).tokens;
+  const t = getModel(locale).tokens;
 
   return (
     <Section id="tokens" eyebrow={t.eyebrow} h2={t.h2} lede={t.lede}>
