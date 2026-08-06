@@ -795,8 +795,8 @@ footer{padding:clamp(36px,5vw,60px) 0 46px;border-top:1px solid var(--line-soft)
                   <stop offset=".16" stop-color="#aeb5bc"/>
                   <stop offset=".38" stop-color="#6a7178"/>
                   <stop offset=".55" stop-color="#454b51"/>
-                  <stop offset=".78" stop-color="#2a2e33"/>
-                  <stop offset="1" stop-color="#191c1f"/>
+                  <stop offset=".78" stop-color="#333940"/>
+                  <stop offset="1" stop-color="#242a30"/>
                 </linearGradient>
                 <linearGradient id="cladG" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0" stop-color="#20242a" stop-opacity="0"/>
@@ -831,7 +831,7 @@ footer{padding:clamp(36px,5vw,60px) 0 46px;border-top:1px solid var(--line-soft)
                   <stop offset="1" stop-color="#000" stop-opacity="0"/>
                 </radialGradient>
                 <clipPath id="bodyClip">
-                  <path d="M52 162 C41 157 35 145 37 131 C39 117 48 108 62 104 C96 99 140 94 176 89 C190 73 212 56 244 45 C270 36 298 33 326 33 C356 33 386 36 412 43 C444 52 474 70 496 94 C508 107 515 121 517 136 C518 150 515 159 508 165 L478 168 C474 107 386 107 382 168 L180 170 C176 107 86 107 82 170 Z"/>
+                  <path d="M64 157 C52 152 47 141 48 127 C49 112 58 98 74 93 C106 89 144 85 176 81 C186 68 206 52 238 42 C264 33 292 30 320 30 C352 30 384 33 412 41 C444 50 474 68 496 90 C508 104 518 118 522 133 C524 147 520 158 513 164 L478 168 C474 107 386 107 382 168 L180 170 C176 107 88 107 84 170 Z"/>
                 </clipPath>
                 <g id="rim">
                   <circle r="28" fill="#0c0e11"/>
@@ -862,48 +862,48 @@ footer{padding:clamp(36px,5vw,60px) 0 46px;border-top:1px solid var(--line-soft)
               <circle cx="430" cy="166" r="33" fill="none" stroke="#191d21" stroke-width="2"/>
 
               <!-- 차체 -->
-              <path d="M52 162 C41 157 35 145 37 131 C39 117 48 108 62 104 C96 99 140 94 176 89 C190 73 212 56 244 45 C270 36 298 33 326 33 C356 33 386 36 412 43 C444 52 474 70 496 94 C508 107 515 121 517 136 C518 150 515 159 508 165 L478 168 C474 107 386 107 382 168 L180 170 C176 107 86 107 82 170 Z"
+              <path d="M64 157 C52 152 47 141 48 127 C49 112 58 98 74 93 C106 89 144 85 176 81 C186 68 206 52 238 42 C264 33 292 30 320 30 C352 30 384 33 412 41 C444 50 474 68 496 90 C508 104 518 118 522 133 C524 147 520 158 513 164 L478 168 C474 107 386 107 382 168 L180 170 C176 107 88 107 84 170 Z"
                     fill="url(#bodyG)"/>
 
               <g clip-path="url(#bodyClip)">
                 <!-- 하단 클래딩 -->
-                <rect x="20" y="116" width="530" height="76" fill="url(#cladG)"/>
+                <rect x="20" y="118" width="530" height="76" fill="url(#cladG)" opacity=".8"/>
                 <!-- 캐릭터 라인 -->
-                <path d="M62 112 C180 106 372 100 522 110" stroke="#eef2f5" stroke-width="1.6" fill="none" opacity=".24"/>
-                <path d="M70 132 C190 126 380 120 524 130" stroke="#000" stroke-width="1.6" fill="none" opacity=".3"/>
+                <path d="M72 108 C186 102 376 96 526 106" stroke="#eef2f5" stroke-width="1.6" fill="none" opacity=".24"/>
+                <path d="M80 128 C196 122 384 116 528 126" stroke="#000" stroke-width="1.6" fill="none" opacity=".3"/>
                 <!-- 휠아치 클래딩 트림 -->
                 <path d="M478 168 C474 107 386 107 382 168" fill="none" stroke="#0d1013" stroke-width="5" opacity=".8"/>
                 <path d="M180 170 C176 107 86 107 82 170" fill="none" stroke="#0d1013" stroke-width="5" opacity=".8"/>
 
                 <!-- 유리 -->
-                <path d="M184 93 C199 79 220 62 250 50 C275 41 302 38 328 38 C357 38 385 41 410 47 C440 56 468 70 486 88 Z" fill="url(#glassG)"/>
+                <path d="M182 84 C195 71 214 55 244 44 C270 36 296 33 322 33 C353 33 383 36 410 44 C440 53 468 68 486 82 Z" fill="url(#glassG)"/>
                 <!-- 앞유리 · 루프 반사 -->
-                <path d="M186 92 C201 78 222 61 252 49 C270 42 290 39 310 38 L254 92 Z" fill="#8098aa" opacity=".24"/>
-                <path d="M352 38 C382 40 410 44 434 53 L400 88 Z" fill="#63798b" opacity=".16"/>
+                <path d="M184 83 C197 70 216 54 246 43 C264 37 284 34 304 33 L250 83 Z" fill="#8098aa" opacity=".24"/>
+                <path d="M348 33 C378 35 408 39 434 48 L400 80 Z" fill="#63798b" opacity=".16"/>
                 <!-- B · C 필러 -->
-                <path d="M290 38.2 L303 38 L306 91 L294 91.2 Z" fill="#080b0e"/>
-                <path d="M392 43 L402 45 L408 89 L398 89.4 Z" fill="#080b0e" opacity=".55"/>
+                <path d="M286 33.2 L299 33 L302 83 L290 83.2 Z" fill="#080b0e"/>
+                <path d="M390 38 L400 40 L406 82 L396 82.4 Z" fill="#080b0e" opacity=".55"/>
                 <!-- 벨트라인 하이라이트 -->
-                <path d="M184 93 L486 88" stroke="url(#beltG)" stroke-width="2.4" fill="none"/>
+                <path d="M182 84 L486 82" stroke="url(#beltG)" stroke-width="2.4" fill="none"/>
                 <!-- 도어 컷 -->
-                <path d="M214 92 L210 170" stroke="#0b0e11" stroke-width="1.6" opacity=".55"/>
-                <path d="M336 90 L333 169" stroke="#0b0e11" stroke-width="1.6" opacity=".55"/>
-                <path d="M432 88 L440 167" stroke="#0b0e11" stroke-width="1.4" opacity=".32"/>
+                <path d="M212 83 L208 170" stroke="#0b0e11" stroke-width="1.6" opacity=".55"/>
+                <path d="M334 82 L331 169" stroke="#0b0e11" stroke-width="1.6" opacity=".55"/>
+                <path d="M432 81 L440 167" stroke="#0b0e11" stroke-width="1.4" opacity=".32"/>
                 <!-- 플러시 도어 핸들 -->
-                <rect x="240" y="101" width="27" height="5" rx="2.5" fill="#dde3e8" opacity=".82"/>
-                <rect x="356" y="98" width="27" height="5" rx="2.5" fill="#dde3e8" opacity=".82"/>
+                <rect x="238" y="93" width="27" height="5" rx="2.5" fill="#dde3e8" opacity=".82"/>
+                <rect x="354" y="90" width="27" height="5" rx="2.5" fill="#dde3e8" opacity=".82"/>
                 <!-- 사이드미러 -->
-                <path d="M186 83 L162 78 L159 88 L184 93 Z" fill="#1e2226"/>
+                <path d="M184 74 L160 69 L157 79 L182 84 Z" fill="#1e2226"/>
                 <!-- 헤드램프 -->
-                <path d="M37 118 C49 110 64 105 80 104 L78 115 C62 116 48 119 38 125 Z" fill="#f2f6fa" opacity=".92"/>
-                <path d="M39 120 C50 114 63 110 76 109 L75.5 113 C62 114 50 117 40 122 Z" fill="#c2e8ff" opacity=".55"/>
+                <path d="M49 108 C60 100 73 95 88 94 L86 105 C71 106 59 109 50 115 Z" fill="#f2f6fa" opacity=".92"/>
+                <path d="M51 110 C61 104 73 101 85 100 L84.5 104 C72 105 61 108 52 112 Z" fill="#c2e8ff" opacity=".55"/>
                 <!-- 테일램프 -->
-                <path d="M478 100 L514 114 L512 125 L476 111 Z" fill="#ff7a45" opacity=".92"/>
-                <path d="M480 104 L509 116 L508 120 L479 108 Z" fill="#ffd0aa" opacity=".5"/>
+                <path d="M478 94 L519 109 L517 120 L476 105 Z" fill="#ff7a45" opacity=".92"/>
+                <path d="M480 98 L514 111 L513 115 L479 102 Z" fill="#ffd0aa" opacity=".5"/>
                 <!-- 스포일러 립 -->
-                <path d="M488 87 L505 100" stroke="#dfe5ea" stroke-width="1.4" opacity=".32" fill="none"/>
+                <path d="M488 84 L506 98" stroke="#dfe5ea" stroke-width="1.4" opacity=".32" fill="none"/>
                 <!-- 충전 포트 -->
-                <rect x="450" y="95" width="14" height="9" rx="2" fill="#0d1013" opacity=".5"/>
+                <rect x="448" y="88" width="14" height="9" rx="2" fill="#0d1013" opacity=".5"/>
                 <!-- 광택 스윕 -->
                 <rect class="shine" x="-180" y="10" width="110" height="200" fill="url(#shineG)" transform="skewX(-16)"/>
               </g>
