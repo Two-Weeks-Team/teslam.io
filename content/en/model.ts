@@ -87,6 +87,13 @@ export const model: ModelContent = {
     perDay: "per day",
     perMonth: "per vehicle · month",
     signalsPerDayLabel: "signals/day",
+    fxLabel: "Rate applied",
+    fxLive: "European Central Bank reference · refreshed hourly",
+    fxFallback: "Whitepaper assumption · used because the reference lookup failed",
+    fxNote:
+      "Won figures are converted at the rate above. The reference rate is published once each working day, so this page follows a new one within the hour.",
+    creditNote:
+      "Tesla grants a {credit} monthly credit per developer account, which is deliberately left out of the arithmetic above. A real invoice may therefore be lower than shown — the figure is kept conservative so that a change in credit policy cannot undermine the argument on this page.",
   },
 
   tokens: {

@@ -1,4 +1,10 @@
-import { getContent, modelPathFor, type Locale } from "@/lib/i18n";
+import {
+  getContent,
+  getLegal,
+  legalPathFor,
+  modelPathFor,
+  type Locale,
+} from "@/lib/i18n";
 import { CONTACT_EMAIL, REPO } from "@/lib/site";
 import cm from "@/data/community.json";
 
@@ -11,6 +17,7 @@ import cm from "@/data/community.json";
  */
 export function CFooter({ locale }: { locale: Locale }) {
   const t = getContent(locale).footer;
+  const l = getLegal(locale);
 
   return (
     <footer className="cmfoot">
@@ -35,6 +42,12 @@ export function CFooter({ locale }: { locale: Locale }) {
           </a>
           <a className="cmfoot__a" href="/llms.txt">
             /llms.txt
+          </a>
+          <a className="cmfoot__a" href={legalPathFor(locale, "privacy")}>
+            {l.navPrivacy}
+          </a>
+          <a className="cmfoot__a" href={legalPathFor(locale, "terms")}>
+            {l.navTerms}
           </a>
         </div>
       </div>

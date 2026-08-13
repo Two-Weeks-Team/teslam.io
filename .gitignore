@@ -10,3 +10,12 @@ build
 *.tsbuildinfo
 next-env.d.ts
 coverage
+
+# Keel per-run gate result — machine-local, never committed.
+.keel/gate-state.json
+
+# Wrangler build/dry-run output
+.wrangler/
+
+# Operator export token — a secret, never committed.
+.keel/export-token.txt

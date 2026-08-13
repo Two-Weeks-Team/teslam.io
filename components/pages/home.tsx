@@ -6,6 +6,9 @@ import { LeftRail, RightRail } from "@/components/community/rails";
 import { CFooter } from "@/components/community/footer";
 import { JsonLd } from "@/components/jsonld";
 import { getContent, type Locale } from "@/lib/i18n";
+import { getGenesisStats } from "@/lib/stats";
+import { LiveProvider } from "@/components/community/live-provider";
+import { Density } from "@/components/community/density";
 import cm from "@/data/community.json";
 
 /**
@@ -17,9 +20,24 @@ import cm from "@/data/community.json";
  * lives at `/model` — it is a document for a partner, not a reason for an
  * owner to visit.
  */
-export function HomePage({ locale }: { locale: Locale }) {
+export async function HomePage({ locale }: { locale: Locale }) {
   const t = getContent(locale);
+  const stats = await getGenesisStats();
 
+  return (
+    <LiveProvider initial={stats}>
+      <HomeBoard locale={locale} t={t} />
+    </LiveProvider>
+  );
+}
+
+function HomeBoard({
+  locale,
+  t,
+}: {
+  locale: Locale;
+  t: ReturnType<typeof getContent>;
+}) {
   return (
     <div className="cm">
       <JsonLd locale={locale} />
@@ -34,6 +52,7 @@ export function HomePage({ locale }: { locale: Locale }) {
         ) : null}
 
         <CHero locale={locale} />
+        <Density locale={locale} />
         <League locale={locale} />
 
         <div className="cols">

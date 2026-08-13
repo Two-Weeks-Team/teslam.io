@@ -5,28 +5,32 @@ import { readoutAt, DAILY_CAP_DRV } from "@/lib/drive/readout";
 
 /**
  * These reproduce the operator's brief exactly, then guard the step the brief
- * did not take. If someone edits `data/model.json` and the API-cost figures
- * stop matching the specification, that is a mistake. If the reward figures
- * move, that is a decision — and the assertions below make sure it is a
- * visible one.
+ * did not take. If the reward figures move, that is a decision — and the
+ * assertions below make sure it is a visible one.
+ *
+ * The figures here are the site's own arithmetic. Whether that arithmetic
+ * agrees with the whitepaper is a separate question, asked in
+ * `whitepaper-parity.test.ts`. Keeping the two apart matters: this file can
+ * only catch a change, while that one catches a number that was wrong from the
+ * day it was written.
  */
 describe("telemetry cost, as specified", () => {
   it("is 240 signals a day", () => {
     expect(e.signalsPerDay).toBe(240);
   });
 
-  it("is $0.024 a day and $0.72 a month", () => {
-    expect(e.apiUsdPerDay).toBeCloseTo(0.024, 6);
-    expect(e.apiUsdPerMonth).toBeCloseTo(0.72, 6);
+  it("is $0.0016 a day and $0.048 a month", () => {
+    expect(e.apiUsdPerDay).toBeCloseTo(0.0016, 8);
+    expect(e.apiUsdPerMonth).toBeCloseTo(0.048, 8);
   });
 
-  it("is about ₩1,000 a month per vehicle", () => {
-    expect(Math.round(e.apiKrwPerMonth)).toBe(1001);
+  it("is about ₩67 a month per vehicle", () => {
+    expect(Math.round(e.apiKrwPerMonth)).toBe(67);
   });
 
-  it("puts Genesis 500 API fees near ₩500,000", () => {
-    expect(e.genesisApiKrwPerMonth).toBeGreaterThan(480_000);
-    expect(e.genesisApiKrwPerMonth).toBeLessThan(520_000);
+  it("puts Genesis 500 API fees near ₩33,000", () => {
+    expect(e.genesisApiKrwPerMonth).toBeGreaterThan(32_000);
+    expect(e.genesisApiKrwPerMonth).toBeLessThan(35_000);
   });
 });
 
@@ -58,6 +62,40 @@ describe("the correction the site is built on", () => {
     expect(e.genesisTotalKrwPerMonth).toBeGreaterThan(
       e.genesisApiKrwPerMonth * 2,
     );
+  });
+});
+
+describe("the live-rate path agrees with the static one", () => {
+  /**
+   * There are now two ways to reach the same seven figures: the constants,
+   * bound to the whitepaper's assumed rate, and `deriveAt`, called with
+   * whatever rate was quoted for a request. Fed the same rate they must give
+   * the same answers, or the page and the machine mirror are describing
+   * different businesses.
+   */
+  const atWhitepaperRate = e.deriveAt(model.assumed.fxKrwPerUsd);
+
+  it.each([
+    ["apiKrwPerMonth", e.apiKrwPerMonth],
+    ["cashCostPerVehicleMonth", e.cashCostPerVehicleMonth],
+    ["apiShareOfCashCost", e.apiShareOfCashCost],
+    ["breakevenKrwPerVehicleMonth", e.breakevenKrwPerVehicleMonth],
+    ["genesisApiKrwPerMonth", e.genesisApiKrwPerMonth],
+    ["genesisPerVehicleKrwPerMonth", e.genesisPerVehicleKrwPerMonth],
+    ["genesisTotalKrwPerMonth", e.genesisTotalKrwPerMonth],
+  ] as const)("%s matches", (key, constant) => {
+    expect(atWhitepaperRate[key]).toBeCloseTo(constant, 8);
+  });
+
+  it("moves every figure when the rate moves, and none when it does not", () => {
+    const higher = e.deriveAt(model.assumed.fxKrwPerUsd * 1.1);
+    expect(higher.apiKrwPerMonth).toBeGreaterThan(e.apiKrwPerMonth);
+    expect(higher.genesisApiKrwPerMonth).toBeGreaterThan(
+      e.genesisApiKrwPerMonth,
+    );
+    // The reward side is pegged in won and must not follow the dollar.
+    expect(e.krwPerDrv).toBe(0.5);
+    expect(e.netRewardKrwPerMonth).toBeGreaterThan(0);
   });
 });
 

@@ -24,6 +24,7 @@ export const metadata: Metadata = {
     url: `${SITE}/`,
     title: t.meta.title,
     description: t.meta.description,
+    images: [{ url: `${SITE}/img/og.webp`, width: 1200, height: 630 }],
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },

@@ -86,6 +86,38 @@ describe("sample content is labelled", () => {
   it("says in the data file itself that the content is sample", () => {
     expect(community._note.toLowerCase()).toContain("sample");
   });
+
+  /**
+   * The page is no longer all one thing.
+   *
+   * Seats, the regional split and the watcher count are measurements now; posts,
+   * ranks and wallet entries are still invented. A notice that lumps them
+   * together was honest while everything was invented and is misleading now, so
+   * the copy has to name both halves and the marks have to exist for each.
+   */
+  it("names both halves rather than calling the page one thing", () => {
+    for (const locale of ["ko", "en"] as const) {
+      const p = getContent(locale).preview;
+      expect(p.realLabel.trim().length, `${locale}: no label for real figures`)
+        .toBeGreaterThan(0);
+      expect(p.sampleLabel.trim().length, `${locale}: no label for sample content`)
+        .toBeGreaterThan(0);
+      expect(
+        p.realLabel.trim() === p.sampleLabel.trim(),
+        `${locale}: the two labels are identical, so they distinguish nothing`,
+      ).toBe(false);
+
+      // The banner must mention the real side too, not only the sample side.
+      const mentionsReal =
+        locale === "ko"
+          ? /실제 수치|실제 값/.test(p.body)
+          : /real figure/i.test(p.body);
+      expect(
+        mentionsReal,
+        `${locale}: the notice does not say which figures are real`,
+      ).toBe(true);
+    }
+  });
 });
 
 describe("claims", () => {

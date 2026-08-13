@@ -1,6 +1,8 @@
 @import "tailwindcss";
 @import "./layout.css";
 @import "./community.css";
+@import "./legal.css";
+@import "./genesis.css";
 
 /* ---------------------------------------------------------------------------
    Design tokens — "Instrument Cluster"

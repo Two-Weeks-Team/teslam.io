@@ -1,5 +1,4 @@
-import { getModel, type Locale } from "@/lib/i18n";
-import { WAITLIST_URL } from "@/lib/site";
+import { genesisPathFor, getModel, type Locale } from "@/lib/i18n";
 
 /**
  * Wordmark, locale switch, and the one call to action.
@@ -33,7 +32,7 @@ export function Header({ locale }: { locale: Locale }) {
             </a>
             <a
               className="topbar__cta"
-              href={WAITLIST_URL}
+              href={genesisPathFor(locale)}
               rel="noopener noreferrer"
               target="_blank"
             >

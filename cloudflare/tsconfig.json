@@ -1,0 +1,23 @@
+{
+  // The Worker runs on workerd, not on Node or in a browser. Its globals and
+  // the site's overlap but are not the same set, so it gets its own project
+  // rather than sharing the root one and quietly resolving `fetch` or
+  // `crypto` against the wrong lib.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    // Brings in the `cloudflare:test` module (the `env` binding the tests use).
+    "types": ["@cloudflare/vitest-pool-workers/types"],
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "jsx": "preserve"
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.mts",
+    "worker-configuration.d.ts",
+    "../lib/genesis.ts"
+  ],
+  "exclude": ["../node_modules"]
+}

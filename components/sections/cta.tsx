@@ -1,5 +1,4 @@
-import { getModel, type Locale } from "@/lib/i18n";
-import { WAITLIST_URL } from "@/lib/site";
+import { genesisPathFor, getModel, type Locale } from "@/lib/i18n";
 
 export function Cta({ locale }: { locale: Locale }) {
   const t = getModel(locale).cta;
@@ -11,7 +10,7 @@ export function Cta({ locale }: { locale: Locale }) {
       <p className="cta__b">{t.body}</p>
       <a
         className="cta__btn"
-        href={WAITLIST_URL}
+        href={genesisPathFor(locale)}
         rel="noopener noreferrer"
         target="_blank"
       >

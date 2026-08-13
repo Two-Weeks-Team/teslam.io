@@ -1,6 +1,7 @@
 import { getContent, getModel, modelPathFor, type Locale } from "@/lib/i18n";
 import { SITE, CONTACT_EMAIL, REPO } from "@/lib/site";
 import * as e from "@/lib/economics";
+import type { LiveFigures } from "@/lib/economics";
 
 /**
  * The `.md` mirrors and `/llms.txt` render from the same content modules and
@@ -12,7 +13,7 @@ import * as e from "@/lib/economics";
 const won = (v: number) => `₩${Math.round(v).toLocaleString("en-US")}`;
 const pc = (v: number) => `${(v * 100).toFixed(1)}%`;
 
-export function renderMarkdown(locale: Locale): string {
+export function renderMarkdown(locale: Locale, live: LiveFigures): string {
   const t = getModel(locale);
   const ko = locale === "ko";
   const L = ko
@@ -87,20 +88,20 @@ export function renderMarkdown(locale: Locale): string {
     [
       "| | |",
       "| --- | ---: |",
-      `| ${L.api} | ${won(e.apiKrwPerMonth)} |`,
+      `| ${L.api} | ${won(live.apiKrwPerMonth)} |`,
       `| ${L.issued} | ${won(e.rewardKrwPerMonth)} |`,
       `| ${L.net} | ${won(e.netRewardKrwPerMonth)} |`,
-      `| **${L.total}** | **${won(e.cashCostPerVehicleMonth)}** |`,
-      `| ${L.share} | ${pc(e.apiShareOfCashCost)} |`,
-      `| ${L.breakeven} | ${won(e.breakevenKrwPerVehicleMonth)} |`,
+      `| **${L.total}** | **${won(live.cashCostPerVehicleMonth)}** |`,
+      `| ${L.share} | ${pc(live.apiShareOfCashCost)} |`,
+      `| ${L.breakeven} | ${won(live.breakevenKrwPerVehicleMonth)} |`,
     ].join("\n"),
   );
   p(t.economics.breakevenNote);
   h(3, L.gen);
   p(
     [
-      `- ${L.genApi}: ${won(e.genesisApiKrwPerMonth)}`,
-      `- ${L.genTrue}: ${won(e.genesisTotalKrwPerMonth)}`,
+      `- ${L.genApi}: ${won(live.genesisApiKrwPerMonth)}`,
+      `- ${L.genTrue}: ${won(live.genesisTotalKrwPerMonth)}`,
     ].join("\n"),
   );
   p(t.economics.genesisNote);
@@ -139,7 +140,7 @@ export function renderMarkdown(locale: Locale): string {
   return lines.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
 }
 
-export function renderLlmsTxt(): string {
+export function renderLlmsTxt(live: LiveFigures): string {
   const ko = getContent("ko");
   const en = getContent("en");
 
@@ -170,10 +171,10 @@ export function renderLlmsTxt(): string {
     "",
     "## The model, in four numbers",
     "",
-    `- Tesla Fleet API, per vehicle per month: ${won(e.apiKrwPerMonth)}`,
+    `- Tesla Fleet API, per vehicle per month: ${won(live.apiKrwPerMonth)}`,
     `- DRV issued at face value, per vehicle per month: ${won(e.rewardKrwPerMonth)}`,
-    `- Actual cash out, per vehicle per month: ${won(e.cashCostPerVehicleMonth)}`,
-    `- API fees as a share of that: ${pc(e.apiShareOfCashCost)}`,
+    `- Actual cash out, per vehicle per month: ${won(live.cashCostPerVehicleMonth)}`,
+    `- API fees as a share of that: ${pc(live.apiShareOfCashCost)}`,
     "",
     "The API bill is the smallest line. The reward is the constraint.",
     "",

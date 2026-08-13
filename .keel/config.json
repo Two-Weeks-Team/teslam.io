@@ -1,0 +1,7 @@
+{
+  "no_red_push": true,
+  "format_on_edit": true,
+  "protect_secrets": true,
+  "format_exclude": [],
+  "stack": ["node"]
+}
