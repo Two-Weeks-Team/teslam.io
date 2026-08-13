@@ -11,7 +11,7 @@ import {
   confirm,
   findByEmail,
   insertPending,
-  refreshToken,
+  refreshPending,
   stats,
   takenCount,
 } from "./lib/db";
@@ -164,7 +164,20 @@ async function register(
     return json({ status: "already_registered" }, 200);
   }
   if (existing) {
-    await refreshToken(env.DB, email!, tokenHash);
+    // Refresh the whole row, not just the token. Someone who resubmits after
+    // changing their mind — a different car, or marketing unticked — would
+    // otherwise be confirmed against the profile they replaced, and a stale
+    // marketing opt-in is a consent record that says the opposite of what the
+    // person just chose.
+    await refreshPending(env.DB, {
+      email: email!,
+      model: model!,
+      trim: String(body.trim),
+      region: region!,
+      kmBand: kmBand!,
+      consentMarketing: body.consentMarketing === true,
+      tokenHash,
+    });
   } else {
     await insertPending(env.DB, {
       email: email!,
@@ -178,7 +191,10 @@ async function register(
   }
 
   const locale = body.locale === "en" ? "en" : "ko";
-  const link = `${env.SITE_ORIGIN}/genesis/confirm?token=${token}`;
+  // English registrants were being sent to the Korean route: the message was
+  // translated and the link was not.
+  const path = locale === "en" ? "/en/genesis/confirm" : "/genesis/confirm";
+  const link = `${env.SITE_ORIGIN}${path}?token=${token}`;
   const mail = confirmationMail(link, locale);
   // Cloudflare first — no key to leak, one processor instead of two. Resend
   // stays as a fallback so the flow is not blocked on a beta product being

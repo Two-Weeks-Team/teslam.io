@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { SeatCluster } from "@/components/genesis/seat-cluster";
 import { REGIONS } from "@/lib/genesis";
-import { getGenesis, pathFor, type Locale } from "@/lib/i18n";
+import { genesisPathFor, getGenesis, pathFor, type Locale } from "@/lib/i18n";
 import { API_ORIGIN } from "@/lib/site";
 
 /**
@@ -90,7 +90,7 @@ export function GenesisConfirm({ locale }: { locale: Locale }) {
   const { placement } = state;
   const seat = placement.kind === "seat";
   const region = REGIONS.find((r) => r.id === placement.region);
-  const seatUrl = `${window.location.origin}/genesis/seat/${placement.number}`;
+  const seatUrl = `${window.location.origin}${genesisPathFor(locale)}/seat/${placement.number}`;
 
   return (
     <>

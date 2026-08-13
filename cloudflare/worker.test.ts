@@ -116,6 +116,55 @@ describe("registration", () => {
     expect((stats as { taken: number }).taken).toBe(1);
   });
 
+  /**
+   * Both of these were found in review, not here — the resend path had no test
+   * at all, so it kept a stale profile and a stale marketing consent while
+   * every existing assertion stayed green.
+   */
+  it("replaces the whole pending profile when the same address resubmits", async () => {
+    const { w, sent } = worker();
+    await w.fetch(
+      post({ ...VALID, region: "capital", consentMarketing: true }, "ip-a"),
+      E,
+    );
+    await w.fetch(
+      post(
+        { ...VALID, region: "jeju", trim: "Performance", consentMarketing: false },
+        "ip-b",
+      ),
+      E,
+    );
+
+    const token = sent[1].text.match(/token=(\w+)/)![1];
+    const out = (await (
+      await w.fetch(get(`/v1/genesis/confirm?token=${token}`), E)
+    ).json()) as { placement: { region: string } };
+
+    expect(out.placement.region).toBe("jeju");
+
+    const row = await E.DB.prepare(
+      "SELECT trim, consent_marketing FROM registrations WHERE email = ?",
+    )
+      .bind(VALID.email)
+      .first<{ trim: string; consent_marketing: number }>();
+
+    expect(row?.trim).toBe("Performance");
+    // Withdrawing marketing consent must actually withdraw it. Keeping the
+    // earlier opt-in would leave a record asserting the opposite of the
+    // registrant's latest choice.
+    expect(row?.consent_marketing).toBe(0);
+  });
+
+  it("sends an English registrant to the English confirmation route", async () => {
+    const { w, sent } = worker();
+    await w.fetch(post({ ...VALID, locale: "en" }, "ip-en"), E);
+    expect(sent[0].text).toContain("/en/genesis/confirm?token=");
+
+    await w.fetch(post({ ...VALID, email: "ko@example.com" }, "ip-ko"), E);
+    expect(sent[1].text).toMatch(/\/genesis\/confirm\?token=/);
+    expect(sent[1].text).not.toContain("/en/genesis/confirm");
+  });
+
   it("stops a loop from one address", async () => {
     const { w } = worker();
     for (let i = 0; i < 5; i++) {

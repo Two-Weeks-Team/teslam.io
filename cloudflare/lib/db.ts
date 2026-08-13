@@ -81,19 +81,42 @@ export async function insertPending(
   return id;
 }
 
-/** A fresh token for someone who registered but never opened the mail. */
-export async function refreshToken(
+/**
+ * Replace an unconfirmed registration with the submission just made.
+ *
+ * Not just a fresh token. Someone who resubmits the same address is correcting
+ * something — a different car, a region they mistyped, marketing they no longer
+ * want — and keeping the old values would confirm them against a profile they
+ * had already replaced. The consent record matters most: a stale opt-in is a
+ * record asserting the opposite of what the person chose a moment ago.
+ *
+ * Only touches rows that have not been confirmed. A held seat is not editable
+ * through this path.
+ */
+export async function refreshPending(
   db: D1Database,
-  email: string,
-  tokenHash: string,
+  r: NewRegistration,
 ): Promise<boolean> {
+  const t = now();
   const res = await db
     .prepare(
       `UPDATE registrations
-          SET verify_token_hash = ?, verify_sent_at = ?
+          SET verify_token_hash = ?, verify_sent_at = ?,
+              model = ?, trim = ?, region = ?, km_band = ?,
+              consent_marketing = ?, consent_at = ?
         WHERE email = ? AND verified_at IS NULL`,
     )
-    .bind(tokenHash, now(), email)
+    .bind(
+      r.tokenHash,
+      t,
+      r.model,
+      r.trim,
+      r.region,
+      r.kmBand,
+      r.consentMarketing ? 1 : 0,
+      t,
+      r.email,
+    )
     .run();
   return (res.meta.changes ?? 0) > 0;
 }

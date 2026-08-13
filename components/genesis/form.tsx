@@ -28,6 +28,7 @@ type State =
   | { kind: "idle" }
   | { kind: "sending" }
   | { kind: "pending" }
+  | { kind: "mail-failed" }
   | { kind: "already" }
   | { kind: "error"; message: string; fields?: string[] };
 
@@ -65,6 +66,7 @@ export function GenesisForm({ locale }: { locale: Locale }) {
       });
       const out = (await res.json()) as {
         status?: string;
+        mailSent?: boolean;
         error?: string;
         fields?: string[];
       };
@@ -76,7 +78,10 @@ export function GenesisForm({ locale }: { locale: Locale }) {
       } else if (out.status === "already_registered") {
         setState({ kind: "already" });
       } else if (out.status === "pending") {
-        setState({ kind: "pending" });
+        // The Worker reports delivery honestly, so the form must too. Telling
+        // someone to check their inbox for a message that was never sent leaves
+        // them waiting on nothing, with no way to retry short of a reload.
+        setState({ kind: out.mailSent ? "pending" : "mail-failed" });
       } else {
         setState({ kind: "error", message: t.errors.network });
       }
@@ -91,6 +96,22 @@ export function GenesisForm({ locale }: { locale: Locale }) {
         <h2>{t.pending.title}</h2>
         <p>{t.pending.body}</p>
         <p className="gx__disc">{t.pending.resend}</p>
+      </div>
+    );
+  }
+
+  if (state.kind === "mail-failed") {
+    return (
+      <div className="gx__state gx__state--warn" role="alert">
+        <h2>{t.mailFailed.title}</h2>
+        <p>{t.mailFailed.body}</p>
+        <button
+          className="gx__btn"
+          type="button"
+          onClick={() => setState({ kind: "idle" })}
+        >
+          {t.mailFailed.retry}
+        </button>
       </div>
     );
   }

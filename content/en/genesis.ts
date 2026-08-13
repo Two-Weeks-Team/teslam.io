@@ -53,6 +53,12 @@ export const genesis: GenesisContent = {
     resend: "If it does not arrive, submit the same address again and a fresh link is sent.",
   },
 
+  mailFailed: {
+    title: "The confirmation email could not be sent",
+    body: "Your submission was saved, but the confirmation link did not go out, so no seat is held yet. Please try again shortly — and if it keeps failing, write to hello@teslam.io and we will sort it out by hand.",
+    retry: "Try again",
+  },
+
   already: {
     title: "You already have a seat",
     body: "This address has already been confirmed. If you have lost your seat number, write to hello@teslam.io and we will tell you.",
@@ -79,6 +85,12 @@ export const genesis: GenesisContent = {
     failedBody:
       "It has either been used already or expired. Submit the same address again and a fresh link is sent.",
     notToken: "Please arrive here through the confirmation link.",
+  },
+
+  seatPage: {
+    title: "Genesis 500 seat",
+    note: "A seat in the teslam.io Genesis 500 cohort. The number records a place in the invitation order and carries no monetary value.",
+    join: "Take a seat too",
   },
 
   disclaimer:

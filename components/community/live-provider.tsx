@@ -72,6 +72,26 @@ export function LiveProvider({
       return;
     }
 
+    // A seat confirmed between the server render and this socket opening sends
+    // its delta to a subscriber that does not exist yet, and `hello` carries
+    // only the watcher count — so without this the page would show a stale
+    // total until the reader navigated. Re-reading the aggregate on open costs
+    // one request and closes the window.
+    socket.addEventListener("open", () => {
+      fetch(`${API_ORIGIN}/v1/genesis/stats`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((fresh: { taken?: number; byRegion?: Array<{ region: string; count: number }> } | null) => {
+          if (!fresh || typeof fresh.taken !== "number") return;
+          setTaken(fresh.taken);
+          setByRegion(
+            Object.fromEntries((fresh.byRegion ?? []).map((r) => [r.region, r.count])),
+          );
+        })
+        .catch(() => {
+          // The server-rendered figures stand. They are only ever stale, never wrong.
+        });
+    });
+
     socket.addEventListener("message", (e) => {
       let msg: Record<string, unknown>;
       try {

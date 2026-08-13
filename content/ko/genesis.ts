@@ -43,6 +43,7 @@ export type GenesisContent = {
   };
 
   pending: { title: string; body: string; resend: string };
+  mailFailed: { title: string; body: string; retry: string };
   already: { title: string; body: string };
 
   confirm: {
@@ -63,6 +64,7 @@ export type GenesisContent = {
     notToken: string;
   };
 
+  seatPage: { title: string; note: string; join: string };
   disclaimer: string;
 };
 
@@ -119,6 +121,12 @@ export const genesis: GenesisContent = {
     resend: "메일이 오지 않았다면 같은 주소로 다시 신청하시면 새 링크를 보냅니다.",
   },
 
+  mailFailed: {
+    title: "확인 메일을 보내지 못했습니다",
+    body: "신청은 저장되었지만 확인 링크가 발송되지 않았습니다. 좌석은 아직 배정되지 않은 상태입니다. 잠시 후 다시 시도해 주시고, 계속 실패하면 hello@teslam.io 로 알려주시면 직접 처리해 드립니다.",
+    retry: "다시 시도",
+  },
+
   already: {
     title: "이미 좌석이 있습니다",
     body: "이 주소로는 이미 확인이 끝났습니다. 좌석 번호를 잊으셨다면 hello@teslam.io 로 알려드립니다.",
@@ -145,6 +153,12 @@ export const genesis: GenesisContent = {
     failedBody:
       "이미 사용된 링크이거나 만료된 링크입니다. 같은 주소로 다시 신청하시면 새 링크를 보냅니다.",
     notToken: "확인 링크로 접근해 주세요.",
+  },
+
+  seatPage: {
+    title: "Genesis 500 좌석",
+    note: "teslam.io Genesis 500 코호트의 좌석입니다. 좌석 번호는 폐쇄 베타 초대 순서를 나타내며, 금전적 가치를 가지지 않습니다.",
+    join: "나도 자리 잡기",
   },
 
   disclaimer:
