@@ -24,3 +24,6 @@ coverage
 # so this file is exactly the thing that must never be committed.
 .dev.vars
 **/.dev.vars
+
+# Published from node_modules by scripts/copy-map-worker.mjs at build time.
+public/maplibre/

@@ -68,6 +68,45 @@ export const home: HomeContent = {
     hint: "You can play through the 500 seats filling. Stopping returns the real numbers.",
   },
 
+  routes: {
+    eyebrow: "Where it went",
+    title: "The roads this car used today",
+    sub: "Drawn on the real network. Zoom in and you can see which lane it took.",
+    flag: "Illustrative drive — not a registrant's travel history",
+    play: "Play the drive",
+    pause: "Pause",
+    again: "Play again",
+    closeUp: "Zoom right in",
+    distance: "Driven",
+    earned: "Earned",
+    worth: "Redeemable for",
+    failed: "The map could not be loaded.",
+    foot: "Routes are illustrative, taken from the OpenStreetMap road network. teslam.io does not collect coordinates, routes or trip history. The distance and the reward, though, are the real calculation — the same figures the operating model uses.",
+  },
+
+  quests: {
+    eyebrow: "This week's quests",
+    title: "What to do to earn",
+    sub: "Distance verifies itself. Quests are the bonus that sits on top.",
+  },
+
+  badges: {
+    eyebrow: "The case",
+    title: "What you have taken so far",
+    sub: "opened by driving, nothing else",
+    earned: "earned",
+    locked: "not yet",
+  },
+
+  shopcase: {
+    eyebrow: "Redemption",
+    title: "What this actually buys",
+    sub: "Where accrued DRV turns into something you can hold.",
+    canBuy: "affordable now",
+    short: "short by",
+    foot: "Redeeming burns the DRV, and the partner's commission is what pays the API bill. The won conversion uses the operating model's peg exactly.",
+  },
+
   density: {
     title: "Who is near you",
     sub: "Confirmed seats by region. A province the registrant chose, never a coordinate.",
