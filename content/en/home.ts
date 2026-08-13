@@ -25,6 +25,9 @@ export const home: HomeContent = {
   preview: {
     tag: "Not open yet",
     body: "The service has not launched. Seats confirmed, the regional split and the number of people watching are real figures; the posts, rankings and wallet entries below are sample content showing what the board looks like populated.",
+    demoTag: "Simulation",
+    demoBody:
+      "The seat count and regional split on screen are a simulation being played back. They are not real registrations. Stopping returns the real figures.",
     realLabel: "real figure",
     sampleLabel: "sample",
     countStale: "The count could not be loaded — the figures below are not current.",
@@ -58,12 +61,19 @@ export const home: HomeContent = {
     note: "500 vehicles, first come. We keep an email, a car, the region you pick and a record of your consent. Never a coordinate, never a VIN.",
   },
 
+  demo: {
+    play: "Watch it fill",
+    stop: "Stop, back to real",
+    flag: "Simulation running — these figures are not real registrations",
+    hint: "You can play through the 500 seats filling. Stopping returns the real numbers.",
+  },
+
   density: {
     title: "Who is near you",
     sub: "Confirmed seats by region. A province the registrant chose, never a coordinate.",
     empty: "No registrations in any region yet",
     emptySub: "The first one is the first light on this map.",
-    note: "A schematic, not a projection. Registrants leave no coordinates, so the only thing this drawing can honestly say is how many people are in each region. A league needs faces you recognise and a redemption partner needs to be somewhere you already drive — which makes this distribution matter more than the national total.",
+    note: "Real administrative boundaries, merged into the seven regions the form asks about. Registrants leave no coordinates, so the finest thing this map can honestly say is still how many people are in each region. A league needs faces you recognise and a redemption partner needs to be somewhere you already drive — which makes this distribution matter more than the national total.",
   },
 
   league: {

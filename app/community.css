@@ -133,6 +133,216 @@
 }
 .pv__b { font-size: .8125rem; color: var(--tx2); line-height: 1.6; }
 
+/* While the rehearsed run plays, the banner says something different and has to
+   look like it — same slot, unmistakably not the resting state. */
+.pv--demo {
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  background: color-mix(in srgb, var(--gold) 9%, transparent);
+}
+.pv--demo .pv__tag { background: var(--gold); color: var(--ink0); }
+
+/* ── map hero ────────────────────────────────────────────────────────── */
+
+/*
+ * The country as the first screen.
+ *
+ * Sized against the viewport rather than against its column, because the point
+ * of drawing real boundaries is that someone can find where they live on them,
+ * and at sidebar scale nobody can.
+ */
+.mh {
+  padding-block: clamp(1.25rem, 3vw, 2.25rem) clamp(1rem, 2.5vw, 1.75rem);
+}
+.mh__grid {
+  display: grid;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  align-items: center;
+}
+@media (min-width: 60rem) {
+  .mh__grid { grid-template-columns: minmax(0, 0.86fr) minmax(0, 1fr); }
+}
+
+.mh__badge {
+  display: inline-flex; align-items: center; gap: .45rem;
+  font-family: var(--font-mono); font-size: .7rem; letter-spacing: .1em;
+  color: var(--mint); border: 1px solid color-mix(in srgb, var(--mint) 40%, transparent);
+  border-radius: 999px; padding: .25rem .65rem;
+}
+.mh__h1 {
+  margin-block: 1rem 0;
+  font-size: clamp(1.75rem, 4.6vw, 3.1rem);
+  line-height: 1.12; letter-spacing: -.035em; text-wrap: balance;
+}
+.mh__h1 em { font-style: normal; color: var(--gold); }
+.mh__sub {
+  margin-block-start: .9rem; max-inline-size: 34rem;
+  color: var(--tx2); font-size: clamp(.9rem, 1.2vw, 1rem); line-height: 1.75;
+}
+.mh__btns { display: flex; flex-wrap: wrap; gap: .6rem; margin-block-start: 1.3rem; }
+
+/* The readout, sized as a graphic rather than as a statistic. */
+.mh__read {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem;
+  margin-block-start: 1.6rem;
+  padding-block-start: 1.2rem; border-block-start: 1px solid var(--hair);
+}
+.mh__of {
+  font-family: var(--font-mono); font-size: 1.1rem; color: var(--tx3);
+  font-variant-numeric: tabular-nums;
+}
+.mh__cap {
+  margin-inline-start: auto; font-family: var(--font-mono);
+  font-size: .7rem; letter-spacing: .1em; color: var(--tx3); text-transform: uppercase;
+}
+
+.mh__stage { position: relative; min-inline-size: 0; }
+.mh__map {
+  inline-size: 100%; block-size: auto;
+  max-block-size: min(74vh, 46rem);
+  display: block; margin-inline: auto;
+  filter: url(#mh-glow);
+}
+.mh__rg {
+  fill: var(--mint);
+  stroke: color-mix(in srgb, var(--mint) 34%, transparent);
+  stroke-width: .28; stroke-linejoin: round;
+  transition: fill-opacity .5s ease, stroke .2s ease;
+}
+.mh__rg.is-on { stroke: var(--gold); stroke-width: .7; }
+.mh__map--empty .mh__rg {
+  fill-opacity: .05;
+  stroke: color-mix(in srgb, var(--mint) 46%, transparent);
+  stroke-width: .38;
+  animation: mh-wait 6s ease-in-out infinite;
+}
+@keyframes mh-wait {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: .42; }
+}
+
+/*
+ * The landing ring.
+ *
+ * `box-shadow` does nothing on an SVG shape, so this is a real element scaled
+ * and faded — the same two properties a compositor can animate without
+ * touching layout, which is what keeps a burst of them cheap.
+ */
+.mh__ping {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: .8;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mh-ping 2.4s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+@keyframes mh-ping {
+  0% { transform: scale(.3); stroke-opacity: 1; stroke-width: 1.4; }
+  100% { transform: scale(7); stroke-opacity: 0; stroke-width: .3; }
+}
+
+.mh__lb { opacity: .45; transition: opacity .25s ease; }
+.mh__lb.is-lit { opacity: 1; }
+.mh__lb.is-on { opacity: 1; }
+.mh__n {
+  font-family: var(--font-mono); font-size: 5px; font-weight: 700;
+  fill: var(--tx); font-variant-numeric: tabular-nums;
+  paint-order: stroke; stroke: var(--ink0); stroke-width: 1.2;
+}
+.mh__lb.is-lit .mh__n { fill: var(--gold); }
+.mh__rn {
+  font-size: 2.6px; fill: var(--tx3);
+  paint-order: stroke; stroke: var(--ink0); stroke-width: .9;
+}
+/* In flow, not absolutely placed. Pinned to the bottom of the stage it landed
+   on top of Jeju, which sits lowest on the map and is the one region whose
+   label had nowhere else to go. */
+.mh__zero {
+  margin-block-start: .6rem;
+  text-align: center; font-size: .82rem; color: var(--tx3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mh__map--empty .mh__rg { animation: none; }
+  .mh__ping { animation: mh-ping 1ms linear forwards; }
+}
+
+/* ── odometer ────────────────────────────────────────────────────────── */
+
+.odo {
+  display: inline-flex; gap: 1px;
+  font-family: var(--font-mono); font-weight: 700;
+  font-size: clamp(2.6rem, 7vw, 4.4rem); line-height: 1;
+}
+/* Taller and wider than the glyph, so each digit sits on its own plate rather
+   than bursting out of it. */
+.odo__col {
+  display: block; overflow: hidden;
+  block-size: 1.24em; inline-size: .74em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ink2) 70%, transparent);
+}
+.odo__strip {
+  display: block;
+  /* Ten digits stacked, so a whole digit is 10% of the strip. */
+  block-size: 1000%;
+  transition: transform .55s cubic-bezier(.22, 1, .36, 1);
+}
+.odo__d {
+  display: flex; align-items: center; justify-content: center;
+  block-size: 10%;
+}
+.odo--volt .odo__d { color: var(--mint); }
+.odo--gold .odo__d { color: var(--gold); }
+@media (prefers-reduced-motion: reduce) {
+  .odo__strip { transition: none; }
+}
+
+/* ── demo transport ──────────────────────────────────────────────────── */
+
+.dt {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .7rem;
+  margin-block-start: 1.2rem;
+}
+.dt__btn {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .5rem .9rem; border-radius: 999px;
+  border: 1px solid var(--hair2); background: var(--ink1); color: var(--tx);
+  font-size: .82rem; font-weight: 600; cursor: pointer;
+}
+.dt__btn:hover { border-color: var(--gold); color: var(--gold); }
+.dt__btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.dt__icon { display: inline-flex; }
+.dt__icon svg { fill: currentColor; }
+.dt--on .dt__btn { border-color: var(--gold); color: var(--gold); }
+
+.dt__track { display: flex; gap: 3px; flex: 1; min-inline-size: 6rem; }
+.dt__seg {
+  position: relative; block-size: 3px; flex: 1;
+  border-radius: 2px; background: var(--hair2); overflow: hidden;
+}
+.dt__fill {
+  position: absolute; inset: 0;
+  background: var(--gold);
+  transform: scaleX(0); transform-origin: left;
+}
+.dt__seg.is-done .dt__fill { transform: scaleX(1); }
+
+/*
+ * The running label.
+ *
+ * Amber, because on this site amber already means "this needs a caveat" — the
+ * preview banner uses it and nothing live does. Volt would put a rehearsed
+ * number in the colour reserved for measured ones.
+ */
+.dt__flag {
+  inline-size: 100%;
+  font-family: var(--font-mono); font-size: .68rem; letter-spacing: .04em;
+  color: var(--gold);
+}
+.dt__hint {
+  inline-size: 100%; font-size: .72rem; color: var(--tx3); line-height: 1.6;
+}
+
 /* ── hero ────────────────────────────────────────────────────────────── */
 
 .chero {
@@ -239,6 +449,39 @@
 .seats__perk::before { content: "◆"; color: var(--gold); font-size: .7em; }
 .seats__cta { margin-block-start: 1rem; }
 .seats__note { margin-block-start: .7rem; font-size: .72rem; color: var(--tx3); line-height: 1.6; }
+
+/* ── cohort section ──────────────────────────────────────────────────── */
+
+.coh {
+  margin-block-start: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 28%, var(--hair));
+  border-radius: 8px;
+  background:
+    radial-gradient(120% 90% at 30% 0%, color-mix(in srgb, var(--gold) 5%, transparent), transparent 60%),
+    var(--ink1);
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+}
+.coh__eyebrow {
+  display: flex; align-items: center; gap: .5rem;
+  font-family: var(--font-mono); font-size: .72rem; letter-spacing: .1em;
+  color: var(--gold); text-transform: uppercase;
+}
+.coh__body { display: grid; gap: 1.25rem; align-items: center; }
+@media (min-width: 58rem) {
+  .coh__body { grid-template-columns: minmax(0, 1fr) minmax(0, 15rem); }
+}
+.coh__read { display: flex; align-items: baseline; gap: .5rem; }
+.coh__of {
+  font-family: var(--font-mono); font-size: 1rem; color: var(--tx3);
+  font-variant-numeric: tabular-nums;
+}
+.coh__left { margin-block-start: .4rem; font-size: .82rem; color: var(--tx2); }
+.coh__perks {
+  margin-block: 1rem; padding-block-start: .9rem;
+  border-block-start: 1px solid var(--hair);
+}
+.coh__perk { display: flex; gap: .5rem; font-size: .8125rem; color: var(--tx2); padding-block: .22rem; }
+.coh__perk::before { content: "◆"; color: var(--gold); font-size: .7em; }
 
 /* ── the cohort, as a car ────────────────────────────────────────────── */
 
@@ -349,7 +592,56 @@
   border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
   border-radius: 2px; padding: 0 .25rem; margin-inline-start: .35rem;
 }
-.lgtable .eff { color: var(--mint); font-family: var(--font-mono); }
+/*
+ * The efficiency column, encoded as well as printed.
+ *
+ * The number stays — km/kWh to two decimals is the thing drivers argue about
+ * and a bar cannot replace it. The bar behind it is what makes the column
+ * scannable: rank order is already given by the row order, but the *size* of
+ * the gap between fourth and fifth is not, and that is the whole subject of a
+ * league.
+ */
+.lgtable .eff {
+  position: relative;
+  color: var(--mint);
+  font-family: var(--font-mono);
+  isolation: isolate;
+}
+/* An underline, not a block behind the digits. Filling the cell read as a
+   selection highlight — the eye took it for state rather than for size. */
+.lgtable .eff::before {
+  content: "";
+  position: absolute;
+  inset-block-end: .34rem;
+  inset-inline-end: .75rem;
+  z-index: -1;
+  block-size: 2px;
+  inline-size: calc(var(--v, 0) * 3rem);
+  border-radius: 2px;
+  background: var(--mint);
+  opacity: .55;
+}
+
+/* The podium's own bar, in the tier colour rather than the table's mint. */
+.pod__bar {
+  display: block;
+  block-size: 3px;
+  margin-block-start: .5rem;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--gold) 20%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+.pod__bar::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: calc(var(--v, 0) * 100%);
+  background: var(--gold);
+}
+.pod--2 .pod__bar::after { background: var(--mint); }
+.pod--3 .pod__bar::after { background: var(--ember); }
 
 .gaprow td {
   text-align: center; color: var(--tx3); font-family: var(--font-mono);
@@ -386,6 +678,19 @@
 .navlist a {
   display: flex; justify-content: space-between; gap: .5rem;
   padding: .42rem .9rem; font-size: .85rem; color: var(--tx2); text-decoration: none;
+  position: relative; isolation: isolate;
+}
+/* Activity, behind the row. Set from `--v` where the list has counts; a list
+   without them just gets no bar. */
+.navlist a::before {
+  content: "";
+  position: absolute;
+  inset-block: .18rem;
+  inset-inline-start: 0;
+  z-index: -1;
+  inline-size: calc(var(--v, 0) * 100%);
+  background: color-mix(in srgb, var(--mint) 9%, transparent);
+  border-inline-start: 2px solid color-mix(in srgb, var(--mint) 38%, transparent);
 }
 .navlist a:hover { background: var(--ink2); color: var(--tx); }
 .navlist .c { font-family: var(--font-mono); font-size: .72rem; color: var(--tx3); }
@@ -405,7 +710,25 @@
 .post { display: flex; gap: .85rem; padding: .8rem .9rem; border-block-end: 1px solid var(--hair); }
 .post:last-of-type { border-block-end: 0; }
 .post:hover { background: var(--ink2); }
-.post__v { flex: none; inline-size: 2.6rem; text-align: center; }
+/* A heat column, not just a number. The bar runs up the side of the vote count
+   so the eye can rank the board without reading seven figures. */
+.post__v {
+  flex: none; inline-size: 2.6rem; text-align: center;
+  position: relative; padding-inline-start: .35rem;
+}
+.post__heat {
+  position: absolute;
+  inset-block: .1rem;
+  inset-inline-start: 0;
+  inline-size: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--ember) 70%, transparent) 0%,
+    color-mix(in srgb, var(--ember) 70%, transparent) calc(var(--v, 0) * 100%),
+    var(--hair2) calc(var(--v, 0) * 100%)
+  );
+}
 .post__vn { font-family: var(--font-mono); font-size: .85rem; color: var(--mint); }
 .post__vl { font-size: .6rem; color: var(--tx3); font-family: var(--font-mono); }
 .post__b { min-width: 0; flex: 1; }
@@ -436,8 +759,14 @@
 }
 .wal__h { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em; color: var(--tx3); text-transform: uppercase; }
 .wal__bl { margin-block-start: .8rem; font-size: .72rem; color: var(--tx3); }
-.wal__b { font-family: var(--font-mono); font-size: 2.1rem; line-height: 1; color: var(--mint); margin-block-start: .2rem; }
-.wal__bu { font-size: .45em; color: var(--tx2); margin-inline-start: .3em; }
+/* The odometer sets its own type size, so this row only has to align it with
+   the unit beside it. */
+.wal__b {
+  display: flex; align-items: baseline; gap: .1rem;
+  margin-block-start: .3rem;
+}
+.wal__b .odo { font-size: 1.55rem; }
+.wal__bu { font-size: .72rem; color: var(--tx2); margin-inline-start: .45em; }
 .wal__w { margin-block-start: .4rem; font-size: .75rem; color: var(--tx3); }
 .wal__cap { margin-block-start: 1rem; }
 .wal__caprow { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: .72rem; color: var(--tx2); }
@@ -518,7 +847,10 @@
 
 .dens__body {
   display: grid;
-  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  /* 15rem, not 12. Seven blobs read fine at thumbnail size; a real coastline
+     with the south-west archipelago in it needs the extra column to be worth
+     drawing at all. */
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
   gap: 1.4rem;
   align-items: center;
 }

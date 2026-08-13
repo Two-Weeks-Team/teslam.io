@@ -6,6 +6,19 @@ import cm from "@/data/community.json";
 const PODIUM = cm.leaderboard.slice(0, 3);
 const REST = cm.leaderboard.slice(3);
 
+/*
+ * Scale for the efficiency bars.
+ *
+ * Anchored to the spread of the field rather than to zero. Every car here is
+ * between 7 and 8.5 km/kWh, so a bar measured from zero would show seven
+ * near-identical full bars and encode nothing — the interesting quantity is the
+ * gap between drivers, which is what the eye should be able to read.
+ */
+const EFFS = cm.leaderboard.map((r) => r.eff);
+const FLOOR = Math.min(...EFFS) - 0.25;
+const CEIL = Math.max(...EFFS) + 0.1;
+const share = (eff: number) => (eff - FLOOR) / (CEIL - FLOOR);
+
 /**
  * The efficiency table, with a hole in it.
  *
@@ -50,6 +63,11 @@ export function League({ locale }: { locale: Locale }) {
                 {p.eff.toFixed(2)}
                 <span className="pod__eu">{t.unit}</span>
               </p>
+              <span
+                className="pod__bar"
+                style={{ "--v": share(p.eff) } as React.CSSProperties}
+                aria-hidden="true"
+              />
             </div>
           </article>
         ))}
@@ -91,7 +109,12 @@ export function League({ locale }: { locale: Locale }) {
                   {r.genesis ? <span className="gen">GEN</span> : null}
                 </td>
                 <td>{r.region}</td>
-                <td className="num eff">{r.eff.toFixed(2)}</td>
+                <td
+                  className="num eff"
+                  style={{ "--v": share(r.eff) } as React.CSSProperties}
+                >
+                  {r.eff.toFixed(2)}
+                </td>
                 <td className="num">{n(locale, r.km)}</td>
                 <td className="num">{n(locale, r.drv)}</td>
                 <td className="num">

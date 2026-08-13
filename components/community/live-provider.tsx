@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -10,6 +11,7 @@ import {
 } from "react";
 import { API_ORIGIN } from "@/lib/site";
 import type { GenesisStats } from "@/lib/stats";
+import { PHASES, demoTimeline, type DemoFrame } from "@/lib/demo";
 
 /**
  * Live figures for the board.
@@ -37,6 +39,25 @@ export type LiveState = {
   open: boolean;
   /** The most recent seat, for the flash on the grid and the ripple on the map. */
   justTook: { seatNo: number; region: string } | null;
+  /**
+   * Rehearsed playback.
+   *
+   * When `playing`, every figure above comes from the script rather than from
+   * the API, and the whole board is showing invented numbers on purpose. It is
+   * exposed here, on the same object as the real state, so that no component
+   * can read a count without the flag that says what the count is — a consumer
+   * that wants one gets both or neither.
+   */
+  demo: {
+    playing: boolean;
+    /** Index into the phase segments. */
+    phase: number;
+    phases: number;
+    /** 0–1 inside the current phase — what the active segment fills to. */
+    phaseProgress: number;
+    start: () => void;
+    stop: () => void;
+  };
 };
 
 const Ctx = createContext<LiveState | null>(null);
@@ -65,6 +86,9 @@ export function LiveProvider({
   const [justTook, setJustTook] = useState<LiveState["justTook"]>(null);
   const [live, setLive] = useState(initial.live);
   const [open, setOpen] = useState(initial.open);
+  const [frame, setFrame] = useState<DemoFrame | null>(null);
+  const timeline = useMemo(() => demoTimeline(), []);
+  const runRef = useRef<{ raf: number; startedAt: number } | null>(null);
   const clearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -140,10 +164,69 @@ export function LiveProvider({
     };
   }, []);
 
-  const value = useMemo<LiveState>(
-    () => ({ taken, seats: initial.seats, byRegion, watching, justTook, live, open }),
-    [taken, initial.seats, byRegion, watching, justTook, live, open],
-  );
+  /*
+   * Playback.
+   *
+   * The clock is read from `performance.now()` on every frame rather than
+   * accumulated, so a dropped frame or a backgrounded tab resumes at the right
+   * point instead of quietly falling behind the script and never catching up.
+   */
+  const stop = useCallback(() => {
+    if (runRef.current) cancelAnimationFrame(runRef.current.raf);
+    runRef.current = null;
+    // A clean cut back to the real figures. Reversing the fill would be a
+    // second animation of invented data, and would read as the board losing
+    // registrations.
+    setFrame(null);
+  }, []);
+
+  const start = useCallback(() => {
+    if (runRef.current) return;
+    const startedAt = performance.now();
+
+    const step = (now: number) => {
+      const next = timeline.at(now - startedAt);
+      setFrame(next);
+      if (next.done) {
+        // Hold on the finished board, then hand the page back. The script ends
+        // rather than looping: five hundred of five hundred is a conclusion,
+        // and looping past it throws the moment away.
+        runRef.current = null;
+        return;
+      }
+      runRef.current = { raf: requestAnimationFrame(step), startedAt };
+    };
+
+    runRef.current = { raf: requestAnimationFrame(step), startedAt };
+  }, [timeline]);
+
+  useEffect(() => stop, [stop]);
+
+  const value = useMemo<LiveState>(() => {
+    const playing = frame !== null;
+
+    return {
+      // While the script runs it owns every figure on the board. Mixing a real
+      // count with rehearsed ones would produce a number that is neither.
+      taken: playing ? frame.taken : taken,
+      seats: initial.seats,
+      byRegion: playing ? frame.byRegion : byRegion,
+      justTook: playing ? frame.justTook : justTook,
+      // The watcher count stays real throughout: it is measured from open
+      // sockets and the script has no business inventing people in the room.
+      watching,
+      live,
+      open,
+      demo: {
+        playing,
+        phase: frame?.phase ?? 0,
+        phases: PHASES.length,
+        phaseProgress: frame?.phaseProgress ?? 0,
+        start,
+        stop,
+      },
+    };
+  }, [frame, taken, initial.seats, byRegion, justTook, watching, live, open, start, stop]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

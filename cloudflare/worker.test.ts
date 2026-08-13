@@ -287,17 +287,23 @@ describe("confirmation and seats", () => {
     const { w, sent } = worker();
     // Fill the cohort directly; registering 500 times through HTTP would test
     // the rate limiter, not the boundary.
+    //
+    // Sent as one batch. Awaiting five hundred inserts in turn took eight
+    // seconds on CI against a five-second limit, and the honest reading of that
+    // is not that the limit is too low — it is that the test was making five
+    // hundred round trips to set up a single assertion.
     const t = Math.floor(Date.now() / 1000);
-    for (let i = 1; i <= SEATS; i++) {
-      await E.DB.prepare(
-        `INSERT INTO registrations
-           (id, seat_no, email, verified_at, model, trim, region, km_band,
-            consent_terms, consent_privacy, consent_at, created_at)
-         VALUES (?, ?, ?, ?, 'Model 3', 'RWD', 'capital', 'under_500', 1, 1, ?, ?)`,
-      )
-        .bind(`seed-${i}`, i, `seed${i}@example.com`, t, t, t)
-        .run();
-    }
+    const insert = E.DB.prepare(
+      `INSERT INTO registrations
+         (id, seat_no, email, verified_at, model, trim, region, km_band,
+          consent_terms, consent_privacy, consent_at, created_at)
+       VALUES (?, ?, ?, ?, 'Model 3', 'RWD', 'capital', 'under_500', 1, 1, ?, ?)`,
+    );
+    await E.DB.batch(
+      Array.from({ length: SEATS }, (_, i) =>
+        insert.bind(`seed-${i + 1}`, i + 1, `seed${i + 1}@example.com`, t, t, t),
+      ),
+    );
 
     const out = await join(w, sent, "late@example.com");
     expect(out.placement).toMatchObject({ kind: "waitlist", number: SEATS + 1 });

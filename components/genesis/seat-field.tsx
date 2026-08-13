@@ -24,35 +24,74 @@ import { carCells } from "@/lib/car";
 const VERT = `#version 300 es
 in vec2 aCorner;
 in vec3 aPos;
+in vec3 aNormal;
 in float aSeat;
 
 uniform mat4 uVP;
+uniform mat4 uModel;
 uniform float uTaken;
 uniform float uSize;
 uniform float uAspect;
 uniform float uFlashSeat;
 uniform float uFlashAge;
+uniform float uTime;
+/* Qualified on both sides. Uniforms shared between stages must agree on
+   precision, and relying on the stage defaults to make them agree is how this
+   silently failed to link once already. */
+uniform highp float uHalo;
 
 out vec2 vCorner;
 out float vLit;
 out float vDepth;
 out float vFlash;
+out float vRim;
+out float vCoc;
+
+/** Cheap hash. Enough to make five hundred cells breathe out of step. */
+float hash(vec3 p) {
+  return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+}
 
 void main() {
   vCorner = aCorner;
-  // A seat lights when its ordinal has been reached. Strictly less-or-equal,
-  // so seat 1 lights at a count of 1 rather than at 2.
-  vLit = step(aSeat, uTaken);
+
+  /*
+   * Assembly with a moving edge, not a switch.
+   *
+   * A seat used to light the instant its ordinal was reached, so a burst of
+   * arrivals read as a row blinking on together. Easing across the last cell
+   * gives the fill a leading edge — the cohort assembles rather than toggles.
+   */
+  vLit = clamp(uTaken - aSeat + 1.0, 0.0, 1.0);
   vFlash = (abs(aSeat - uFlashSeat) < 0.5) ? (1.0 - uFlashAge) : 0.0;
 
-  vec4 clip = uVP * vec4(aPos, 1.0);
-  // Depth is kept for brightness only. Fading the far side of the body is what
-  // makes a rotating point cloud read as a solid.
-  vDepth = clamp((clip.w - 1.7) / 1.9, 0.0, 1.0);
+  /*
+   * Idle breathing.
+   *
+   * Without it a cohort nobody is joining is a frozen object, and a frozen
+   * object on a page that claims to be live reads as a screenshot. The offset
+   * is a fraction of the cell spacing, so the silhouette never smears.
+   */
+  float seed = hash(aPos * 7.3);
+  vec3 world = aPos + aNormal * (sin(uTime * 0.9 + seed * 6.283) * 0.007);
 
-  // Billboard at a constant screen size: cells on the far side must stay big
-  // enough to be seen as part of a surface rather than as noise.
-  float grow = 1.0 + vFlash * 1.6;
+  vec4 clip = uVP * vec4(world, 1.0);
+  vDepth = clamp((clip.w - 1.5) / 1.9, 0.0, 1.0);
+
+  /*
+   * Rim light from the cell's own surface normal.
+   *
+   * This is what turns a field of billboards into something with a shape: cells
+   * along the roofline and the shoulders catch light while cells facing the
+   * camera stay flat, and the eye reads a body instead of a cloud.
+   */
+  vec3 n = normalize(mat3(uModel) * aNormal);
+  vRim = pow(1.0 - abs(n.z), 2.0);
+
+  // Circle of confusion: cells off the focal plane grow and soften.
+  vCoc = clamp(abs(clip.w - 2.05) * 0.5, 0.0, 1.0);
+
+  float grow = (1.0 + vFlash * 1.8) * (1.0 + vCoc * 0.9) * uHalo;
   vec2 off = aCorner * uSize * grow * vec2(1.0 / uAspect, 1.0);
   gl_Position = clip + vec4(off * clip.w, 0.0, 0.0);
 }`;
@@ -64,29 +103,53 @@ in vec2 vCorner;
 in float vLit;
 in float vDepth;
 in float vFlash;
+in float vRim;
+in float vCoc;
 
 uniform vec3 uLitColour;
 uniform vec3 uDimColour;
+uniform vec3 uRimColour;
 uniform float uDimAlpha;
+/* Explicitly highp: a uniform shared with the vertex stage has to match its
+   precision there, and floats default to highp in a vertex shader while this
+   file declares mediump for fragments. Leaving it implicit failed to link. */
+uniform highp float uHalo;
 
 out vec4 outColour;
+
+/** Interleaved gradient noise. One dither at the end kills banding on the dark ground. */
+float dither(vec2 p) {
+  return fract(52.9829189 * fract(dot(p, vec2(0.06711056, 0.00583715))));
+}
 
 void main() {
   float d = length(vCorner);
   if (d > 1.0) discard;
 
-  // Soft-edged rather than square. Five hundred hard squares on a curved
-  // surface alias into a moiré the moment the body turns.
-  float edge = smoothstep(1.0, 0.35, d);
-  // Only a light touch of depth fade. At the first setting the far side of the
-  // body dropped to a third and, with the unlit cells already dim, the car had
-  // no silhouette at all — the render was gold confetti on black.
-  float near = mix(1.0, 0.62, vDepth);
+  /*
+   * Two passes make the bloom.
+   *
+   * The halo pass draws the same cells much larger and much fainter, so a lit
+   * seat sits inside a glow rather than being a flat disc. It costs one extra
+   * draw of five hundred quads — nothing — and it is the single biggest reason
+   * the object stops reading as a scatter plot.
+   */
+  float core = pow(1.0 - smoothstep(0.0, 0.92, d), 1.3);
+  float halo = pow(1.0 - smoothstep(0.0, 1.0, d), 2.6);
+  float shape = uHalo > 1.5 ? halo : core;
+
+  float near = mix(1.0, 0.72, vDepth);
+  float sharp = mix(0.72, 1.0, 1.0 - vCoc);
 
   vec3 colour = mix(uDimColour, uLitColour, vLit);
+  colour = mix(colour, uRimColour, vRim * 0.45 * (1.0 - vLit * 0.5));
   colour = mix(colour, vec3(1.0), vFlash * 0.85);
 
-  float alpha = mix(uDimAlpha, 1.0, vLit) * edge * near + vFlash * 0.5 * edge;
+  float alpha = mix(uDimAlpha, 1.0, vLit) * shape * near * sharp
+              + vFlash * 0.5 * shape;
+  if (uHalo > 1.5) alpha *= 0.13;
+
+  colour += (1.0 / 255.0) * dither(gl_FragCoord.xy) - (0.5 / 255.0);
   outColour = vec4(colour, alpha);
 }`;
 
@@ -177,11 +240,19 @@ export function SeatField({
     // beneath stays visible and nothing here runs.
     if (!gl) return;
 
+    /*
+     * A failure here falls back to the grid, which is the right behaviour for a
+     * visitor and a miserable one for whoever is editing the shader: the page
+     * simply shows the old thing and says nothing. The log costs nothing at
+     * runtime — it only runs when the compile has already failed — and it is
+     * the difference between reading an error and guessing at GLSL.
+     */
     const compile = (type: number, source: string) => {
       const shader = gl.createShader(type)!;
       gl.shaderSource(shader, source);
       gl.compileShader(shader);
       if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.warn("seat-field: shader failed to compile\n", gl.getShaderInfoLog(shader));
         gl.deleteShader(shader);
         return null;
       }
@@ -196,16 +267,23 @@ export function SeatField({
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.warn("seat-field: program failed to link\n", gl.getProgramInfoLog(program));
+      return;
+    }
     gl.useProgram(program);
 
     const cells = carCells();
     const positions = new Float32Array(cells.length * 3);
+    const normals = new Float32Array(cells.length * 3);
     const seatIds = new Float32Array(cells.length);
     cells.forEach((cell, i) => {
       positions[i * 3] = cell.x;
       positions[i * 3 + 1] = cell.y;
       positions[i * 3 + 2] = cell.z;
+      normals[i * 3] = cell.nx;
+      normals[i * 3 + 1] = cell.ny;
+      normals[i * 3 + 2] = cell.nz;
       seatIds[i] = cell.seat;
     });
 
@@ -230,21 +308,27 @@ export function SeatField({
 
     attach(corners, "aCorner", 2, 0);
     attach(positions, "aPos", 3, 1);
+    attach(normals, "aNormal", 3, 1);
     attach(seatIds, "aSeat", 1, 1);
 
     const uni = (name: string) => gl.getUniformLocation(program, name);
     const uVP = uni("uVP");
+    const uModel = uni("uModel");
     const uTaken = uni("uTaken");
     const uSize = uni("uSize");
     const uAspect = uni("uAspect");
     const uFlashSeat = uni("uFlashSeat");
     const uFlashAge = uni("uFlashAge");
     const uDimAlpha = uni("uDimAlpha");
+    const uTime = uni("uTime");
+    const uHalo = uni("uHalo");
 
-    // Gold for a seat held, and a cold near-black for one still free — the same
-    // two colours the legend and the grid have always used.
+    // Gold for a seat held, a cold grey for one still free, and mint on the
+    // rim — the same three the rest of the board already uses for scarce, idle
+    // and live.
     gl.uniform3f(uni("uLitColour"), 1.0, 0.69, 0.13);
     gl.uniform3f(uni("uDimColour"), 0.56, 0.64, 0.74);
+    gl.uniform3f(uni("uRimColour"), 0.0, 0.76, 0.66);
 
     gl.disable(gl.DEPTH_TEST);
     gl.enable(gl.BLEND);
@@ -313,19 +397,28 @@ export function SeatField({
       leanY += (aimY * 0.16 - leanY) * 0.06;
 
       const aspect = width / Math.max(height, 1);
-      const view = multiply(
-        translate(0, -0.3, -2.05),
-        multiply(rotateX(-0.2 + leanY), rotateY(spin + leanX)),
-      );
+      // The model rotation on its own, so the shader can turn a cell's normal
+      // into view space without inverting the whole view-projection.
+      const model = multiply(rotateX(-0.2 + leanY), rotateY(spin + leanX));
+      const view = multiply(translate(0, -0.3, -2.05), model);
       const vp = multiply(perspective(0.62, aspect, 0.1, 20), view);
 
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
 
       gl.uniformMatrix4fv(uVP, false, new Float32Array(vp));
+      gl.uniformMatrix4fv(uModel, false, new Float32Array(model));
       gl.uniform1f(uTaken, takenRef.current);
       gl.uniform1f(uAspect, aspect);
-      gl.uniform1f(uSize, 0.019);
+      // Tuned against the section width the car actually gets. The first value
+      // was set when this was a 500px sidebar panel; at full width the same
+      // number drew the object as dust.
+      gl.uniform1f(uSize, 0.026);
+      // The same clock the sweep uses, not the wall clock. Reading
+      // `performance.now()` here left the idle breathing running for a reader
+      // who asked for reduced motion — the rotation stopped and the cells
+      // carried on moving, which is half a setting honoured.
+      gl.uniform1f(uTime, clock);
       // An empty cohort has no gold to carry the shape, so the unlit cells have
       // to carry it alone and are drawn brighter. Once seats start landing the
       // ghost steps back, or the thing that has been earned stops standing out
@@ -337,7 +430,20 @@ export function SeatField({
       gl.uniform1f(uFlashSeat, flash && age < 1 ? flash.seat : -1);
       gl.uniform1f(uFlashAge, Math.min(1, age));
 
+      /*
+       * Halo first, then core.
+       *
+       * Two draws of the same five hundred quads: one large and very faint for
+       * the glow, one small and bright for the cell itself. Additive blending
+       * makes the order irrelevant to correctness, but drawing the halo first
+       * keeps the bright core on top where overlaps pile up.
+       */
+      gl.uniform1f(uHalo, 3.4);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, cells.length);
+
+      gl.uniform1f(uHalo, 1.0);
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, cells.length);
+
       raf = requestAnimationFrame(frame);
     };
 

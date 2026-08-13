@@ -65,6 +65,17 @@ export type Cell = {
   x: number;
   y: number;
   z: number;
+  /**
+   * Outward surface normal at this cell.
+   *
+   * Carried rather than derived in the shader because the surface is known
+   * here analytically and is only guessable there. It buys the renderer a rim
+   * light, which is most of what makes a field of flat billboards read as a
+   * body with a shoulder line.
+   */
+  nx: number;
+  ny: number;
+  nz: number;
 };
 
 /* ── the silhouette ───────────────────────────────────────────────────── */
@@ -114,7 +125,9 @@ function halfWidth(t: number): number {
  * closer to a rounded rectangle, and a circular loft gives a smooth tube that
  * reads as a submarine.
  */
-function shell(t: number, v: number, cabin: boolean): [number, number, number] {
+type Point = { p: [number, number, number]; n: [number, number, number] };
+
+function shell(t: number, v: number, cabin: boolean): Point {
   const top = roof(t);
   const bottom = sill(t);
   const cy = (top + bottom) / 2;
@@ -128,11 +141,21 @@ function shell(t: number, v: number, cabin: boolean): [number, number, number] {
   const s = Math.sin(a);
   const p = 0.62;
 
-  return [
-    2 * t - 1,
-    cy + ry * Math.sign(s) * Math.abs(s) ** p,
-    rz * Math.sign(c) * Math.abs(c) ** p,
-  ];
+  const y = cy + ry * Math.sign(s) * Math.abs(s) ** p;
+  const z = rz * Math.sign(c) * Math.abs(c) ** p;
+
+  // Outward from the section's own axis. The x term comes from how fast the
+  // body tapers, so the nose and tail cells face forward rather than sideways.
+  const taper = (halfWidth(Math.min(1, t + 0.02)) - halfWidth(Math.max(0, t - 0.02))) / 0.04;
+  const nx = -taper * 0.35;
+  const ny = ry > 0 ? (y - cy) / ry : 0;
+  const nz = rz > 0 ? z / rz : 0;
+  const len = Math.hypot(nx, ny, nz) || 1;
+
+  return {
+    p: [2 * t - 1, y, z],
+    n: [nx / len, ny / len, nz / len],
+  };
 }
 
 /**
@@ -146,12 +169,7 @@ function shell(t: number, v: number, cabin: boolean): [number, number, number] {
  */
 const TYRE_SHARE = 0.62;
 
-function wheel(
-  cx: number,
-  side: number,
-  count: number,
-  index: number,
-): [number, number, number] {
+function wheel(cx: number, side: number, count: number, index: number): Point {
   const tyreCount = Math.ceil(count * TYRE_SHARE);
   const onTyre = index < tyreCount;
 
@@ -160,7 +178,14 @@ function wheel(
   const r = onTyre ? 0.15 : 0.078;
 
   const a = (i / n) * Math.PI * 2;
-  return [cx + Math.cos(a) * r, WHEEL_Y + Math.sin(a) * r, side * 0.355];
+  return {
+    p: [cx + Math.cos(a) * r, WHEEL_Y + Math.sin(a) * r, side * 0.355],
+    // A wheel face points outward along the axle. The tyre ring leans a little
+    // toward its own rim so the outer ring still catches the rim light.
+    n: onTyre
+      ? [Math.cos(a) * 0.5, Math.sin(a) * 0.5, side * 0.7]
+      : [0, 0, side],
+  };
 }
 
 /** Hub height. The tyre top rises into the body, which is what an arch is. */
@@ -208,7 +233,7 @@ export function carCells(): Cell[] {
 
   for (const [part, count] of PLAN) {
     for (let i = 0; i < count; i += 1) {
-      let point: [number, number, number];
+      let point: Point;
 
       if (part.startsWith("wheel")) {
         const front = part.includes("Front");
@@ -231,7 +256,16 @@ export function carCells(): Cell[] {
         point = shell(t, v, band.cabin === true);
       }
 
-      cells.push({ seat, part, x: point[0], y: point[1], z: point[2] });
+      cells.push({
+        seat,
+        part,
+        x: point.p[0],
+        y: point.p[1],
+        z: point.p[2],
+        nx: point.n[0],
+        ny: point.n[1],
+        nz: point.n[2],
+      });
       seat += 1;
     }
   }
