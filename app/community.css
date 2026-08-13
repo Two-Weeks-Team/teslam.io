@@ -518,7 +518,10 @@
 
 .dens__body {
   display: grid;
-  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  /* 15rem, not 12. Seven blobs read fine at thumbnail size; a real coastline
+     with the south-west archipelago in it needs the extra column to be worth
+     drawing at all. */
+  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
   gap: 1.4rem;
   align-items: center;
 }
