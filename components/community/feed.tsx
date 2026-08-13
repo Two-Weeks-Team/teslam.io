@@ -3,6 +3,8 @@ import { Mark } from "@/components/community/mark";
 import { n } from "@/lib/format";
 import cm from "@/data/community.json";
 
+const TOP_VOTES = Math.max(...cm.posts.map((p) => p.votes));
+
 /** The board. On a community site this is the product, so it gets the middle. */
 export function Feed({ locale }: { locale: Locale }) {
   const t = getContent(locale).feed;
@@ -36,13 +38,20 @@ export function Feed({ locale }: { locale: Locale }) {
 
       {cm.posts.map((p) => (
         <article className="post" key={p.id}>
-          <div className="post__v">
+          <div
+            className="post__v"
+            // Against the loudest post on the board, so the column reads as a
+            // ranking of heat rather than as an absolute scale nobody has a
+            // reference for.
+            style={{ "--v": p.votes / TOP_VOTES } as React.CSSProperties}
+          >
             <div className="post__vn">
               {p.votes >= 1000
                 ? `${(p.votes / 1000).toFixed(1)}k`
                 : n(locale, p.votes)}
             </div>
             <div className="post__vl">▲</div>
+            <span className="post__heat" aria-hidden="true" />
           </div>
 
           <div className="post__b">

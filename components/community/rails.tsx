@@ -1,8 +1,19 @@
 import { getContent, genesisPathFor, type Locale } from "@/lib/i18n";
 import { Mark } from "@/components/community/mark";
+import { Odometer } from "@/components/community/odometer";
 import { krw, n } from "@/lib/format";
 import { krwPerDrv, dailyCapDrv } from "@/lib/economics";
 import cm from "@/data/community.json";
+
+/*
+ * Busiest board and busiest region, for the bars behind the counts.
+ *
+ * A navigation list of names and numbers is a list you read one line at a time.
+ * The same list with the counts encoded is one you take in at a glance, which
+ * is what a sidebar is for.
+ */
+const TOP_BOARD = Math.max(...cm.boards.map((b) => b.count));
+const TOP_REGION = Math.max(...cm.regions.map((r) => r.count));
 
 /** Boards, regions, rankings. The navigation a forum actually needs. */
 export function LeftRail({ locale }: { locale: Locale }) {
@@ -14,7 +25,11 @@ export function LeftRail({ locale }: { locale: Locale }) {
         <p className="card__h">{t.boards}</p>
         <div className="navlist">
           {cm.boards.map((b) => (
-            <a key={b.id} href="#feed">
+            <a
+              key={b.id}
+              href="#feed"
+              style={{ "--v": b.count / TOP_BOARD } as React.CSSProperties}
+            >
               <span>{b.name}</span>
               <span className="c">{n(locale, b.count)}</span>
             </a>
@@ -26,7 +41,11 @@ export function LeftRail({ locale }: { locale: Locale }) {
         <p className="card__h">{t.regions}</p>
         <div className="navlist">
           {cm.regions.map((r) => (
-            <a key={r.id} href="#feed">
+            <a
+              key={r.id}
+              href="#feed"
+              style={{ "--v": r.count / TOP_REGION } as React.CSSProperties}
+            >
               <span>{r.name}</span>
               <span className="c">{n(locale, r.count)}</span>
             </a>
@@ -69,7 +88,9 @@ export function RightRail({ locale }: { locale: Locale }) {
         </p>
         <p className="wal__bl">{t.balance}</p>
         <p className="wal__b">
-          {n(locale, w.balanceDrv)}
+          {/* The same instrument the seat counters use, so a balance reads as a
+              readout rather than as a paragraph with a big number in it. */}
+          <Odometer value={w.balanceDrv} digits={5} tone="volt" />
           <span className="wal__bu">DRV</span>
         </p>
         <p className="wal__w">

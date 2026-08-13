@@ -592,7 +592,56 @@
   border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
   border-radius: 2px; padding: 0 .25rem; margin-inline-start: .35rem;
 }
-.lgtable .eff { color: var(--mint); font-family: var(--font-mono); }
+/*
+ * The efficiency column, encoded as well as printed.
+ *
+ * The number stays — km/kWh to two decimals is the thing drivers argue about
+ * and a bar cannot replace it. The bar behind it is what makes the column
+ * scannable: rank order is already given by the row order, but the *size* of
+ * the gap between fourth and fifth is not, and that is the whole subject of a
+ * league.
+ */
+.lgtable .eff {
+  position: relative;
+  color: var(--mint);
+  font-family: var(--font-mono);
+  isolation: isolate;
+}
+/* An underline, not a block behind the digits. Filling the cell read as a
+   selection highlight — the eye took it for state rather than for size. */
+.lgtable .eff::before {
+  content: "";
+  position: absolute;
+  inset-block-end: .34rem;
+  inset-inline-end: .75rem;
+  z-index: -1;
+  block-size: 2px;
+  inline-size: calc(var(--v, 0) * 3rem);
+  border-radius: 2px;
+  background: var(--mint);
+  opacity: .55;
+}
+
+/* The podium's own bar, in the tier colour rather than the table's mint. */
+.pod__bar {
+  display: block;
+  block-size: 3px;
+  margin-block-start: .5rem;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--gold) 20%, transparent);
+  position: relative;
+  overflow: hidden;
+}
+.pod__bar::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: calc(var(--v, 0) * 100%);
+  background: var(--gold);
+}
+.pod--2 .pod__bar::after { background: var(--mint); }
+.pod--3 .pod__bar::after { background: var(--ember); }
 
 .gaprow td {
   text-align: center; color: var(--tx3); font-family: var(--font-mono);
@@ -629,6 +678,19 @@
 .navlist a {
   display: flex; justify-content: space-between; gap: .5rem;
   padding: .42rem .9rem; font-size: .85rem; color: var(--tx2); text-decoration: none;
+  position: relative; isolation: isolate;
+}
+/* Activity, behind the row. Set from `--v` where the list has counts; a list
+   without them just gets no bar. */
+.navlist a::before {
+  content: "";
+  position: absolute;
+  inset-block: .18rem;
+  inset-inline-start: 0;
+  z-index: -1;
+  inline-size: calc(var(--v, 0) * 100%);
+  background: color-mix(in srgb, var(--mint) 9%, transparent);
+  border-inline-start: 2px solid color-mix(in srgb, var(--mint) 38%, transparent);
 }
 .navlist a:hover { background: var(--ink2); color: var(--tx); }
 .navlist .c { font-family: var(--font-mono); font-size: .72rem; color: var(--tx3); }
@@ -648,7 +710,25 @@
 .post { display: flex; gap: .85rem; padding: .8rem .9rem; border-block-end: 1px solid var(--hair); }
 .post:last-of-type { border-block-end: 0; }
 .post:hover { background: var(--ink2); }
-.post__v { flex: none; inline-size: 2.6rem; text-align: center; }
+/* A heat column, not just a number. The bar runs up the side of the vote count
+   so the eye can rank the board without reading seven figures. */
+.post__v {
+  flex: none; inline-size: 2.6rem; text-align: center;
+  position: relative; padding-inline-start: .35rem;
+}
+.post__heat {
+  position: absolute;
+  inset-block: .1rem;
+  inset-inline-start: 0;
+  inline-size: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--ember) 70%, transparent) 0%,
+    color-mix(in srgb, var(--ember) 70%, transparent) calc(var(--v, 0) * 100%),
+    var(--hair2) calc(var(--v, 0) * 100%)
+  );
+}
 .post__vn { font-family: var(--font-mono); font-size: .85rem; color: var(--mint); }
 .post__vl { font-size: .6rem; color: var(--tx3); font-family: var(--font-mono); }
 .post__b { min-width: 0; flex: 1; }
@@ -679,8 +759,14 @@
 }
 .wal__h { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em; color: var(--tx3); text-transform: uppercase; }
 .wal__bl { margin-block-start: .8rem; font-size: .72rem; color: var(--tx3); }
-.wal__b { font-family: var(--font-mono); font-size: 2.1rem; line-height: 1; color: var(--mint); margin-block-start: .2rem; }
-.wal__bu { font-size: .45em; color: var(--tx2); margin-inline-start: .3em; }
+/* The odometer sets its own type size, so this row only has to align it with
+   the unit beside it. */
+.wal__b {
+  display: flex; align-items: baseline; gap: .1rem;
+  margin-block-start: .3rem;
+}
+.wal__b .odo { font-size: 1.55rem; }
+.wal__bu { font-size: .72rem; color: var(--tx2); margin-inline-start: .45em; }
 .wal__w { margin-block-start: .4rem; font-size: .75rem; color: var(--tx3); }
 .wal__cap { margin-block-start: 1rem; }
 .wal__caprow { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: .72rem; color: var(--tx2); }
