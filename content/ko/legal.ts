@@ -99,7 +99,7 @@ export const legal: LegalContent = {
         items: [
           "Cloudflare, Inc. — 등록 정보 보관 및 전송",
           "Vercel Inc. — 웹사이트 호스팅",
-          "메일 발송 — Cloudflare Email Sending을 우선 사용하며, 활성화 전에는 Resend, Inc.를 대체 경로로 둡니다",
+          "Google LLC — 확인 및 안내 메일 발송 (Google Workspace)",
         ],
       },
       {
