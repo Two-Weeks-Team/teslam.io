@@ -4,45 +4,30 @@ import { useState } from "react";
 import { useLive } from "@/components/community/live-provider";
 import { Mark } from "@/components/community/mark";
 import { REGIONS, type RegionId } from "@/lib/genesis";
+import { MAP_VIEWBOX, REGION_CENTRES, REGION_PATHS } from "@/lib/map/regions";
 import { getContent, type Locale } from "@/lib/i18n";
 import { n } from "@/lib/format";
 
 /**
  * Where the cohort actually is.
  *
- * A schematic, not a projection — and that is the honest form. Registrants pick
- * a province-sized region from a list; nobody hands over a coordinate. Drawing
- * an accurate coastline would dress seven counts up as geography they are not,
- * and would need a topology file fetched at build time to say no more than
- * these seven shapes do.
+ * This was seven hand-drawn blobs, argued for as a schematic: registrants pick
+ * a region from a list and never hand over a coordinate, so the drawing was
+ * kept deliberately abstract. The argument was wrong in the way that matters —
+ * a reader who lives in one of those regions could not find it on the picture,
+ * and a map nobody can read is not more honest than a map, only less useful.
+ *
+ * So these are the real administrative boundaries, merged to the seven regions
+ * the form asks about, generated once and committed (see
+ * `scripts/build-map.mjs`). What stays true is the resolution: a region is the
+ * smallest thing this can show, because a region is the smallest thing anyone
+ * told us.
  *
  * The argument it makes is the whitepaper's §10.1: a league needs faces you
  * recognise and a redemption partner needs to be somewhere you already drive,
  * so what matters to a visitor is not the national total but how many people
  * are near them.
  */
-
-/** Seven faceted shapes, laid out so the peninsula is recognisable. */
-const SHAPES: Record<RegionId, string> = {
-  capital: "M20 14 L46 10 L52 26 L44 40 L22 38 L14 26 Z",
-  gangwon: "M46 10 L84 14 L88 30 L74 42 L52 38 L52 26 Z",
-  chungcheong: "M14 40 L44 42 L52 54 L44 66 L18 64 L10 50 Z",
-  daegu: "M54 40 L86 44 L90 62 L76 72 L56 68 L48 56 Z",
-  jeolla: "M14 66 L44 68 L48 84 L36 100 L18 96 L8 80 Z",
-  busan: "M50 70 L76 74 L86 86 L72 100 L50 96 L44 82 Z",
-  jeju: "M20 114 L38 112 L42 120 L34 126 L20 124 L16 118 Z",
-};
-
-/** Approximate centre of each shape, for the ripple and the count label. */
-const CENTRES: Record<RegionId, [number, number]> = {
-  capital: [33, 25],
-  gangwon: [68, 26],
-  chungcheong: [31, 53],
-  daegu: [69, 56],
-  jeolla: [28, 83],
-  busan: [64, 85],
-  jeju: [29, 119],
-};
 
 export function Density({ locale }: { locale: Locale }) {
   const live = useLive();
@@ -54,6 +39,16 @@ export function Density({ locale }: { locale: Locale }) {
     count: live.byRegion[r.id] ?? 0,
   }));
   const peak = Math.max(1, ...counts.map((c) => c.count));
+  /*
+   * No region has anyone in it yet.
+   *
+   * Drawn differently rather than drawn the same with zeroes in it. Seven flat
+   * shapes above seven empty bars and seven zeroes is a chart of nothing, and a
+   * reader cannot tell it apart from a chart that failed — so the empty case
+   * gets one sentence saying what it is, and the shapes get an outline that
+   * makes them read as waiting rather than as unlit.
+   */
+  const empty = counts.every((c) => c.count === 0);
 
   return (
     <section className="dens" aria-labelledby="dens-h">
@@ -65,10 +60,17 @@ export function Density({ locale }: { locale: Locale }) {
         <p className="dens__sub">{t.sub}</p>
       </div>
 
+      {empty ? (
+        <p className="dens__zero">
+          <b>{t.empty}</b>
+          <span>{t.emptySub}</span>
+        </p>
+      ) : null}
+
       <div className="dens__body">
         <svg
-          className="dens__map"
-          viewBox="0 0 100 132"
+          className={empty ? "dens__map dens__map--empty" : "dens__map"}
+          viewBox={MAP_VIEWBOX}
           role="img"
           aria-label={`${t.title}: ${counts
             .map((c) => `${locale === "ko" ? c.ko : c.en} ${c.count}`)
@@ -82,18 +84,21 @@ export function Density({ locale }: { locale: Locale }) {
               <g key={r.id}>
                 <path
                   className={`dens__rg${active ? " is-on" : ""}${rippling ? " is-new" : ""}`}
-                  d={SHAPES[r.id]}
+                  d={REGION_PATHS[r.id]}
                   // Opacity carries density; the stroke stays constant so an
-                  // empty region is still a shape rather than a hole.
-                  style={{ fillOpacity: 0.08 + lit * 0.72 }}
+                  // empty region is still a shape rather than a hole. Left
+                  // unset when nothing is registered anywhere, so the empty
+                  // state can be styled in the sheet — an inline value would
+                  // beat any class and force an `!important` to undo it.
+                  style={empty ? undefined : { fillOpacity: 0.08 + lit * 0.72 }}
                   onMouseEnter={() => setHover(r.id)}
                   onMouseLeave={() => setHover(null)}
                 />
                 {r.count > 0 ? (
                   <text
                     className="dens__num"
-                    x={CENTRES[r.id][0]}
-                    y={CENTRES[r.id][1]}
+                    x={REGION_CENTRES[r.id][0]}
+                    y={REGION_CENTRES[r.id][1]}
                     textAnchor="middle"
                     dominantBaseline="middle"
                     aria-hidden="true"
@@ -106,7 +111,7 @@ export function Density({ locale }: { locale: Locale }) {
           })}
         </svg>
 
-        <ul className="dens__list">
+        <ul className={empty ? "dens__list dens__list--empty" : "dens__list"}>
           {counts.map((r) => (
             <li
               key={r.id}

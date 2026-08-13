@@ -24,6 +24,15 @@ export type GenesisStats = {
   /** False when the API could not be reached — the page says so rather than
    *  presenting a fallback as a measurement. */
   live: boolean;
+  /**
+   * Whether the API is accepting registrations.
+   *
+   * Owned by the Worker, not by this file, because the Worker is what actually
+   * refuses. A page that decided for itself would eventually disagree with the
+   * endpoint, and the disagreement a visitor meets is a form that submits into
+   * a 503.
+   */
+  open: boolean;
 };
 
 const EMPTY: GenesisStats = {
@@ -33,6 +42,9 @@ const EMPTY: GenesisStats = {
   byRegion: [],
   recent: [],
   live: false,
+  // Closed when we cannot ask. Drawing a form we cannot confirm is reachable is
+  // the one failure mode worth defaulting against.
+  open: false,
 };
 
 export async function getGenesisStats(): Promise<GenesisStats> {
@@ -53,6 +65,7 @@ export async function getGenesisStats(): Promise<GenesisStats> {
       byRegion: body.byRegion ?? [],
       recent: body.recent ?? [],
       live: true,
+      open: body.open === true,
     };
   } catch {
     // Before the Worker exists, and any time it is unreachable, the page shows

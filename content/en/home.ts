@@ -36,6 +36,7 @@ export const home: HomeContent = {
     h1b: "Distance driven does not lie.",
     sub: "Link a Tesla account once and you are done. While the car moves, the odometer reports every 60 seconds, proves your kilometres for you, and accrues them as DRV. No developer account, no API bill.",
     ctaPrimary: "Join Genesis 500",
+    ctaPrimaryClosed: "What Genesis 500 is",
     ctaSecondary: "How does it accrue?",
   },
 
@@ -51,12 +52,17 @@ export const home: HomeContent = {
       "A vote on tokenomics changes",
     ],
     cta: "Take a seat",
+    ctaClosed: "What Genesis 500 is",
+    empty: "All 500 seats are empty",
+    emptyFirst: "the first is #001",
     note: "500 vehicles, first come. We keep an email, a car, the region you pick and a record of your consent. Never a coordinate, never a VIN.",
   },
 
   density: {
     title: "Who is near you",
     sub: "Confirmed seats by region. A province the registrant chose, never a coordinate.",
+    empty: "No registrations in any region yet",
+    emptySub: "The first one is the first light on this map.",
     note: "A schematic, not a projection. Registrants leave no coordinates, so the only thing this drawing can honestly say is how many people are in each region. A league needs faces you recognise and a redemption partner needs to be somewhere you already drive — which makes this distribution matter more than the national total.",
   },
 

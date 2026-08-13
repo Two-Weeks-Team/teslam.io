@@ -4,6 +4,7 @@ import { genesisPathFor, getContent, modelPathFor, type Locale } from "@/lib/i18
 import { n } from "@/lib/format";
 import { useLive } from "@/components/community/live-provider";
 import { Mark } from "@/components/community/mark";
+import { SeatField } from "@/components/genesis/seat-field";
 
 /**
  * Headline, and the Genesis call to action drawn as the cohort itself.
@@ -18,8 +19,19 @@ import { Mark } from "@/components/community/mark";
  */
 export function CHero({ locale }: { locale: Locale }) {
   const t = getContent(locale);
-  const { seats, taken, justTook, live } = useLive();
+  const { seats, taken, justTook, live, open } = useLive();
   const left = seats - taken;
+  /*
+   * Nobody has confirmed yet.
+   *
+   * Worth a state of its own rather than letting the general case render it.
+   * Five hundred identical dark squares under the words "taken 0" reads as a
+   * widget that failed to load, which is the opposite of what an empty cohort
+   * means — every seat being free is the most attractive this grid will ever
+   * be, and the design has to say so out loud instead of leaving a reader to
+   * infer it from a zero.
+   */
+  const empty = taken === 0;
 
   return (
     <section className="chero">
@@ -38,7 +50,7 @@ export function CHero({ locale }: { locale: Locale }) {
             rel="noopener noreferrer"
             target="_blank"
           >
-            {t.hero.ctaPrimary}
+            {open ? t.hero.ctaPrimary : t.hero.ctaPrimaryClosed}
           </a>
           <a className="btn btn--ghost" href={modelPathFor(locale)}>
             {t.hero.ctaSecondary}
@@ -52,36 +64,54 @@ export function CHero({ locale }: { locale: Locale }) {
           {t.genesis.title}
         </p>
 
-        <div
-          className="seats__grid"
-          role="img"
-          aria-label={`${t.genesis.seatGridLabel}: ${n(locale, taken)} / ${n(locale, seats)}`}
+        {empty ? (
+          <p className="seats__zero">
+            <b>{t.genesis.empty}</b>
+            <span>{t.genesis.emptyFirst}</span>
+          </p>
+        ) : null}
+
+        <SeatField
+          taken={taken}
+          justSeat={justTook?.seatNo ?? null}
+          label={`${t.genesis.seatGridLabel}: ${n(locale, taken)} / ${n(locale, seats)}`}
         >
-          {Array.from({ length: seats }, (_, i) => (
-            <span
-              key={i}
-              className={
-                justTook && i === justTook.seatNo - 1
-                  ? "seat seat--on seat--new"
-                  : i < taken
-                    ? "seat seat--on"
-                    : i === taken
-                      ? "seat seat--you"
-                      : "seat"
-              }
-            />
-          ))}
-        </div>
+          <div
+            className={empty ? "seats__grid seats__grid--empty" : "seats__grid"}
+            role="img"
+            aria-label={`${t.genesis.seatGridLabel}: ${n(locale, taken)} / ${n(locale, seats)}`}
+          >
+            {Array.from({ length: seats }, (_, i) => (
+              <span
+                key={i}
+                className={
+                  justTook && i === justTook.seatNo - 1
+                    ? "seat seat--on seat--new"
+                    : i < taken
+                      ? "seat seat--on"
+                      : i === taken
+                        ? "seat seat--you"
+                        : "seat"
+                }
+              />
+            ))}
+          </div>
+        </SeatField>
 
         <div className="seats__legend">
-          <span className="seats__key">
-            <span
-              className="seats__sw"
-              style={{ background: "var(--gold)" }}
-              aria-hidden="true"
-            />
-            {t.genesis.seatTaken} {n(locale, taken)}
-          </span>
+          {/* Suppressed at zero: the line above already says every seat is
+              free, and "taken 0" beneath it reads as the same fact told twice
+              in the more discouraging direction. */}
+          {empty ? null : (
+            <span className="seats__key">
+              <span
+                className="seats__sw"
+                style={{ background: "var(--gold)" }}
+                aria-hidden="true"
+              />
+              {t.genesis.seatTaken} {n(locale, taken)}
+            </span>
+          )}
           <span className="seats__key">
             <span
               className="seats__sw"
@@ -114,7 +144,7 @@ export function CHero({ locale }: { locale: Locale }) {
           rel="noopener noreferrer"
           target="_blank"
         >
-          {t.genesis.cta}
+          {open ? t.genesis.cta : t.genesis.ctaClosed}
         </a>
         <p className="seats__note">{t.genesis.note}</p>
       </aside>

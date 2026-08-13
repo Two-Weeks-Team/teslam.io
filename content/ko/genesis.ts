@@ -42,6 +42,17 @@ export type GenesisContent = {
     fieldMissing: string;
   };
 
+  /** 등록을 아직 받지 않는 동안 폼 자리에 놓이는 화면. */
+  closed: {
+    tag: string;
+    title: string;
+    body: string;
+    why: string;
+    seatsAllOpen: string;
+    nextTitle: string;
+    next: string[];
+  };
+
   pending: { title: string; body: string; resend: string };
   mailFailed: { title: string; body: string; retry: string };
   already: { title: string; body: string };
@@ -113,6 +124,20 @@ export const genesis: GenesisContent = {
     rateLimited: "잠시 후 다시 시도해 주세요. 짧은 시간에 너무 여러 번 보냈습니다.",
     network: "연결이 되지 않았습니다. 잠시 후 다시 시도해 주세요.",
     fieldMissing: "이 항목이 필요합니다",
+  },
+
+  closed: {
+    tag: "접수 준비 중",
+    title: "아직 받지 않습니다",
+    body: "확인 메일을 보낼 수 있게 되면 그때 엽니다. 주소를 받아두고 링크는 보내지 못하는 상태로 여는 것은, 신청을 받는 게 아니라 첫 단계에서 약속을 어기는 일이라서요.",
+    why: "등록은 두 부분입니다 — 좌석을 적어두는 쪽과, 그 좌석이 본인 것임을 메일로 확인받는 쪽. 앞쪽은 작동합니다. 뒤쪽이 아직입니다.",
+    seatsAllOpen: "500석 전부 남아 있습니다. 순서는 여는 날부터 매겨집니다.",
+    nextTitle: "열리면 이렇게 진행됩니다",
+    next: [
+      "이메일과 차량 정보를 남깁니다 — 위치도 차대번호도 받지 않습니다",
+      "받은 메일의 링크를 엽니다 — 그 순간 좌석 번호가 배정됩니다",
+      "좌석은 보드에 즉시 켜집니다 — 지금 0인 그 숫자가 움직입니다",
+    ],
   },
 
   pending: {
