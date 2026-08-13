@@ -1,58 +1,50 @@
 import { Bar } from "@/components/community/bar";
-import { CHero } from "@/components/community/hero";
+import { MapHero } from "@/components/community/map-hero";
+import { Cohort } from "@/components/community/cohort";
 import { League } from "@/components/community/league";
 import { Feed } from "@/components/community/feed";
 import { LeftRail, RightRail } from "@/components/community/rails";
 import { CFooter } from "@/components/community/footer";
 import { JsonLd } from "@/components/jsonld";
-import { getContent, type Locale } from "@/lib/i18n";
+import { type Locale } from "@/lib/i18n";
 import { getGenesisStats } from "@/lib/stats";
 import { LiveProvider } from "@/components/community/live-provider";
-import { Density } from "@/components/community/density";
+import { PreviewBanner } from "@/components/community/preview-banner";
 import cm from "@/data/community.json";
 
 /**
  * The community front page.
  *
- * Order is the argument: identity and the seat you could take, then the
- * competition that brings you back, then the board that is the actual product,
- * with the wallet parked beside it. The cost model that used to be here now
- * lives at `/model` — it is a document for a partner, not a reason for an
- * owner to visit.
+ * Order is the argument, and the argument changed: the country comes first,
+ * then the cohort as the object it is a cohort of, then the competition that
+ * brings people back, then the board that is the actual product. What used to
+ * lead — a headline beside a panel of five hundred grey squares — said less in
+ * more space than the map does in a glance.
+ *
+ * Everything above the league is a live figure or a drawing of one. Everything
+ * below it is still sample content, and still labelled as such.
  */
 export async function HomePage({ locale }: { locale: Locale }) {
-  const t = getContent(locale);
   const stats = await getGenesisStats();
 
   return (
     <LiveProvider initial={stats}>
-      <HomeBoard locale={locale} t={t} />
+      <HomeBoard locale={locale} />
     </LiveProvider>
   );
 }
 
-function HomeBoard({
-  locale,
-  t,
-}: {
-  locale: Locale;
-  t: ReturnType<typeof getContent>;
-}) {
+function HomeBoard({ locale }: { locale: Locale }) {
   return (
     <div className="cm">
       <JsonLd locale={locale} />
       <Bar locale={locale} />
 
       <div className="cm__wrap">
-        {cm.isPreview ? (
-          <p className="pv">
-            <span className="pv__tag">{t.preview.tag}</span>
-            <span className="pv__b">{t.preview.body}</span>
-          </p>
-        ) : null}
+        {cm.isPreview ? <PreviewBanner locale={locale} /> : null}
 
-        <CHero locale={locale} />
-        <Density locale={locale} />
+        <MapHero locale={locale} />
+        <Cohort locale={locale} />
         <League locale={locale} />
 
         <div className="cols">

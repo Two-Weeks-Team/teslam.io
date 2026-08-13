@@ -25,6 +25,9 @@ export const home: HomeContent = {
   preview: {
     tag: "Not open yet",
     body: "The service has not launched. Seats confirmed, the regional split and the number of people watching are real figures; the posts, rankings and wallet entries below are sample content showing what the board looks like populated.",
+    demoTag: "Simulation",
+    demoBody:
+      "The seat count and regional split on screen are a simulation being played back. They are not real registrations. Stopping returns the real figures.",
     realLabel: "real figure",
     sampleLabel: "sample",
     countStale: "The count could not be loaded — the figures below are not current.",
@@ -56,6 +59,13 @@ export const home: HomeContent = {
     empty: "All 500 seats are empty",
     emptyFirst: "the first is #001",
     note: "500 vehicles, first come. We keep an email, a car, the region you pick and a record of your consent. Never a coordinate, never a VIN.",
+  },
+
+  demo: {
+    play: "Watch it fill",
+    stop: "Stop, back to real",
+    flag: "Simulation running — these figures are not real registrations",
+    hint: "You can play through the 500 seats filling. Stopping returns the real numbers.",
   },
 
   density: {
