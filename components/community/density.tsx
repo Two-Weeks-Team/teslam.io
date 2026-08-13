@@ -60,7 +60,7 @@ export function Density({ locale }: { locale: Locale }) {
       <div className="dens__head">
         <h2 className="dens__h" id="dens-h">
           {t.title}
-          <Mark locale={locale} kind="real" />
+          {live.live ? <Mark locale={locale} kind="real" /> : null}
         </h2>
         <p className="dens__sub">{t.sub}</p>
       </div>
@@ -124,6 +124,9 @@ export function Density({ locale }: { locale: Locale }) {
         </ul>
       </div>
 
+      {live.live ? null : (
+        <p className="gf__err">{getContent(locale).preview.countStale}</p>
+      )}
       <p className="dens__note">{t.note}</p>
     </section>
   );

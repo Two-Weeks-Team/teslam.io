@@ -30,6 +30,10 @@
   // (`wrangler email sending enable teslam.io`) before a send succeeds; until
   // then the Worker records the registration and reports mailSent: false
   // rather than pretending a link went out.
+  // Daily sweep of unconfirmed registrations past their link's expiry, which
+  // is what makes the confirmation mail's deletion promise true.
+  "triggers": { "crons": ["17 3 * * *"] },
+
   "send_email": [{ "name": "EMAIL" }],
 
   "durable_objects": {

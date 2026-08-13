@@ -18,7 +18,7 @@ import { Mark } from "@/components/community/mark";
  */
 export function CHero({ locale }: { locale: Locale }) {
   const t = getContent(locale);
-  const { seats, taken, justTook } = useLive();
+  const { seats, taken, justTook, live } = useLive();
   const left = seats - taken;
 
   return (
@@ -48,7 +48,7 @@ export function CHero({ locale }: { locale: Locale }) {
 
       <aside className="seats" aria-labelledby="seats-h">
         <p className="seats__h" id="seats-h">
-          <Mark locale={locale} kind="real" />
+          {live ? <Mark locale={locale} kind="real" /> : null}
           {t.genesis.title}
         </p>
 

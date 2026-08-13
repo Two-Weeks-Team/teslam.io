@@ -29,6 +29,9 @@ export type LiveState = {
   seats: number;
   byRegion: Record<string, number>;
   watching: number | null;
+  /** False when the server could not reach the API. The board must not present
+   *  a fallback as a measurement. */
+  live: boolean;
   /** The most recent seat, for the flash on the grid and the ripple on the map. */
   justTook: { seatNo: number; region: string } | null;
 };
@@ -57,6 +60,7 @@ export function LiveProvider({
   const [byRegion, setByRegion] = useState<Record<string, number>>(seed);
   const [watching, setWatching] = useState<number | null>(null);
   const [justTook, setJustTook] = useState<LiveState["justTook"]>(null);
+  const [live, setLive] = useState(initial.live);
   const clearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -86,6 +90,9 @@ export function LiveProvider({
           setByRegion(
             Object.fromEntries((fresh.byRegion ?? []).map((r) => [r.region, r.count])),
           );
+          // The socket reached the API, so the figures are live again even if
+          // the server render could not fetch them.
+          setLive(true);
         })
         .catch(() => {
           // The server-rendered figures stand. They are only ever stale, never wrong.
@@ -126,8 +133,8 @@ export function LiveProvider({
   }, []);
 
   const value = useMemo<LiveState>(
-    () => ({ taken, seats: initial.seats, byRegion, watching, justTook }),
-    [taken, initial.seats, byRegion, watching, justTook],
+    () => ({ taken, seats: initial.seats, byRegion, watching, justTook, live }),
+    [taken, initial.seats, byRegion, watching, justTook, live],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

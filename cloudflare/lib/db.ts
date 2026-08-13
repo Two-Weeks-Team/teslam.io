@@ -42,6 +42,16 @@ export type Placement = {
 
 const now = () => Math.floor(Date.now() / 1000);
 
+/**
+ * How long a confirmation link stays usable.
+ *
+ * `verify_sent_at` was in the schema and in nothing else, so a link stayed
+ * valid forever: an old mailbox that leaked years later would still hold a
+ * working key to a seat. Seven days is long enough for someone who registered
+ * on holiday and short enough that a stale message is not a credential.
+ */
+export const TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7;
+
 /** Rows written by a request that never confirmed are not registrations. */
 export async function findByEmail(db: D1Database, email: string) {
   return db
@@ -50,19 +60,27 @@ export async function findByEmail(db: D1Database, email: string) {
     .first<Pick<Registration, "id" | "seat_no" | "waitlist_no" | "verified_at">>();
 }
 
+/**
+ * Returns false when the address already had a row, which the caller resolves
+ * by refreshing instead. Two requests for the same new address arriving
+ * together both read "no existing row", and without `ON CONFLICT` the loser
+ * raised a UNIQUE violation that reached the client as a 500 with no CORS
+ * headers — a crash where a resend was meant.
+ */
 export async function insertPending(
   db: D1Database,
   r: NewRegistration,
-): Promise<string> {
+): Promise<boolean> {
   const id = crypto.randomUUID();
   const t = now();
-  await db
+  const res = await db
     .prepare(
       `INSERT INTO registrations
          (id, email, verify_token_hash, verify_sent_at,
           model, trim, region, km_band,
           consent_terms, consent_privacy, consent_marketing, consent_at, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, 1, ?, ?, ?)
+       ON CONFLICT(email) DO NOTHING`,
     )
     .bind(
       id,
@@ -78,7 +96,25 @@ export async function insertPending(
       t,
     )
     .run();
-  return id;
+  return (res.meta.changes ?? 0) > 0;
+}
+
+/**
+ * Delete unconfirmed registrations whose link has expired.
+ *
+ * The confirmation email promises that "nothing was stored beyond the address
+ * it was sent to, and it is deleted unconfirmed" — a promise the cohort had no
+ * code to keep. Run from the scheduled handler.
+ */
+export async function purgeExpired(db: D1Database): Promise<number> {
+  const res = await db
+    .prepare(
+      `DELETE FROM registrations
+        WHERE verified_at IS NULL AND verify_sent_at < ?`,
+    )
+    .bind(now() - TOKEN_TTL_SECONDS)
+    .run();
+  return res.meta.changes ?? 0;
 }
 
 /**
@@ -166,6 +202,7 @@ const PLACE = `
            ELSE NULL
          END
    WHERE verify_token_hash = ? AND verified_at IS NULL
+     AND verify_sent_at >= ?
   RETURNING seat_no, waitlist_no, region, model
 `;
 
@@ -175,7 +212,7 @@ export async function confirm(
 ): Promise<Placement | null> {
   const res = await db
     .prepare(PLACE)
-    .bind(now(), SEATS, SEATS, SEATS, tokenHash)
+    .bind(now(), SEATS, SEATS, SEATS, tokenHash, now() - TOKEN_TTL_SECONDS)
     .all<{
       seat_no: number | null;
       waitlist_no: number | null;

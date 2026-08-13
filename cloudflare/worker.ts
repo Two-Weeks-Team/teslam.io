@@ -13,6 +13,7 @@ import {
   insertPending,
   refreshPending,
   stats,
+  purgeExpired,
   takenCount,
 } from "./lib/db";
 import {
@@ -163,13 +164,12 @@ async function register(
     // Already holds a place. Say so without revealing anything else.
     return json({ status: "already_registered" }, 200);
   }
-  if (existing) {
-    // Refresh the whole row, not just the token. Someone who resubmits after
-    // changing their mind — a different car, or marketing unticked — would
-    // otherwise be confirmed against the profile they replaced, and a stale
-    // marketing opt-in is a consent record that says the opposite of what the
-    // person just chose.
-    await refreshPending(env.DB, {
+  // Insert first when there is no row, and fall back to a refresh if another
+  // request for the same address won the race. Checking then inserting left a
+  // window where the loser raised a UNIQUE violation and the caller saw a 500.
+  const inserted =
+    existing === null &&
+    (await insertPending(env.DB, {
       email: email!,
       model: model!,
       trim: String(body.trim),
@@ -177,9 +177,15 @@ async function register(
       kmBand: kmBand!,
       consentMarketing: body.consentMarketing === true,
       tokenHash,
-    });
-  } else {
-    await insertPending(env.DB, {
+    }));
+
+  if (!inserted) {
+    // Refresh the whole row, not just the token. Someone who resubmits after
+    // changing their mind — a different car, or marketing unticked — would
+    // otherwise be confirmed against the profile they replaced, and a stale
+    // marketing opt-in is a consent record that says the opposite of what the
+    // person just chose.
+    await refreshPending(env.DB, {
       email: email!,
       model: model!,
       trim: String(body.trim),
@@ -304,6 +310,15 @@ export function createWorker(deps: Deps = {}) {
       }
 
       return json({ error: "not_found" }, 404, headers);
+    },
+
+    /**
+     * The confirmation mail promises that an unconfirmed registration is
+     * deleted. Nothing kept that promise until this handler existed — the row
+     * simply sat there with a token that never expired.
+     */
+    async scheduled(_event: unknown, env: Env): Promise<void> {
+      await purgeExpired(env.DB);
     },
   };
 }

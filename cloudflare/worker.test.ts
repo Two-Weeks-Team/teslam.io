@@ -7,6 +7,7 @@ import SCHEMA from "./migrations/0001_registrations.sql?raw";
 import { createWorker, type Env } from "./worker";
 import { collectingMailer } from "./lib/mail";
 import { SEATS } from "../lib/genesis";
+import { TOKEN_TTL_SECONDS, purgeExpired } from "./lib/db";
 
 /**
  * The registration API, exercised against a real D1 in workerd.
@@ -163,6 +164,44 @@ describe("registration", () => {
     await w.fetch(post({ ...VALID, email: "ko@example.com" }, "ip-ko"), E);
     expect(sent[1].text).toMatch(/\/genesis\/confirm\?token=/);
     expect(sent[1].text).not.toContain("/en/genesis/confirm");
+  });
+
+  it("survives two requests racing for the same new address", async () => {
+    const { w } = worker();
+    const results = await Promise.all(
+      Array.from({ length: 4 }, (_, i) =>
+        w.fetch(post(VALID, `race-${i}`), E).then((r) => r.status),
+      ),
+    );
+    // Check-then-insert used to let the loser raise a UNIQUE violation, which
+    // reached the caller as a 500 with no CORS headers.
+    expect(results.every((s) => s === 200), `statuses: ${results}`).toBe(true);
+  });
+
+  it("expires a confirmation link and sweeps the row it belonged to", async () => {
+    const { w, sent } = worker();
+    await w.fetch(post(VALID), E);
+    const token = sent[0].text.match(/token=(\w+)/)![1];
+
+    // Age the row past the link's lifetime.
+    await E.DB.prepare(
+      "UPDATE registrations SET verify_sent_at = verify_sent_at - ? WHERE email = ?",
+    )
+      .bind(TOKEN_TTL_SECONDS + 60, VALID.email)
+      .run();
+
+    expect(
+      (await w.fetch(get(`/v1/genesis/confirm?token=${token}`), E)).status,
+      "an expired link must not still open a seat",
+    ).toBe(404);
+
+    // And the promise the mail makes — that an unconfirmed row is deleted.
+    const removed = await purgeExpired(E.DB);
+    expect(removed).toBe(1);
+    const left = await E.DB.prepare(
+      "SELECT COUNT(*) AS n FROM registrations",
+    ).first<{ n: number }>();
+    expect(left?.n).toBe(0);
   });
 
   it("stops a loop from one address", async () => {

@@ -27,6 +27,7 @@ export const home: HomeContent = {
     body: "The service has not launched. Seats confirmed, the regional split and the number of people watching are real figures; the posts, rankings and wallet entries below are sample content showing what the board looks like populated.",
     realLabel: "real figure",
     sampleLabel: "sample",
+    countStale: "The count could not be loaded — the figures below are not current.",
   },
 
   hero: {
@@ -50,7 +51,7 @@ export const home: HomeContent = {
       "A vote on tokenomics changes",
     ],
     cta: "Take a seat",
-    note: "500 vehicles, first come. We ask for an email and a car; never a location or a VIN.",
+    note: "500 vehicles, first come. We keep an email, a car, the region you pick and a record of your consent. Never a coordinate, never a VIN.",
   },
 
   density: {
