@@ -10,7 +10,11 @@ const config = [
   {
     ignores: [
       ".next/**",
+      // Both spellings: `wrangler dev` writes its bundle under the config's
+      // own directory, not the repo root, so the root-anchored pattern missed
+      // it and the gate reported warnings about Cloudflare's generated facade.
       ".wrangler/**",
+      "**/.wrangler/**",
       "node_modules/**",
       "public/**",
       "next-env.d.ts",

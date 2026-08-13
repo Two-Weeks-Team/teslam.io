@@ -367,3 +367,113 @@ describe("what the public can see", () => {
     expect(evil.headers.get("access-control-allow-origin")).toBeNull();
   });
 });
+
+/**
+ * Registration closed, which is how production runs until mail is live.
+ *
+ * The failure being guarded against is a form that looks open, writes a row,
+ * and promises a confirmation link nothing will ever send. Hiding the form in
+ * the page does not achieve that — the endpoint is still there — so the refusal
+ * has to be provable at the API.
+ */
+describe("while registration is closed", () => {
+  /** Production's setting, applied to one request at a time. */
+  const CLOSED = { ...E, REGISTRATION_OPEN: "false" };
+
+  it("refuses the public form without writing anything or sending mail", async () => {
+    const { w, sent } = worker();
+    const res = await w.fetch(post(VALID), CLOSED);
+
+    expect(res.status).toBe(503);
+    expect(await res.json()).toMatchObject({ status: "closed" });
+    expect(sent).toHaveLength(0);
+
+    const stats = await (await w.fetch(get("/v1/genesis/stats"), CLOSED)).json();
+    expect((stats as { taken: number }).taken).toBe(0);
+
+    const rows = await E.DB.prepare("SELECT COUNT(*) AS n FROM registrations").first<{
+      n: number;
+    }>();
+    expect(rows?.n, "a closed registration must not leave a row").toBe(0);
+  });
+
+  it("says so in the figures the page renders from", async () => {
+    const { w } = worker();
+    const closed = await (await w.fetch(get("/v1/genesis/stats"), CLOSED)).json();
+    const open = await (await w.fetch(get("/v1/genesis/stats"), E)).json();
+
+    expect(closed).toMatchObject({ open: false });
+    expect(open).toMatchObject({ open: true });
+  });
+
+  it("still lets the operator walk the whole flow", async () => {
+    const { w, sent } = worker();
+
+    const minted = await w.fetch(
+      new Request("https://api.teslam.io/v1/genesis/invite", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer test-export-token",
+        },
+        body: JSON.stringify({ ...VALID, email: "operator@example.com" }),
+      }),
+      CLOSED,
+    );
+
+    expect(minted.status).toBe(200);
+    const { confirmUrl } = (await minted.json()) as { confirmUrl: string };
+    expect(confirmUrl).toContain("/genesis/confirm?token=");
+    // The point of this route is that it does not send. If it ever did, the
+    // closed state would be sending mail it cannot deliver.
+    expect(sent).toHaveLength(0);
+
+    const token = confirmUrl.match(/token=(\w+)/)![1];
+    const done = await w.fetch(get(`/v1/genesis/confirm?token=${token}`), CLOSED);
+    expect(await done.json()).toMatchObject({
+      placement: { kind: "seat", number: 1 },
+    });
+  });
+
+  it("refuses to mint a link without the operator's token", async () => {
+    const { w } = worker();
+    const cases: Record<string, string>[] = [
+      { "content-type": "application/json" },
+      { "content-type": "application/json", authorization: "Bearer wrong" },
+      // Same length as the real token, so a comparison that stopped at the
+      // first differing byte would still have to walk the whole string.
+      { "content-type": "application/json", authorization: "Bearer test-export-tokeX" },
+    ];
+    for (const headers of cases) {
+      const res = await w.fetch(
+        new Request("https://api.teslam.io/v1/genesis/invite", {
+          method: "POST",
+          headers,
+          body: JSON.stringify(VALID),
+        }),
+        CLOSED,
+      );
+      expect(res.status).toBe(401);
+    }
+  });
+
+  it("holds the operator to the same consent rules as the form", async () => {
+    const { w } = worker();
+    const res = await w.fetch(
+      new Request("https://api.teslam.io/v1/genesis/invite", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer test-export-token",
+        },
+        body: JSON.stringify({ ...VALID, consentPrivacy: false }),
+      }),
+      CLOSED,
+    );
+
+    expect(res.status).toBe(400);
+    expect((await res.json()) as { fields: string[] }).toMatchObject({
+      fields: expect.arrayContaining(["consentPrivacy"]),
+    });
+  });
+});

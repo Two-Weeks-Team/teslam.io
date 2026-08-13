@@ -1,5 +1,8 @@
 import { existsSync, readFileSync } from "node:fs";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { GenesisForm } from "@/components/genesis/form";
 import { genesis as ko } from "@/content/ko/genesis";
 import { genesis as en } from "@/content/en/genesis";
 import { KM_BANDS, MODELS, REGIONS, SEATS, TRIMS, isEmail } from "@/lib/genesis";
@@ -72,42 +75,83 @@ describe("copy", () => {
   });
 });
 
-describe.runIf(built)("the rendered page", () => {
+/**
+ * The form itself, rendered on its own.
+ *
+ * These used to read the built page, which stopped working the moment
+ * registration could be closed: the page then ships a waiting state and the
+ * form is not in the HTML at all. Skipping the assertions in that case would
+ * have been the worst option available — the form would go unchecked for
+ * exactly the months it is not being exercised by anyone, and come back on the
+ * day it matters most.
+ *
+ * So the component is rendered directly. `renderToStaticMarkup` needs no DOM
+ * and no build, and it asserts the same thing the artefact did: the fields the
+ * API expects, offered with the vocabulary the API accepts.
+ */
+describe("the registration form", () => {
   for (const locale of ["ko", "en"] as const) {
     describe(locale, () => {
-      const doc = () => read(PAGE[locale]);
+      const html = renderToStaticMarkup(createElement(GenesisForm, { locale }));
 
-      it("ships the form without JavaScript", () => {
+      it("renders every field without JavaScript", () => {
         for (const field of ["email", "model", "trim", "region", "kmBand"]) {
-          expect(doc(), `field ${field} not server-rendered`).toContain(
-            `name="${field}"`,
-          );
+          expect(html, `field ${field} missing`).toContain(`name="${field}"`);
         }
       });
 
       it("offers every region and band the API accepts", () => {
         for (const r of REGIONS) {
-          expect(doc(), `region ${r.id} missing`).toContain(`value="${r.id}"`);
+          expect(html, `region ${r.id} missing`).toContain(`value="${r.id}"`);
         }
         for (const b of KM_BANDS) {
-          expect(doc(), `band ${b.id} missing`).toContain(`value="${b.id}"`);
+          expect(html, `band ${b.id} missing`).toContain(`value="${b.id}"`);
         }
       });
 
       it("asks for terms and privacy as two separate required ticks", () => {
-        expect(doc()).toContain('name="consentTerms"');
-        expect(doc()).toContain('name="consentPrivacy"');
+        expect(html).toContain('name="consentTerms"');
+        expect(html).toContain('name="consentPrivacy"');
         // Marketing is offered but must not be required.
-        expect(doc()).toContain('name="consentMarketing"');
-        const marketing = doc().slice(doc().indexOf('name="consentMarketing"'));
+        expect(html).toContain('name="consentMarketing"');
+        const marketing = html.slice(html.indexOf('name="consentMarketing"'));
         expect(marketing.slice(0, 120)).not.toContain("required");
       });
 
       it("links both consents to the document they consent to", () => {
         const privacy = locale === "ko" ? "/privacy" : "/en/privacy";
         const terms = locale === "ko" ? "/terms" : "/en/terms";
-        expect(doc()).toContain(`href="${privacy}"`);
-        expect(doc()).toContain(`href="${terms}"`);
+        expect(html).toContain(`href="${privacy}"`);
+        expect(html).toContain(`href="${terms}"`);
+      });
+    });
+  }
+});
+
+describe.runIf(built)("the rendered page", () => {
+  for (const locale of ["ko", "en"] as const) {
+    describe(locale, () => {
+      const doc = () => read(PAGE[locale]);
+
+      /**
+       * Whichever half the build shipped, it has to be whole.
+       *
+       * The page shows the form or the waiting state, never both and never
+       * neither — a page with the form missing and no explanation in its place
+       * is the failure this pair of assertions exists to catch.
+       */
+      it("ships either the form or the waiting state, and says which", () => {
+        const t = locale === "ko" ? ko : en;
+        const hasForm = doc().includes('name="consentPrivacy"');
+
+        if (hasForm) {
+          expect(doc()).toContain('name="email"');
+        } else {
+          expect(doc(), "closed, but the page does not say so").toContain(
+            t.closed.title,
+          );
+          expect(doc()).toContain(t.closed.next[0].split(/[—-]/)[0].trim());
+        }
       });
 
       it("puts the count and the cohort size in the HTML", () => {

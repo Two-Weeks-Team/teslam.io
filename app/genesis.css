@@ -27,12 +27,20 @@
   gap: 0.6rem;
 }
 
+/* Amber, not volt.
+ *
+ * Volt is this site's action colour and it is everywhere; amber is what it
+ * uses for anything scarce, which is exactly what a cohort of five hundred is.
+ * It also mends a handoff: the board sends people here from a gold button, and
+ * landing on a lime page made the two look like different products. The
+ * interactive controls below stay volt — the accent marks the thing, not the
+ * verb. */
 .gx__eyebrow {
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--color-volt);
+  color: var(--color-amber);
 }
 
 .gx__h1 {
@@ -67,9 +75,107 @@
   font-family: var(--font-display);
   font-size: 1.7rem;
   font-weight: 700;
-  color: var(--color-volt);
+  color: var(--color-amber);
   font-variant-numeric: tabular-nums;
   line-height: 1;
+}
+
+/* ── registration closed ──────────────────────────────────────────────── */
+
+/*
+ * Where the form goes while registration is shut.
+ *
+ * Given the form's weight rather than a footnote's: this is the whole middle
+ * of the page for now, and a visitor who scrolled here to act deserves to be
+ * met by something, not by an apology in small type.
+ */
+.gcl {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: clamp(1.25rem, 4vw, 1.9rem);
+  border: 1px solid color-mix(in srgb, var(--color-amber) 30%, var(--color-line));
+  border-radius: var(--radius-card);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--color-amber) 6%, var(--color-panel)) 0%,
+    var(--color-panel) 60%
+  );
+}
+
+.gcl__tag {
+  align-self: start;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-amber);
+  border: 1px solid color-mix(in srgb, var(--color-amber) 40%, transparent);
+  border-radius: 999px;
+  padding: 0.22rem 0.6rem;
+}
+
+.gcl__h {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 3.6vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--color-paper);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.gcl__body {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--color-chalk);
+}
+
+.gcl__why {
+  margin: 0;
+  padding-inline-start: 0.9rem;
+  border-inline-start: 2px solid color-mix(in srgb, var(--color-amber) 45%, transparent);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  color: var(--color-mute);
+}
+
+.gcl__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0.9rem 0 0;
+  list-style: none;
+  border-block-start: 1px solid var(--color-line);
+}
+
+.gcl__step {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--color-chalk);
+}
+
+.gcl__n {
+  flex: none;
+  inline-size: 1.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--color-amber);
+  font-variant-numeric: tabular-nums;
+}
+
+.gcl__open {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--color-mute);
 }
 .gx__count span {
   font-family: var(--font-mono);

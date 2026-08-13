@@ -18,7 +18,19 @@
 
   "vars": {
     "ALLOWED_ORIGINS": "https://teslam.io",
-    "SITE_ORIGIN": "https://teslam.io"
+    "SITE_ORIGIN": "https://teslam.io",
+
+    // Closed until a confirmation mail can actually leave the account.
+    // Registration has two halves and they became ready at different times:
+    // the write, the placement and the live board all work, while no mail
+    // sends. An open form in that state takes an address and promises a link
+    // that never arrives, so the public route refuses before it writes and the
+    // page draws a waiting state instead of a form.
+    //
+    // Flip to "true" in the same change that makes mail live. The operator
+    // route (/v1/genesis/invite) ignores this, which is how the flow stays
+    // walkable end to end in the meantime.
+    "REGISTRATION_OPEN": "false"
   },
 
   // RESEND_API_KEY, MAIL_FROM and EXPORT_TOKEN are secrets, set with
@@ -58,7 +70,11 @@
       "compatibility_flags": ["nodejs_compat"],
       "vars": {
         "ALLOWED_ORIGINS": "http://localhost:3000",
-        "SITE_ORIGIN": "http://localhost:3000"
+        "SITE_ORIGIN": "http://localhost:3000",
+        // Open here on purpose. Preview is where the form is developed and the
+        // tests run; closing it would mean the public path shipped to
+        // production having only ever been exercised through its refusal.
+        "REGISTRATION_OPEN": "true"
       },
       // Named environments do not inherit bindings, so these are repeated
       // rather than omitted. A missing binding here fails at request time, not

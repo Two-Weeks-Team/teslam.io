@@ -47,6 +47,20 @@ export const genesis: GenesisContent = {
     fieldMissing: "This is required",
   },
 
+  closed: {
+    tag: "Not open yet",
+    title: "Seats are not being taken yet",
+    body: "Registration opens when the confirmation mail can actually be sent. Taking your address while the link cannot leave the building would not be accepting a registration — it would be breaking the promise at the first step.",
+    why: "Registration is two halves: writing the seat down, and confirming by mail that the seat is yours. The first half works. The second does not, yet.",
+    seatsAllOpen: "All 500 seats are open. The order starts on the day it does.",
+    nextTitle: "How it will go when it opens",
+    next: [
+      "You leave an email and what you drive — no location, no VIN",
+      "You open the link in the mail — that is the moment a seat number is assigned",
+      "The seat lights up on the board — the zero you see now starts moving",
+    ],
+  },
+
   pending: {
     title: "Check your email",
     body: "A confirmation link is on its way. Opening it assigns your seat number. Until then no seat is held.",

@@ -29,6 +29,10 @@ export default defineConfig({
           ALLOWED_ORIGINS: "https://teslam.io",
           SITE_ORIGIN: "https://teslam.io",
           EXPORT_TOKEN: "test-export-token",
+          // Open by default here so the suite exercises the working path. The
+          // refusal is tested by overriding this per request, which is also the
+          // only way production's value ever gets covered.
+          REGISTRATION_OPEN: "true",
         },
       },
     }),

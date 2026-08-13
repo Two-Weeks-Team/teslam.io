@@ -32,6 +32,9 @@ export type LiveState = {
   /** False when the server could not reach the API. The board must not present
    *  a fallback as a measurement. */
   live: boolean;
+  /** Whether the API is taking registrations. Decides what the calls to action
+   *  are allowed to promise. */
+  open: boolean;
   /** The most recent seat, for the flash on the grid and the ripple on the map. */
   justTook: { seatNo: number; region: string } | null;
 };
@@ -61,6 +64,7 @@ export function LiveProvider({
   const [watching, setWatching] = useState<number | null>(null);
   const [justTook, setJustTook] = useState<LiveState["justTook"]>(null);
   const [live, setLive] = useState(initial.live);
+  const [open, setOpen] = useState(initial.open);
   const clearRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -84,12 +88,16 @@ export function LiveProvider({
     socket.addEventListener("open", () => {
       fetch(`${API_ORIGIN}/v1/genesis/stats`)
         .then((r) => (r.ok ? r.json() : null))
-        .then((fresh: { taken?: number; byRegion?: Array<{ region: string; count: number }> } | null) => {
+        .then((fresh: { taken?: number; open?: boolean; byRegion?: Array<{ region: string; count: number }> } | null) => {
           if (!fresh || typeof fresh.taken !== "number") return;
           setTaken(fresh.taken);
           setByRegion(
             Object.fromEntries((fresh.byRegion ?? []).map((r) => [r.region, r.count])),
           );
+          // Registration can be opened without redeploying the site, so a tab
+          // left sitting on a cached page picks it up here rather than
+          // continuing to offer a button for something that is now possible.
+          setOpen(fresh.open === true);
           // The socket reached the API, so the figures are live again even if
           // the server render could not fetch them.
           setLive(true);
@@ -133,8 +141,8 @@ export function LiveProvider({
   }, []);
 
   const value = useMemo<LiveState>(
-    () => ({ taken, seats: initial.seats, byRegion, watching, justTook, live }),
-    [taken, initial.seats, byRegion, watching, justTook, live],
+    () => ({ taken, seats: initial.seats, byRegion, watching, justTook, live, open }),
+    [taken, initial.seats, byRegion, watching, justTook, live, open],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

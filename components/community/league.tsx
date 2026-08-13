@@ -19,15 +19,15 @@ export function League({ locale }: { locale: Locale }) {
   const omitted = 134;
 
   return (
-    <section className="lg" id="league" aria-labelledby="lg-h">
-      <div className="lg__top">
-        <p className="lg__eyebrow">{t.eyebrow}</p>
-        <h2 className="lg__h2" id="lg-h">
+    <section className="league" id="league" aria-labelledby="lg-h">
+      <div className="league__top">
+        <p className="league__eyebrow">{t.eyebrow}</p>
+        <h2 className="league__h2" id="lg-h">
           {t.title}
           <Mark locale={locale} kind="sample" />
         </h2>
-        <p className="lg__sub">{t.sub}</p>
-        <p className="lg__clock">
+        <p className="league__sub">{t.sub}</p>
+        <p className="league__clock">
           {cm.season.week}
           {t.weekLabel} · {t.closesIn} {cm.season.closesInDays}
           {t.days}
@@ -55,7 +55,7 @@ export function League({ locale }: { locale: Locale }) {
         ))}
       </div>
 
-      <div className="lg__scroll">
+      <div className="league__scroll">
         <table className="lgtable">
           <thead>
             <tr>
@@ -119,7 +119,7 @@ export function League({ locale }: { locale: Locale }) {
         </table>
       </div>
 
-      <a className="lg__all" href="#league">
+      <a className="league__all" href="#league">
         {t.all} →
       </a>
     </section>

@@ -1,3 +1,4 @@
+import { GenesisClosed } from "@/components/genesis/closed";
 import { GenesisForm } from "@/components/genesis/form";
 import { CFooter } from "@/components/community/footer";
 import { getGenesis, pathFor, type Locale } from "@/lib/i18n";
@@ -43,7 +44,16 @@ export async function GenesisPage({ locale }: { locale: Locale }) {
           </span>
         </p>
 
-        <GenesisForm locale={locale} />
+        {/*
+          The Worker decides this, not the page. Drawing the form from a local
+          guess would eventually disagree with the endpoint, and the visitor who
+          meets that disagreement meets it as a form that submits into a 503.
+        */}
+        {stats.open ? (
+          <GenesisForm locale={locale} />
+        ) : (
+          <GenesisClosed locale={locale} />
+        )}
 
         <section className="gx__not">
           <h2>{t.notCollected.title}</h2>
