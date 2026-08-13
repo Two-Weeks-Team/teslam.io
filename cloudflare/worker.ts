@@ -19,6 +19,7 @@ import {
 import {
   cloudflareMailer,
   confirmationMail,
+  gmailMailer,
   resendMailer,
   type EmailBinding,
   type Mailer,
@@ -34,6 +35,10 @@ export type Env = {
   ALLOWED_ORIGINS: string;
   SITE_ORIGIN: string;
   RESEND_API_KEY?: string;
+  /** Google Workspace, sending as an alias on a domain that account owns. */
+  GMAIL_CLIENT_ID?: string;
+  GMAIL_CLIENT_SECRET?: string;
+  GMAIL_REFRESH_TOKEN?: string;
   MAIL_FROM?: string;
   EXPORT_TOKEN?: string;
 };
@@ -202,17 +207,35 @@ async function register(
   const path = locale === "en" ? "/en/genesis/confirm" : "/genesis/confirm";
   const link = `${env.SITE_ORIGIN}${path}?token=${token}`;
   const mail = confirmationMail(link, locale);
-  // Cloudflare first — no key to leak, one processor instead of two. Resend
-  // stays as a fallback so the flow is not blocked on a beta product being
-  // enabled, and tests inject their own collector.
-  const from = env.MAIL_FROM ?? "genesis@teslam.io";
+  /*
+   * Whichever route can actually send from a teslam.io address.
+   *
+   * Gmail first because that is the one configured: the domain lives in the
+   * operator's Workspace, so `noreply@teslam.io` is an alias it may send as.
+   * Cloudflare Email Sending would need no key at all and is preferred the
+   * moment the account has it enabled. Resend is last — its plan holds one
+   * domain and that slot belongs to another project.
+   *
+   * All three are optional. With none configured the registration is still
+   * written and the caller is told no mail went out.
+   */
+  const from = env.MAIL_FROM ?? "noreply@teslam.io";
+  const gmailReady =
+    env.GMAIL_CLIENT_ID && env.GMAIL_CLIENT_SECRET && env.GMAIL_REFRESH_TOKEN;
   const mailer =
     deps.mailer ??
-    (env.EMAIL
-      ? cloudflareMailer(env.EMAIL, from)
-      : env.RESEND_API_KEY
-        ? resendMailer(env.RESEND_API_KEY, from)
-        : null);
+    (gmailReady
+      ? gmailMailer({
+          clientId: env.GMAIL_CLIENT_ID!,
+          clientSecret: env.GMAIL_CLIENT_SECRET!,
+          refreshToken: env.GMAIL_REFRESH_TOKEN!,
+          from: `teslam.io <${from}>`,
+        })
+      : env.EMAIL
+        ? cloudflareMailer(env.EMAIL, from)
+        : env.RESEND_API_KEY
+          ? resendMailer(env.RESEND_API_KEY, from)
+          : null);
 
   const delivered = mailer ? await mailer.send(email!, mail.subject, mail.text) : false;
 

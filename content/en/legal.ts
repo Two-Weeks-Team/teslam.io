@@ -72,7 +72,7 @@ export const legal: LegalContent = {
         items: [
           "Cloudflare, Inc. — storage and transport of registration records",
           "Vercel Inc. — website hosting",
-          "Confirmation and notification email — Cloudflare Email Sending where available, with Resend, Inc. as the fallback until it is",
+          "Google LLC — confirmation and notification email, via Google Workspace",
         ],
       },
       {

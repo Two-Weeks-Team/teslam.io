@@ -66,6 +66,111 @@ export function cloudflareMailer(binding: EmailBinding, from: string): Mailer {
   };
 }
 
+/* ── Gmail ────────────────────────────────────────────────────────────── */
+
+export type GmailConfig = {
+  clientId: string;
+  clientSecret: string;
+  refreshToken: string;
+  /** The address to send as. Must be a Workspace alias the account may use. */
+  from: string;
+};
+
+/** Base64url without padding, over bytes rather than code units. */
+function b64url(bytes: Uint8Array): string {
+  let bin = "";
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+const utf8 = (s: string) => new TextEncoder().encode(s);
+
+/**
+ * RFC 2047 for the subject, base64 for the body.
+ *
+ * Both are required here rather than optional: the Korean subject line is not
+ * ASCII, and a raw 8-bit body is what makes a message arrive with its hangul
+ * replaced by question marks.
+ */
+function mime(from: string, to: string, subject: string, text: string): string {
+  return [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: =?UTF-8?B?${b64url(utf8(subject)).replace(/-/g, "+").replace(/_/g, "/")}?=`,
+    "MIME-Version: 1.0",
+    'Content-Type: text/plain; charset="UTF-8"',
+    "Content-Transfer-Encoding: base64",
+    "",
+    btoa(String.fromCharCode(...utf8(text))).replace(/(.{76})/g, "$1\r\n"),
+  ].join("\r\n");
+}
+
+/**
+ * Send through Gmail, using the Workspace account the domain belongs to.
+ *
+ * The API is plain HTTPS, which is what makes it usable here — a Worker cannot
+ * reliably hold the raw TCP connection SMTP needs, and Cloudflare blocks the
+ * ports it would use.
+ *
+ * Access tokens last about an hour, so one is kept per worker instance and
+ * refreshed only when it expires. Refreshing on every send would triple the
+ * latency of a registration and burn quota for nothing.
+ */
+export function gmailMailer(cfg: GmailConfig): Mailer {
+  let token: { value: string; expiresAt: number } | null = null;
+
+  async function accessToken(): Promise<string | null> {
+    if (token && Date.now() < token.expiresAt - 60_000) return token.value;
+    try {
+      const res = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: cfg.clientId,
+          client_secret: cfg.clientSecret,
+          refresh_token: cfg.refreshToken,
+          grant_type: "refresh_token",
+        }),
+      });
+      if (!res.ok) return null;
+      const body = (await res.json()) as { access_token?: string; expires_in?: number };
+      if (!body.access_token) return null;
+      token = {
+        value: body.access_token,
+        expiresAt: Date.now() + (body.expires_in ?? 3600) * 1000,
+      };
+      return token.value;
+    } catch {
+      return null;
+    }
+  }
+
+  return {
+    async send(to, subject, text) {
+      const bearer = await accessToken();
+      if (!bearer) return false;
+      try {
+        const res = await fetch(
+          "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+          {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${bearer}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              raw: b64url(utf8(mime(cfg.from, to, subject, text))),
+            }),
+          },
+        );
+        return res.ok;
+      } catch {
+        return false;
+      }
+    },
+  };
+}
+
 export function resendMailer(apiKey: string, from: string): Mailer {
   return {
     async send(to, subject, text) {
