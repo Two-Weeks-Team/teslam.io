@@ -1,0 +1,470 @@
+/* ---------------------------------------------------------------------------
+   Genesis 500 — registration and seat confirmation
+
+   Two screens with opposite jobs. The form is deliberately quiet: it is the one
+   place on the site that asks for something, and a page that asks should not
+   also shout. The confirmation is the opposite — it is the artefact someone
+   shares, so it gets the instrument glass and the amber.
+--------------------------------------------------------------------------- */
+
+.gx {
+  min-height: 100dvh;
+  background: var(--color-void);
+  padding: clamp(2rem, 6vw, 4rem) var(--spacing-gutter) clamp(3rem, 8vw, 5rem);
+}
+
+.gx__wrap {
+  max-width: 38rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.gx__top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.gx__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-volt);
+}
+
+.gx__h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 6vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--color-paper);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.gx__lede {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--color-chalk);
+  margin: 0;
+}
+
+/* Seat counter above the form — the one real number on the page. */
+.gx__count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-panel);
+}
+.gx__count b {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--color-volt);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.gx__count span {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  color: var(--color-mute);
+}
+
+/* ── form ─────────────────────────────────────────────────────────────── */
+
+.gf {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.gf__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.gf__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media (max-width: 30rem) {
+  .gf__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gf__label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+}
+
+.gf__input,
+.gf__select {
+  appearance: none;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--color-line-2);
+  border-radius: 4px;
+  background: var(--color-panel-2);
+  color: var(--color-paper);
+  font: inherit;
+  font-size: 0.95rem;
+}
+.gf__select {
+  /* Room for the caret, drawn in the background rather than with an icon font. */
+  padding-right: 2rem;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-mute) 50%),
+    linear-gradient(135deg, var(--color-mute) 50%, transparent 50%);
+  background-position:
+    right 1.05rem center,
+    right 0.8rem center;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+}
+
+.gf__input:focus-visible,
+.gf__select:focus-visible {
+  outline: 2px solid var(--color-volt);
+  outline-offset: 1px;
+  border-color: var(--color-volt);
+}
+
+.gf__input[aria-invalid="true"],
+.gf__select[aria-invalid="true"] {
+  border-color: var(--color-halt);
+}
+
+.gf__hint {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--color-dim);
+}
+
+.gf__err {
+  font-size: 0.8rem;
+  color: var(--color-halt);
+}
+
+.gf__checks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding-block-start: 0.4rem;
+  border-block-start: 1px solid var(--color-line);
+}
+
+.gf__check {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.6rem;
+  align-items: start;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--color-chalk);
+  cursor: pointer;
+}
+.gf__check input {
+  margin-block-start: 0.25rem;
+  accent-color: var(--color-volt);
+  width: 1rem;
+  height: 1rem;
+}
+.gf__check a {
+  color: var(--color-chalk);
+  text-underline-offset: 3px;
+}
+.gf__check a:hover {
+  color: var(--color-volt);
+}
+
+.gf__submit {
+  padding: 0.85rem 1.2rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--color-volt);
+  color: #06120a;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+.gf__submit:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+.gf__submit:focus-visible {
+  outline: 2px solid var(--color-paper);
+  outline-offset: 2px;
+}
+
+/* ── what is not collected ────────────────────────────────────────────── */
+
+.gx__not {
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  padding: 1.1rem 1.2rem;
+  background: var(--color-panel);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.gx__not h2 {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+  margin: 0;
+}
+.gx__not ul {
+  margin: 0;
+  padding-left: 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.gx__not li {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--color-chalk);
+}
+.gx__not li::marker {
+  color: var(--color-dim);
+}
+
+.gx__disc {
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--color-dim);
+}
+
+/* ── states ───────────────────────────────────────────────────────────── */
+
+.gx__state {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1.4rem 1.3rem;
+  border: 1px solid var(--color-line);
+  border-left: 3px solid var(--color-volt);
+  border-radius: var(--radius-card);
+  background: var(--color-panel);
+}
+.gx__state h2 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 650;
+  color: var(--color-paper);
+  margin: 0;
+}
+.gx__state p {
+  font-size: 0.93rem;
+  line-height: 1.7;
+  color: var(--color-chalk);
+  margin: 0;
+}
+.gx__state--warn {
+  border-left-color: var(--color-halt);
+}
+
+/* ── seat cluster ─────────────────────────────────────────────────────── */
+
+.sc {
+  display: flex;
+  justify-content: center;
+}
+
+.sc__glass {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding: 1.6rem 1.4rem 1.3rem;
+  border-radius: 16px;
+  border: 1px solid #000;
+  background: radial-gradient(130% 100% at 50% 6%, #241503, #130a02 58%, #0a0501);
+  box-shadow:
+    inset 0 0 46px rgba(0, 0, 0, 0.85),
+    inset 0 0 14px rgba(255, 176, 60, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.sc--waitlist .sc__glass {
+  background: radial-gradient(130% 100% at 50% 6%, #07200f, #03130a 58%, #020a05);
+  box-shadow:
+    inset 0 0 46px rgba(0, 0, 0, 0.85),
+    inset 0 0 14px rgba(82, 255, 143, 0.07);
+}
+
+.sc__label,
+.sc__suffix {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 176, 60, 0.62);
+  margin: 0;
+}
+.sc--waitlist .sc__label,
+.sc--waitlist .sc__suffix {
+  color: rgba(82, 255, 143, 0.6);
+}
+
+.sc__digits {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.sc__cell {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+  padding: 0.16em 0.2em;
+  border-radius: 5px;
+  border: 1px solid #000;
+  background: linear-gradient(180deg, #000, #231505 32%, #231505 68%, #000);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  font-family: var(--font-mono);
+  font-size: clamp(2.6rem, 12vw, 4.2rem);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sc--waitlist .sc__cell {
+  background: linear-gradient(180deg, #000, #05200f 32%, #05200f 68%, #000);
+}
+
+.sc__strip {
+  display: block;
+  /* Starts at zero and transitions to the target digit on mount, which is what
+     makes the number roll rather than appear. */
+  transition: transform 1.05s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sc__strip i {
+  display: block;
+  height: 1em;
+  font-style: normal;
+  color: #ffb03c;
+  text-shadow: 0 0 9px rgba(255, 140, 26, 0.5);
+}
+.sc--waitlist .sc__strip i {
+  color: #52ff8f;
+  text-shadow: 0 0 9px rgba(40, 220, 110, 0.45);
+}
+
+/* Scanlines. Purely decorative, and cheap enough to leave on. */
+.sc__scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0 2px,
+    rgba(0, 0, 0, 0.22) 2px 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc__strip {
+    transition: none;
+  }
+}
+
+/* ── nameplate ────────────────────────────────────────────────────────── */
+
+.gx__plate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 0.8rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-card);
+  background: var(--color-panel);
+}
+.gx__plate dt {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-dim);
+}
+.gx__plate dd {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--color-paper);
+}
+
+.gx__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+.gx__btn {
+  padding: 0.6rem 0.95rem;
+  border: 1px solid var(--color-line-2);
+  border-radius: 4px;
+  background: var(--color-panel-2);
+  color: var(--color-chalk);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  cursor: pointer;
+}
+.gx__btn:hover,
+.gx__btn:focus-visible {
+  border-color: var(--color-volt);
+  color: var(--color-paper);
+}
+
+/* The empty bay, behind the registration page. A place reserved for someone,
+   which is what a seat number is. Kept far darker than the hero's — this page
+   is a form, and a form must never be hard to read. */
+.gx {
+  position: relative;
+  isolation: isolate;
+}
+.gx::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: image-set(
+    url("/img/seat.avif") type("image/avif"),
+    url("/img/seat.webp") type("image/webp")
+  );
+  background-size: cover;
+  background-position: 50% 30%;
+  opacity: 0.16;
+}
+.gx::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-void) 55%, transparent) 0%,
+    var(--color-void) 62%
+  );
+}

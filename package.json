@@ -11,10 +11,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p cloudflare/tsconfig.json",
+    "test": "vitest run && vitest run --config cloudflare/vitest.config.mts",
     "test:watch": "vitest",
-    "verify": "pnpm lint && pnpm typecheck && pnpm build && pnpm test"
+    "verify": "pnpm lint && pnpm typecheck && pnpm build && pnpm test",
+    "test:worker": "vitest run --config cloudflare/vitest.config.mts",
+    "cf:check": "wrangler deploy --config cloudflare/wrangler.jsonc --dry-run --env preview --outdir .wrangler/dry-run",
+    "cf:dev": "wrangler dev --config cloudflare/wrangler.jsonc --env preview",
+    "cf:migrate:preview": "wrangler d1 migrations apply teslam-genesis-preview --config cloudflare/wrangler.jsonc --env preview --remote",
+    "cf:migrate:production": "wrangler d1 migrations apply teslam-genesis-production --config cloudflare/wrangler.jsonc --env=\"\" --remote",
+    "cf:deploy:preview": "wrangler deploy --config cloudflare/wrangler.jsonc --env preview",
+    "cf:deploy:production": "wrangler deploy --config cloudflare/wrangler.jsonc --env=\"\""
   },
   "dependencies": {
     "next": "16.2.12",
@@ -22,6 +29,7 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.21.1",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "26.1.2",
     "@types/react": "19.2.18",
@@ -30,6 +38,7 @@
     "eslint-config-next": "16.2.12",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "wrangler": "^4.121.0"
   }
 }

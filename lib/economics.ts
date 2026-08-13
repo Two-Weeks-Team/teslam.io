@@ -32,7 +32,19 @@ export const samplesPerHour = 3600 / given.samplingIntervalSeconds;
 export const signalsPerDay =
   signalCount * samplesPerHour * given.assumedDriveHoursPerDay;
 
-export const apiUsdPerDay = signalsPerDay * given.pricePerSignalUsd;
+/**
+ * Fleet Telemetry is quoted as a bundle — $1 per 150,000 signals — so that is
+ * how the input is stored. Deriving the per-signal price here rather than
+ * rounding it into the data file keeps the arithmetic exact and keeps the
+ * number in `model.json` identical to the number on the invoice.
+ *
+ * The site previously carried $0.0001/signal, which was the October 2024
+ * pre-revision tariff. That is 15× the current price and it made the API bill
+ * look like the dominant cost, which is the opposite of what this page argues.
+ */
+export const pricePerSignalUsd = 1 / given.signalsPerUsd;
+
+export const apiUsdPerDay = signalsPerDay * pricePerSignalUsd;
 export const apiUsdPerMonth = apiUsdPerDay * given.daysPerMonth;
 export const apiKrwPerMonth = apiUsdPerMonth * assumed.fxKrwPerUsd;
 
@@ -114,6 +126,39 @@ export const genesisPerVehicleKrwPerMonth = apiKrwPerMonth + genesisNetReward;
 export const genesisTotalKrwPerMonth =
   genesisPerVehicleKrwPerMonth * genesisSeats;
 
+/* ── The same figures at a live rate ──────────────────────────────────── */
+
+/**
+ * Exactly seven figures on this site move with the exchange rate, and all seven
+ * descend from the API bill. Everything else is pegged in won already — a DRV
+ * is defined as half a won, so the reward side of the ledger does not care what
+ * the dollar does.
+ *
+ * The constants above stay bound to the whitepaper's assumed rate: they are
+ * what the document argues, and the parity test and the machine mirrors need a
+ * figure that does not move underfoot. This function is what the page renders,
+ * at whatever rate was quoted for that request.
+ */
+export type LiveFigures = ReturnType<typeof deriveAt>;
+
+export function deriveAt(fxKrwPerUsd: number) {
+  const api = apiUsdPerMonth * fxKrwPerUsd;
+  const cashCost = api + netRewardKrwPerMonth;
+  const genesisApi = api * genesisSeats;
+  const genesisPerVehicle = api + genesisNetReward;
+
+  return {
+    fxKrwPerUsd,
+    apiKrwPerMonth: api,
+    cashCostPerVehicleMonth: cashCost,
+    apiShareOfCashCost: api / cashCost,
+    breakevenKrwPerVehicleMonth: cashCost,
+    genesisApiKrwPerMonth: genesisApi,
+    genesisPerVehicleKrwPerMonth: genesisPerVehicle,
+    genesisTotalKrwPerMonth: genesisPerVehicle * genesisSeats,
+  };
+}
+
 /* ── Token supply ─────────────────────────────────────────────────────── */
 
 export const tslmTotalSupply = given.tslmTotalSupply;
@@ -122,7 +167,15 @@ export const dailyCapDrv = given.dailyCapDrv;
 export const pegDrv = given.pegDrv;
 export const pegKrw = given.pegKrw;
 export const samplingIntervalSeconds = given.samplingIntervalSeconds;
-export const pricePerSignalUsd = given.pricePerSignalUsd;
+export const signalsPerUsd = given.signalsPerUsd;
+
+/**
+ * Tesla's per-account monthly credit. Deliberately absent from every
+ * calculation above — the site quotes the gross bill so that a change in
+ * credit policy cannot undermine the argument. Exported only so the footnote
+ * that discloses it reads the figure from the model instead of hardcoding it.
+ */
+export const monthlyAccountCreditUsd = given.monthlyAccountCreditUsd;
 export const fxKrwPerUsd = assumed.fxKrwPerUsd;
 export const avgKmPerMonth = assumed.avgKmPerMonth;
 export const partnerCommissionRate = assumed.partnerCommissionRate;

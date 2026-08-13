@@ -2,19 +2,20 @@ import { Section } from "@/components/sections/section";
 import { getModel, type Locale } from "@/lib/i18n";
 import { krw, pct } from "@/lib/format";
 import {
-  apiKrwPerMonth,
-  apiShareOfCashCost,
-  breakevenKrwPerVehicleMonth,
   burnedKrwPerMonth,
-  cashCostPerVehicleMonth,
   cashRedeemedKrwPerMonth,
   commissionRecoveredKrwPerMonth,
   deferredKrwPerMonth,
-  genesisApiKrwPerMonth,
-  genesisTotalKrwPerMonth,
   netRewardKrwPerMonth,
   rewardKrwPerMonth,
 } from "@/lib/economics";
+import type { LiveFigures } from "@/lib/economics";
+
+/*
+ * The imports above are the reward side of the ledger, which is pegged in won
+ * and does not move with the dollar. Everything that does move arrives as
+ * `live`, derived from the rate quoted for this request.
+ */
 
 /** Marks a row whose input has not been validated against a real fleet. */
 function Assumed({ label }: { label: string }) {
@@ -31,7 +32,13 @@ function Assumed({ label }: { label: string }) {
  * number, so the smaller number is shown next to the real one rather than
  * instead of it.
  */
-export function Economics({ locale }: { locale: Locale }) {
+export function Economics({
+  locale,
+  live,
+}: {
+  locale: Locale;
+  live: LiveFigures;
+}) {
   const t = getModel(locale).economics;
   const r = t.rows;
 
@@ -46,7 +53,7 @@ export function Economics({ locale }: { locale: Locale }) {
                 {r.api.k}
                 <span className="ledger__d"> · {r.api.d}</span>
               </th>
-              <td className="ledger__v">{krw(locale, apiKrwPerMonth)}</td>
+              <td className="ledger__v">{krw(locale, live.apiKrwPerMonth)}</td>
             </tr>
 
             <tr>
@@ -109,7 +116,7 @@ export function Economics({ locale }: { locale: Locale }) {
                 <span className="ledger__d"> · {r.total.d}</span>
               </th>
               <td className="ledger__v">
-                {krw(locale, cashCostPerVehicleMonth)}
+                {krw(locale, live.cashCostPerVehicleMonth)}
               </td>
             </tr>
           </tbody>
@@ -119,13 +126,13 @@ export function Economics({ locale }: { locale: Locale }) {
       <div className="split">
         <div className="big">
           <p className="big__h">{t.shareNote}</p>
-          <p className="big__v">{pct(locale, apiShareOfCashCost)}</p>
+          <p className="big__v">{pct(locale, live.apiShareOfCashCost)}</p>
           <p className="big__n">{t.rows.api.d}</p>
         </div>
         <div className="big big--volt">
           <p className="big__h">{t.breakevenTitle}</p>
           <p className="big__v">
-            {krw(locale, breakevenKrwPerVehicleMonth)}
+            {krw(locale, live.breakevenKrwPerVehicleMonth)}
           </p>
           <p className="big__n">{t.breakevenNote}</p>
         </div>
@@ -137,11 +144,11 @@ export function Economics({ locale }: { locale: Locale }) {
       <div className="compare">
         <div className="compare__cell">
           <p className="compare__l">{t.genesisQuoted}</p>
-          <p className="compare__v">{krw(locale, genesisApiKrwPerMonth)}</p>
+          <p className="compare__v">{krw(locale, live.genesisApiKrwPerMonth)}</p>
         </div>
         <div className="compare__cell compare__cell--true">
           <p className="compare__l">{t.genesisTrue}</p>
-          <p className="compare__v">{krw(locale, genesisTotalKrwPerMonth)}</p>
+          <p className="compare__v">{krw(locale, live.genesisTotalKrwPerMonth)}</p>
         </div>
       </div>
       <p className="mix__n">{t.genesisNote}</p>

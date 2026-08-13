@@ -24,7 +24,10 @@ export const home: HomeContent = {
 
   preview: {
     tag: "Not open yet",
-    body: "The service has not launched. The posts, rankings and ledger entries below are sample content showing what the board looks like populated — none of it is real activity.",
+    body: "The service has not launched. Seats confirmed, the regional split and the number of people watching are real figures; the posts, rankings and wallet entries below are sample content showing what the board looks like populated.",
+    realLabel: "real figure",
+    sampleLabel: "sample",
+    countStale: "The count could not be loaded — the figures below are not current.",
   },
 
   hero: {
@@ -48,7 +51,13 @@ export const home: HomeContent = {
       "A vote on tokenomics changes",
     ],
     cta: "Take a seat",
-    note: "500 vehicles, first come. Registration happens on an external form; this site stores no personal data.",
+    note: "500 vehicles, first come. We keep an email, a car, the region you pick and a record of your consent. Never a coordinate, never a VIN.",
+  },
+
+  density: {
+    title: "Who is near you",
+    sub: "Confirmed seats by region. A province the registrant chose, never a coordinate.",
+    note: "A schematic, not a projection. Registrants leave no coordinates, so the only thing this drawing can honestly say is how many people are in each region. A league needs faces you recognise and a redemption partner needs to be somewhere you already drive — which makes this distribution matter more than the national total.",
   },
 
   league: {

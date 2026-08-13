@@ -2,8 +2,14 @@ import { home as koHome } from "@/content/ko/home";
 import { home as enHome } from "@/content/en/home";
 import { model as koModel } from "@/content/ko/model";
 import { model as enModel } from "@/content/en/model";
+import { legal as koLegal } from "@/content/ko/legal";
+import { genesis as koGenesis } from "@/content/ko/genesis";
+import { legal as enLegal } from "@/content/en/legal";
+import { genesis as enGenesis } from "@/content/en/genesis";
 import type { HomeContent } from "@/content/ko/home";
 import type { ModelContent } from "@/content/ko/model";
+import type { LegalContent } from "@/content/ko/legal";
+import type { GenesisContent } from "@/content/ko/genesis";
 import { SITE } from "@/lib/site";
 
 export const LOCALES = ["ko", "en"] as const;
@@ -14,6 +20,8 @@ export const DEFAULT_LOCALE: Locale = "ko";
 
 const HOME: Record<Locale, HomeContent> = { ko: koHome, en: enHome };
 const MODEL: Record<Locale, ModelContent> = { ko: koModel, en: enModel };
+const LEGAL: Record<Locale, LegalContent> = { ko: koLegal, en: enLegal };
+const GENESIS: Record<Locale, GenesisContent> = { ko: koGenesis, en: enGenesis };
 
 /** The community front page — the shrine. */
 export function getContent(locale: Locale): HomeContent {
@@ -53,6 +61,48 @@ export function alternatesFor(locale: Locale) {
       ko: `${SITE}/`,
       en: `${SITE}/en`,
       "x-default": `${SITE}/`,
+    },
+  };
+}
+
+/**
+ * The privacy policy and terms.
+ *
+ * These exist before the registration form does, not after it. A policy
+ * written once personal data is already arriving is a description of a fait
+ * accompli rather than a commitment.
+ */
+export function getLegal(locale: Locale): LegalContent {
+  return LEGAL[locale];
+}
+
+/** Copy for the registration flow. */
+export function getGenesis(locale: Locale): GenesisContent {
+  return GENESIS[locale];
+}
+
+/** The registration flow. Korean lives at the root, as everything else does. */
+export function genesisPathFor(locale: Locale): string {
+  return locale === "ko" ? "/genesis" : "/en/genesis";
+}
+
+export function genesisConfirmPathFor(locale: Locale): string {
+  return `${genesisPathFor(locale)}/confirm`;
+}
+
+export type LegalSlug = "privacy" | "terms";
+
+export function legalPathFor(locale: Locale, slug: LegalSlug): string {
+  return locale === "ko" ? `/${slug}` : `/en/${slug}`;
+}
+
+export function legalAlternatesFor(locale: Locale, slug: LegalSlug) {
+  return {
+    canonical: `${SITE}${legalPathFor(locale, slug)}`,
+    languages: {
+      ko: `${SITE}/${slug}`,
+      en: `${SITE}/en/${slug}`,
+      "x-default": `${SITE}/${slug}`,
     },
   };
 }

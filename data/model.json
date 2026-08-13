@@ -1,13 +1,13 @@
 {
   "capturedAt": "2026-08-06",
 
-  "_note": "Inputs only. Every figure shown on the site is computed from this file by lib/economics.ts, so a number on the page can never drift from the number in the model. `given` is the operator's specification. `assumed` has not been validated against a real fleet yet and is labelled as such wherever it is rendered.",
+  "_note": "Inputs only. Every figure shown on the site is computed from this file by lib/economics.ts, so a number on the page can never drift from the number in the model. `given` is the operator's specification. `assumed` has not been validated against a real fleet yet and is labelled as such wherever it is rendered. `monthlyAccountCreditUsd` is a published Tesla figure that is deliberately NOT applied to any calculation — it is carried here only so the page can name it in a footnote from a single source rather than typing it into prose.",
 
   "given": {
     "signals": ["latitude", "longitude", "vehicleSpeed", "odometer"],
     "samplingIntervalSeconds": 60,
     "assumedDriveHoursPerDay": 1,
-    "pricePerSignalUsd": 0.0001,
+    "signalsPerUsd": 150000,
     "daysPerMonth": 30,
 
     "drvPerKm": 10,
@@ -18,7 +18,9 @@
     "tslmTotalSupply": 100000000,
 
     "genesisSeats": 500,
-    "genesisRewardMultiplier": 1.5
+    "genesisRewardMultiplier": 1.5,
+
+    "monthlyAccountCreditUsd": 10
   },
 
   "assumed": {

@@ -1,4 +1,5 @@
 import { getContent, type Locale } from "@/lib/i18n";
+import { Mark } from "@/components/community/mark";
 import { n } from "@/lib/format";
 import cm from "@/data/community.json";
 
@@ -8,6 +9,9 @@ export function Feed({ locale }: { locale: Locale }) {
 
   return (
     <section className="feed" id="feed" aria-labelledby="feed-h">
+      <p className="fd__mark">
+        <Mark locale={locale} kind="sample" />
+      </p>
       <h2 className="skip" id="feed-h">
         {t.title}
       </h2>

@@ -7,7 +7,18 @@ import typescript from "eslint-config-next/typescript";
  * plugin graph these presets ship under ESLint 10.
  */
 const config = [
-  { ignores: [".next/**", "node_modules/**", "public/**", "next-env.d.ts"] },
+  {
+    ignores: [
+      ".next/**",
+      ".wrangler/**",
+      "node_modules/**",
+      "public/**",
+      "next-env.d.ts",
+      // Written by `wrangler types`. Editing it is pointless — it is
+      // regenerated — and linting it only reports on Cloudflare's formatting.
+      "cloudflare/worker-configuration.d.ts",
+    ],
+  },
   ...coreWebVitals,
   ...typescript,
 ];

@@ -1,19 +1,24 @@
-import { getContent, modelPathFor, type Locale } from "@/lib/i18n";
-import { WAITLIST_URL } from "@/lib/site";
-import { n } from "@/lib/format";
-import cm from "@/data/community.json";
+"use client";
 
-const { seats, taken } = cm.genesis;
+import { genesisPathFor, getContent, modelPathFor, type Locale } from "@/lib/i18n";
+import { n } from "@/lib/format";
+import { useLive } from "@/components/community/live-provider";
+import { Mark } from "@/components/community/mark";
 
 /**
  * Headline, and the Genesis call to action drawn as the cohort itself.
  *
- * The seat grid is the whole idea: 500 squares, 347 gold and taken, the rest
+ * The seat grid is the whole idea: 500 squares, the taken ones gold, the rest
  * empty — and one mint square blinking, which is the seat the reader would be
  * getting. A progress bar would carry the same number and none of the pull.
+ *
+ * The count is real. It arrives from the server in the HTML and then follows
+ * the live socket, so a seat taken while someone is reading lights up under
+ * their eyes rather than waiting for a reload.
  */
 export function CHero({ locale }: { locale: Locale }) {
   const t = getContent(locale);
+  const { seats, taken, justTook, live } = useLive();
   const left = seats - taken;
 
   return (
@@ -29,7 +34,7 @@ export function CHero({ locale }: { locale: Locale }) {
         <div className="chero__btns">
           <a
             className="btn btn--gold"
-            href={WAITLIST_URL}
+            href={genesisPathFor(locale)}
             rel="noopener noreferrer"
             target="_blank"
           >
@@ -43,6 +48,7 @@ export function CHero({ locale }: { locale: Locale }) {
 
       <aside className="seats" aria-labelledby="seats-h">
         <p className="seats__h" id="seats-h">
+          {live ? <Mark locale={locale} kind="real" /> : null}
           {t.genesis.title}
         </p>
 
@@ -55,7 +61,13 @@ export function CHero({ locale }: { locale: Locale }) {
             <span
               key={i}
               className={
-                i < taken ? "seat seat--on" : i === taken ? "seat seat--you" : "seat"
+                justTook && i === justTook.seatNo - 1
+                  ? "seat seat--on seat--new"
+                  : i < taken
+                    ? "seat seat--on"
+                    : i === taken
+                      ? "seat seat--you"
+                      : "seat"
               }
             />
           ))}
@@ -98,7 +110,7 @@ export function CHero({ locale }: { locale: Locale }) {
 
         <a
           className="btn btn--mint btn--block seats__cta"
-          href={WAITLIST_URL}
+          href={genesisPathFor(locale)}
           rel="noopener noreferrer"
           target="_blank"
         >

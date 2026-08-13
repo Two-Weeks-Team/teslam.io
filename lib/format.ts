@@ -12,8 +12,9 @@ export function n(locale: Locale, value: number, digits = 0): string {
 
 /**
  * Won, rounded to whole units. Costs are quoted to the won because the whole
- * argument turns on a figure near ₩3,000 — rounding to thousands would erase
- * the difference the page exists to show.
+ * argument turns on a figure near ₩2,100 — rounding to thousands would erase
+ * the difference the page exists to show, and it would flatten the ₩67 API
+ * line into nothing at all.
  */
 export function krw(locale: Locale, value: number): string {
   const body = n(locale, Math.round(value));

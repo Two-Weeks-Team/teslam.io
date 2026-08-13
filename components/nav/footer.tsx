@@ -1,4 +1,4 @@
-import { getModel, type Locale } from "@/lib/i18n";
+import { getLegal, getModel, legalPathFor, type Locale } from "@/lib/i18n";
 import { CONTACT_EMAIL, REPO } from "@/lib/site";
 import { capturedAt } from "@/lib/economics";
 
@@ -11,6 +11,7 @@ import { capturedAt } from "@/lib/economics";
  */
 export function Footer({ locale }: { locale: Locale }) {
   const t = getModel(locale).footer;
+  const l = getLegal(locale);
   const year = 2026;
 
   return (
@@ -36,6 +37,12 @@ export function Footer({ locale }: { locale: Locale }) {
           </a>
           <a className="foot__a" href="/llms.txt">
             /llms.txt
+          </a>
+          <a className="foot__a" href={legalPathFor(locale, "privacy")}>
+            {l.navPrivacy}
+          </a>
+          <a className="foot__a" href={legalPathFor(locale, "terms")}>
+            {l.navTerms}
           </a>
         </div>
       </div>

@@ -3,6 +3,10 @@ import { home as koHome } from "@/content/ko/home";
 import { home as enHome } from "@/content/en/home";
 import { model as koModel } from "@/content/ko/model";
 import { model as enModel } from "@/content/en/model";
+import { legal as koLegal } from "@/content/ko/legal";
+import { legal as enLegal } from "@/content/en/legal";
+import { genesis as koGenesis } from "@/content/ko/genesis";
+import { genesis as enGenesis } from "@/content/en/genesis";
 
 /**
  * TypeScript already guarantees the locales share a shape. What it cannot
@@ -52,11 +56,17 @@ const SHARED = new Set([
   "model.cta.eyebrow",
   "model.footer.rights",
   "model.roadmap.phases.genesis.t",
+  // Effective dates. The same document takes effect on the same day in both
+  // languages — a translated date would mean two different policies.
+  "legal.privacy.updated",
+  "legal.terms.updated",
 ]);
 
 const MODULES: Array<[string, unknown, unknown]> = [
   ["home", koHome, enHome],
   ["model", koModel, enModel],
+  ["legal", koLegal, enLegal],
+  ["genesis", koGenesis, enGenesis],
 ];
 
 describe.each(MODULES)("locale parity — %s", (name, ko, en) => {

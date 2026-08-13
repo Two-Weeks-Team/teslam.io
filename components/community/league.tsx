@@ -1,5 +1,5 @@
-import { getContent, type Locale } from "@/lib/i18n";
-import { WAITLIST_URL } from "@/lib/site";
+import { getContent, genesisPathFor, type Locale } from "@/lib/i18n";
+import { Mark } from "@/components/community/mark";
 import { n } from "@/lib/format";
 import cm from "@/data/community.json";
 
@@ -24,6 +24,7 @@ export function League({ locale }: { locale: Locale }) {
         <p className="lg__eyebrow">{t.eyebrow}</p>
         <h2 className="lg__h2" id="lg-h">
           {t.title}
+          <Mark locale={locale} kind="sample" />
         </h2>
         <p className="lg__sub">{t.sub}</p>
         <p className="lg__clock">
@@ -108,7 +109,7 @@ export function League({ locale }: { locale: Locale }) {
 
             <tr className="yourow">
               <td colSpan={7}>
-                <a href={WAITLIST_URL} rel="noopener noreferrer" target="_blank">
+                <a href={genesisPathFor(locale)} rel="noopener noreferrer" target="_blank">
                   {t.yourRow}
                 </a>
                 <span className="hint">{t.yourRowNote}</span>

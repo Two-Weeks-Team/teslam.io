@@ -1,0 +1,137 @@
+/* ---------------------------------------------------------------------------
+   Legal documents — /privacy and /terms
+
+   These are read, not scanned. So: one column at a comfortable measure, real
+   paragraph rhythm, and no card chrome. The instrument-cluster palette still
+   applies, but volt appears only on links — nothing here is live signal.
+
+   The lede is set slightly larger because in both documents the first
+   paragraph carries the sentence that matters most, and a reader who stops
+   after it should still have the point.
+--------------------------------------------------------------------------- */
+
+.lg {
+  min-height: 100dvh;
+  background: var(--color-void);
+  padding: clamp(2rem, 6vw, 4.5rem) var(--spacing-gutter)
+    clamp(3rem, 8vw, 6rem);
+}
+
+.lg__wrap {
+  max-width: 44rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.lg__top {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--color-line);
+}
+
+.lg__back {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+  text-decoration: none;
+  width: fit-content;
+}
+
+.lg__back:hover,
+.lg__back:focus-visible {
+  color: var(--color-volt);
+}
+
+.lg__h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 5vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  color: var(--color-paper);
+  text-wrap: balance;
+  margin: 0;
+}
+
+.lg__stamp {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--color-dim);
+}
+
+.lg__lede {
+  font-size: 1.03rem;
+  line-height: 1.7;
+  color: var(--color-chalk);
+  margin: 0;
+}
+
+.lg__sec {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.lg__h2 {
+  font-family: var(--font-display);
+  font-size: 1.04rem;
+  font-weight: 650;
+  letter-spacing: -0.008em;
+  line-height: 1.4;
+  color: var(--color-paper);
+  margin: 0;
+}
+
+.lg__p {
+  font-size: 0.95rem;
+  line-height: 1.75;
+  color: var(--color-chalk);
+  margin: 0;
+}
+
+.lg__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding-left: 1.05rem;
+}
+
+.lg__li {
+  font-size: 0.93rem;
+  line-height: 1.7;
+  color: var(--color-chalk);
+}
+
+.lg__li::marker {
+  color: var(--color-dim);
+}
+
+.lg__foot {
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--color-line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--color-dim);
+}
+
+.lg__foot a {
+  color: var(--color-mute);
+  text-decoration: none;
+}
+
+.lg__foot a:hover,
+.lg__foot a:focus-visible {
+  color: var(--color-volt);
+}

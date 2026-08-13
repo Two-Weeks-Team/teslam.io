@@ -1,10 +1,13 @@
-import { getContent, modelPathFor, type Locale } from "@/lib/i18n";
-import { WAITLIST_URL } from "@/lib/site";
+"use client";
+
+import { genesisPathFor, getContent, modelPathFor, type Locale } from "@/lib/i18n";
 import { n } from "@/lib/format";
+import { useLive } from "@/components/community/live-provider";
 import cm from "@/data/community.json";
 
 /** Top bar, then the live ticker. Both are chrome the board sits under. */
 export function Bar({ locale }: { locale: Locale }) {
+  const { watching } = useLive();
   const t = getContent(locale);
   const boards = cm.boards.slice(1, 6);
 
@@ -30,11 +33,19 @@ export function Bar({ locale }: { locale: Locale }) {
           </div>
 
           <div className="cmbar__right">
-            <span className="cmbar__online">
-              <span className="cmbar__pulse" aria-hidden="true" />
-              {t.nav.online} {n(locale, cm.onlineNow)}
-              {t.nav.people}
-            </span>
+            {/*
+              The real number of people in the room, from the live socket.
+              Rendered as nothing at all until a socket is open — an unknown
+              count and a count of zero are different facts, and the old value
+              here was simply invented.
+            */}
+            {watching === null ? null : (
+              <span className="cmbar__online">
+                <span className="cmbar__pulse" aria-hidden="true" />
+                {t.nav.online} {n(locale, watching)}
+                {t.nav.people}
+              </span>
+            )}
             <a
               className="cmbar__locale"
               href={t.nav.localeHref}
@@ -45,7 +56,7 @@ export function Bar({ locale }: { locale: Locale }) {
             </a>
             <a
               className="cmbar__cta"
-              href={WAITLIST_URL}
+              href={genesisPathFor(locale)}
               rel="noopener noreferrer"
               target="_blank"
             >

@@ -1,4 +1,5 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import * as e from "@/lib/economics";
 import { krw, pct } from "@/lib/format";
@@ -35,23 +36,82 @@ describe.runIf(built)("the operating model page", () => {
     describe(locale, () => {
       const doc = () => read(PAGES.model[locale]);
 
+      /**
+       * The exchange rate is now fetched per request, so the page cannot be
+       * checked against a constant. It is checked against itself instead: the
+       * rate it publishes in `data-fx` must be the rate every won figure on it
+       * was computed with.
+       *
+       * This is a stronger test than the old one, not a weaker substitute. The
+       * previous version could only prove the page agreed with a number in a
+       * file; this proves the page agrees with the number it showed the reader,
+       * which is the thing a reader can actually check.
+       */
+      const quotedRate = () => {
+        const m = doc().match(/data-fx="([\d.]+)"/);
+        expect(m, "the page does not publish the rate it used").not.toBeNull();
+        return Number(m![1]);
+      };
+
+      it("publishes a plausible rate with the day it is for", () => {
+        const rate = quotedRate();
+        expect(rate).toBeGreaterThan(500);
+        expect(rate).toBeLessThan(5000);
+        expect(doc()).toMatch(/data-fx-as-of="\d{4}-\d{2}-\d{2}"/);
+        expect(doc()).toMatch(/data-fx-source="(ecb|whitepaper)"/);
+      });
+
       it("renders the API cost, the true cash cost and the break-even", () => {
+        const live = e.deriveAt(quotedRate());
         for (const figure of [
-          krw(locale, e.apiKrwPerMonth),
-          krw(locale, e.cashCostPerVehicleMonth),
-          krw(locale, e.breakevenKrwPerVehicleMonth),
+          krw(locale, live.apiKrwPerMonth),
+          krw(locale, live.cashCostPerVehicleMonth),
+          krw(locale, live.breakevenKrwPerVehicleMonth),
         ]) {
           expect(doc(), `missing figure ${figure}`).toContain(figure);
         }
       });
 
       it("renders both Genesis figures, not just the flattering one", () => {
-        expect(doc()).toContain(krw(locale, e.genesisApiKrwPerMonth));
-        expect(doc()).toContain(krw(locale, e.genesisTotalKrwPerMonth));
+        const live = e.deriveAt(quotedRate());
+        expect(doc()).toContain(krw(locale, live.genesisApiKrwPerMonth));
+        expect(doc()).toContain(krw(locale, live.genesisTotalKrwPerMonth));
       });
 
       it("renders the API share of cash out", () => {
-        expect(doc()).toContain(pct(locale, e.apiShareOfCashCost));
+        const live = e.deriveAt(quotedRate());
+        expect(doc()).toContain(pct(locale, live.apiShareOfCashCost));
+      });
+
+      /**
+       * The machine mirror must quote the page's rate, not its own.
+       *
+       * This test exists because the mirror silently drifted the first time the
+       * rate went live: the page said ₩2,108 while `/llms.txt` still said
+       * ₩2,107, because two of the mirror's figures were still reading the
+       * static constant. Nothing else caught it — the suites agreed with
+       * themselves, and only comparing the two artefacts revealed the gap.
+       */
+      it("quotes the same figures to a machine as to a person", () => {
+        // `llms.txt` is also a directory in the build output, so existence is
+        // not enough — the body file is the one that holds the rendered text.
+        const mirror = ["llms.txt.body", "llms.txt"]
+          .map((f) => join(".next/server/app", f))
+          .filter((p) => existsSync(p) && statSync(p).isFile())
+          .map((p) => readFileSync(p, "utf8"))[0];
+        expect(mirror, "no rendered /llms.txt in the build output").toBeTruthy();
+
+        const live = e.deriveAt(quotedRate());
+        for (const figure of [
+          live.apiKrwPerMonth,
+          live.cashCostPerVehicleMonth,
+        ]) {
+          const asWon = Math.round(figure).toLocaleString("en-US");
+          expect(
+            mirror,
+            `/llms.txt is missing ${asWon} — the mirror and the page disagree`,
+          ).toContain(asWon);
+        }
       });
 
       it("ships the hero as a finished picture, without JavaScript", () => {

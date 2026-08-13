@@ -1,5 +1,5 @@
-import { getContent, type Locale } from "@/lib/i18n";
-import { WAITLIST_URL } from "@/lib/site";
+import { getContent, genesisPathFor, type Locale } from "@/lib/i18n";
+import { Mark } from "@/components/community/mark";
 import { krw, n } from "@/lib/format";
 import { krwPerDrv, dailyCapDrv } from "@/lib/economics";
 import cm from "@/data/community.json";
@@ -64,6 +64,7 @@ export function RightRail({ locale }: { locale: Locale }) {
     <aside className="rail rail--right" aria-labelledby="wal-h">
       <div className="wal">
         <p className="wal__h" id="wal-h">
+          <Mark locale={locale} kind="sample" />
           {t.title}
         </p>
         <p className="wal__bl">{t.balance}</p>
@@ -94,7 +95,7 @@ export function RightRail({ locale }: { locale: Locale }) {
 
         <a
           className="btn btn--mint btn--block wal__cta"
-          href={WAITLIST_URL}
+          href={genesisPathFor(locale)}
           rel="noopener noreferrer"
           target="_blank"
         >

@@ -1,0 +1,81 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "teslam-genesis-api",
+  "main": "worker.ts",
+  "compatibility_date": "2026-08-11",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Production serves only from the custom domain. A workers.dev URL would be
+  // a second origin holding the same personal data, with none of the DNS or
+  // CORS assumptions the site makes about itself.
+  "workers_dev": false,
+  "routes": [{ "pattern": "api.teslam.io", "custom_domain": true }],
+
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "invocation_logs": true }
+  },
+
+  "vars": {
+    "ALLOWED_ORIGINS": "https://teslam.io",
+    "SITE_ORIGIN": "https://teslam.io"
+  },
+
+  // RESEND_API_KEY, MAIL_FROM and EXPORT_TOKEN are secrets, set with
+  // `wrangler secret put`. They are absent here on purpose — a key in a
+  // committed config is a leaked key.
+
+  // Cloudflare Email Sending. No API key: the binding is the credential.
+  // The account must have Email Sending enabled and teslam.io onboarded
+  // (`wrangler email sending enable teslam.io`) before a send succeeds; until
+  // then the Worker records the registration and reports mailSent: false
+  // rather than pretending a link went out.
+  // Daily sweep of unconfirmed registrations past their link's expiry, which
+  // is what makes the confirmation mail's deletion promise true.
+  "triggers": { "crons": ["17 3 * * *"] },
+
+  "send_email": [{ "name": "EMAIL" }],
+
+  "durable_objects": {
+    "bindings": [{ "name": "LIVE", "class_name": "LiveBoard" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LiveBoard"] }],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "teslam-genesis-production",
+      "database_id": "6f26cbc9-83a4-4833-9418-3d84d31efcef",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  "env": {
+    "preview": {
+      "name": "teslam-genesis-api-preview",
+      "workers_dev": true,
+      "routes": [],
+      "compatibility_flags": ["nodejs_compat"],
+      "vars": {
+        "ALLOWED_ORIGINS": "http://localhost:3000",
+        "SITE_ORIGIN": "http://localhost:3000"
+      },
+      // Named environments do not inherit bindings, so these are repeated
+      // rather than omitted. A missing binding here fails at request time, not
+      // at deploy time, which is the worst moment to find out.
+      "send_email": [{ "name": "EMAIL" }],
+      "durable_objects": {
+        "bindings": [{ "name": "LIVE", "class_name": "LiveBoard" }]
+      },
+      "migrations": [{ "tag": "v1", "new_sqlite_classes": ["LiveBoard"] }],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "teslam-genesis-preview",
+          "database_id": "f00a64d8-6659-43f4-bc51-56b8c381bb18",
+          "migrations_dir": "migrations"
+        }
+      ]
+    }
+  }
+}
