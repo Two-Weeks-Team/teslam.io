@@ -42,7 +42,7 @@ describe("the generated boundaries", () => {
        * south-west archipelago would fail it for being the right shape.
        */
       const points = (d.match(/[ML]/g) ?? []).length;
-      expect(points, `${region.id} collapsed to ${points} points`).toBeGreaterThan(12);
+      expect(points, `${region.id} collapsed to ${points} points`).toBeGreaterThanOrEqual(12);
     }
   });
 

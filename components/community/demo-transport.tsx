@@ -79,7 +79,7 @@ export function DemoTransport({ locale }: { locale: Locale }) {
                 className="dt__fill"
                 style={
                   i === demo.phase && demo.playing
-                    ? { transform: `scaleX(${demo.progress})` }
+                    ? { transform: `scaleX(${demo.phaseProgress})` }
                     : undefined
                 }
               />

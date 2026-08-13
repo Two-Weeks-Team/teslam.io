@@ -50,11 +50,11 @@ export type LiveState = {
    */
   demo: {
     playing: boolean;
-    /** 0–1 across the whole script. */
-    progress: number;
     /** Index into the phase segments. */
     phase: number;
     phases: number;
+    /** 0–1 inside the current phase — what the active segment fills to. */
+    phaseProgress: number;
     start: () => void;
     stop: () => void;
   };
@@ -219,9 +219,9 @@ export function LiveProvider({
       open,
       demo: {
         playing,
-        progress: frame?.progress ?? 0,
         phase: frame?.phase ?? 0,
         phases: PHASES.length,
+        phaseProgress: frame?.phaseProgress ?? 0,
         start,
         stop,
       },

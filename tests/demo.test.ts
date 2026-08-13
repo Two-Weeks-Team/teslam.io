@@ -94,6 +94,35 @@ describe("the timeline", () => {
     expect(at(DEMO_DURATION).done).toBe(true);
   });
 
+  /**
+   * The segments are phases, so each one fills on its own clock.
+   *
+   * Driven from the whole-run figure — which is what shipped — the first
+   * segment stopped at about a sixth before handing over and the last began
+   * most of the way full: a progress bar that was wrong everywhere except its
+   * ends, and that nothing checked because it looked like motion.
+   */
+  it("fills each segment across its own phase, not the whole run", () => {
+    for (let i = 0; i < PHASES.length; i += 1) {
+      const from = i === 0 ? 0 : PHASES[i - 1].until;
+      const to = PHASES[i].until;
+
+      const opening = at(from + 1);
+      expect(opening.phase, `phase ${i} start`).toBe(i);
+      expect(opening.phaseProgress).toBeLessThan(0.05);
+
+      const closing = at(to - 1);
+      expect(closing.phase, `phase ${i} end`).toBe(i);
+      expect(closing.phaseProgress).toBeGreaterThan(0.95);
+    }
+  });
+
+  it("holds the last segment full through the hold", () => {
+    const held = at(DEMO_DURATION);
+    expect(held.phase).toBe(PHASES.length - 1);
+    expect(held.phaseProgress).toBe(1);
+  });
+
   it("only advances", () => {
     let previous = 0;
     for (let ms = 0; ms <= DEMO_DURATION; ms += 250) {

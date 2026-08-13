@@ -121,8 +121,16 @@ export function demoScript(): DemoEvent[] {
     // loading bar.
     for (let i = 0; i < count; i += 1) {
       const t = (i + 0.5) / count;
-      // Ease-out inside the phase: busy at the start, thinning toward the
-      // handover, which is what a burst actually looks like.
+      /*
+       * Ease-out along the phase's timeline, which means arrivals are sparse
+       * at its start and tighten toward its end — each phase closes in a burst
+       * before the next takes over.
+       *
+       * The comment here used to claim the opposite. The curve's slope is
+       * `2(1 - t)`, so consecutive arrivals are furthest apart at the start
+       * and closest at the end; the gaps run 0.095 down to 0.005 across a
+       * phase. The pacing was fine and the description was backwards.
+       */
       const eased = 1 - (1 - t) * (1 - t);
       const jitter = (random() - 0.5) * (span / count) * 2.2;
       events.push({
@@ -154,9 +162,18 @@ export type DemoFrame = {
   byRegion: Record<string, number>;
   /** The seat that landed most recently, for the flash and the map ripple. */
   justTook: { seatNo: number; region: string } | null;
-  /** 0–1 across the whole script, for the progress bar. */
+  /** 0–1 across the whole script. */
   progress: number;
   phase: number;
+  /**
+   * 0–1 inside the current phase.
+   *
+   * The segments are phases, so a segment has to fill on its own phase's clock.
+   * Driving them from the whole-run figure made the first segment stop at about
+   * a sixth before handing over and the last one start most of the way full —
+   * a progress bar that was wrong everywhere except its ends.
+   */
+  phaseProgress: number;
   done: boolean;
 };
 
@@ -201,14 +218,20 @@ export function demoTimeline() {
     const last = taken > 0 ? events[taken - 1] : null;
     const fresh = last !== null && elapsed - last.at < 2_600;
 
+    // Past the last boundary the run is in its hold, which belongs to the final
+    // phase and shows it full.
+    const found = PHASES.findIndex((p) => elapsed < p.until);
+    const phase = found === -1 ? PHASES.length - 1 : found;
+    const from = phase === 0 ? 0 : PHASES[phase - 1].until;
+    const to = PHASES[phase].until;
+
     return {
       taken,
       byRegion: taken > 0 ? cumulative[taken - 1] : empty,
       justTook: fresh && last ? { seatNo: last.seat, region: last.region } : null,
-      progress: Math.min(1, elapsed / DEMO_DURATION),
-      phase: PHASES.findIndex((p) => elapsed < p.until) === -1
-        ? PHASES.length - 1
-        : PHASES.findIndex((p) => elapsed < p.until),
+      progress: Math.min(1, Math.max(0, elapsed / DEMO_DURATION)),
+      phase,
+      phaseProgress: Math.min(1, Math.max(0, (elapsed - from) / (to - from))),
       done: elapsed >= DEMO_DURATION,
     };
   }

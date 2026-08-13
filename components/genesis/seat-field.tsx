@@ -414,7 +414,11 @@ export function SeatField({
       // was set when this was a 500px sidebar panel; at full width the same
       // number drew the object as dust.
       gl.uniform1f(uSize, 0.026);
-      gl.uniform1f(uTime, now / 1000);
+      // The same clock the sweep uses, not the wall clock. Reading
+      // `performance.now()` here left the idle breathing running for a reader
+      // who asked for reduced motion — the rotation stopped and the cells
+      // carried on moving, which is half a setting honoured.
+      gl.uniform1f(uTime, clock);
       // An empty cohort has no gold to carry the shape, so the unlit cells have
       // to carry it alone and are drawn brighter. Once seats start landing the
       // ghost steps back, or the thing that has been earned stops standing out
