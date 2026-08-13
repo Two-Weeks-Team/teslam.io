@@ -13,13 +13,13 @@
   "onlineNow": 1284,
 
   "leaderboard": [
-    { "rank": 1, "name": "광교전비장인", "trim": "Model 3 Long Range", "region": "수도권", "eff": 8.42, "km": 487, "drv": 5250, "streak": 23, "delta": 0, "genesis": true },
+    { "rank": 1, "name": "광교전비장인", "trim": "Model 3 Long Range", "region": "수도권", "eff": 8.42, "km": 487, "drv": 5250, "streak": 23, "delta": 1, "genesis": true },
     { "rank": 2, "name": "제주바람가르기", "trim": "Model Y RWD", "region": "제주", "eff": 8.11, "km": 512, "drv": 5120, "streak": 41, "delta": 4, "genesis": false },
-    { "rank": 3, "name": "노란번호판형", "trim": "Model 3 하이랜드", "region": "영남", "eff": 7.96, "km": 446, "drv": 4460, "streak": 12, "delta": -1, "genesis": true },
-    { "rank": 4, "name": "하남스타필드러", "trim": "Model Y Long Range", "region": "수도권", "eff": 7.74, "km": 402, "drv": 3420, "streak": 9, "delta": 2, "genesis": false },
+    { "rank": 3, "name": "노란번호판형", "trim": "Model 3 하이랜드", "region": "영남", "eff": 7.96, "km": 446, "drv": 4460, "streak": 12, "delta": -2, "genesis": true },
+    { "rank": 4, "name": "하남스타필드러", "trim": "Model Y Long Range", "region": "수도권", "eff": 7.74, "km": 402, "drv": 3420, "streak": 9, "delta": 1, "genesis": false },
     { "rank": 5, "name": "판교M3P", "trim": "Model 3 퍼포먼스", "region": "수도권", "eff": 7.68, "km": 531, "drv": 5350, "streak": 18, "delta": -2, "genesis": true },
     { "rank": 6, "name": "초록불차선", "trim": "Model Y Long Range", "region": "충청", "eff": 7.55, "km": 388, "drv": 3110, "streak": 6, "delta": 1, "genesis": false },
-    { "rank": 7, "name": "은하수3", "trim": "Model 3 하이랜드", "region": "대전·충청", "eff": 7.41, "km": 364, "drv": 2980, "streak": 14, "delta": 0, "genesis": false }
+    { "rank": 7, "name": "은하수3", "trim": "Model 3 하이랜드", "region": "대전·충청", "eff": 7.41, "km": 364, "drv": 2980, "streak": 14, "delta": -3, "genesis": false }
   ],
 
   "boards": [

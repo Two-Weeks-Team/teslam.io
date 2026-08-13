@@ -96,6 +96,8 @@ export const home: HomeContent = {
     yourRow: "Your seat — ??",
     yourRowNote: "Link a car and your name lands here",
     all: "Full table",
+    replay: "Replay the week's moves",
+    fromLastWeek: "vs last week",
     unit: "km/kWh",
     dayUnit: "d",
   },

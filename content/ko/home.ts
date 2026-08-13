@@ -108,6 +108,8 @@ export const home = {
     yourRow: "당신 자리 — ??",
     yourRowNote: "연결하면 여기에 이름이 박힙니다",
     all: "전체 순위 보기",
+    replay: "순위 변동 다시 보기",
+    fromLastWeek: "지난주 대비",
     unit: "km/kWh",
     dayUnit: "일",
   },
