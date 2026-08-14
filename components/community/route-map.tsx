@@ -1,39 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Map as MapLibreMap, GeoJSONSource } from "maplibre-gl";
 // The library itself is imported on demand; its stylesheet is not, because the
 // controls it renders would otherwise appear unstyled for the moment between
 // the map loading and the CSS arriving.
 import "maplibre-gl/dist/maplibre-gl.css";
 import { ROUTES } from "@/lib/map/routes";
-import { cumulative, sliceTo } from "@/lib/map/slice";
+import { sliceTo } from "@/lib/map/slice";
+import { FLEET, LEGS, fleetAt } from "@/lib/map/fleet";
 import { darkStyle } from "@/lib/map/style";
 import { drvPerKm, krwPerDrv } from "@/lib/economics";
 import { getContent, type Locale } from "@/lib/i18n";
 import { krw, n } from "@/lib/format";
 
 /**
- * A drive, on the actual roads it used.
+ * The fleet, on the roads it uses.
  *
- * The region map above answers "how many people are near me". This answers a
- * different question — what the product is watching — by playing a drive along
- * real road geometry, close enough in that individual streets are visible.
+ * This began as one car tracing one line, which reads as a diagram. Dozens
+ * moving across the country at the same moment reads as a service running —
+ * and that is the thing a visitor is being asked to join, so it is the thing
+ * the page should show.
  *
- * **The routes are illustrative and the page says so throughout.** teslam.io
- * does not collect coordinates: `/privacy` and the registration form both state
- * it, so no real route data exists to draw. What is real here is the arithmetic
- * beside the map — the distance is the road's true length, and the DRV it earns
- * comes from `lib/economics`, the same figures `/model` is argued from. The
- * shape of the drive is a simulation; what a drive is worth is not.
+ * One car is followed at a time: the readouts and the camera belong to it while
+ * the rest of the fleet drives around it. Following gives the eye somewhere to
+ * rest and gives the numbers something to be about.
  *
- * MapLibre is loaded on demand when the section is first reached. It is by far
- * the largest dependency on the site, and a reader who never scrolls this far
- * should not pay for it.
+ * **The drives are illustrative and the page says so throughout.** teslam.io
+ * does not collect coordinates — `/privacy` and the registration form both
+ * state it — so no real route data exists to draw. What is real is the
+ * arithmetic: distances are the roads' true lengths and the DRV comes from
+ * `lib/economics`, the same figures `/model` is argued from. The shape of a
+ * drive is a simulation; what a drive is worth is not.
+ *
+ * MapLibre loads on demand when the section is first reached. It is by far the
+ * largest dependency on the site and a reader who never scrolls here should not
+ * pay for it.
  */
-
-/** Metres per second along the line, sped up so a 205km drive is watchable. */
-const PLAYBACK_KMH = 5_400;
 
 export function RouteMap({ locale }: { locale: Locale }) {
   const t = getContent(locale).routes;
@@ -41,28 +44,25 @@ export function RouteMap({ locale }: { locale: Locale }) {
   const holderRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const rafRef = useRef(0);
-  const startedRef = useRef(0);
+  const originRef = useRef(0);
+  const clockRef = useRef(0);
 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [active, setActive] = useState(0);
+  // Whether the reader has chosen a route. Until they do, the camera stays on
+  // the country: the first impression of this section should be the whole
+  // fleet moving, not one road with most of the cars outside the frame.
+  const [chosen, setChosen] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [travelled, setTravelled] = useState(0);
+  const [clock, setClock] = useState(0);
 
   const route = ROUTES[active];
+  const legs = LEGS[active];
 
-  /* ── cumulative distance, so playback moves at a speed rather than an index ──
-   *
-   * Stepping one point per frame would race through the dense curves and crawl
-   * down the straight motorway sections, because the simplifier leaves points
-   * where the road bends and removes them where it does not.
-   */
-  const legs = useMemo(() => cumulative(route.points), [route]);
-
-  const path = useCallback(
-    (metres: number) => sliceTo(route.points, legs.cum, legs.total, metres),
-    [route, legs],
-  );
+  /** The car whose numbers the panel shows: the first one on the active route. */
+  const lead = FLEET.find((c) => c.route === active) ?? FLEET[0];
+  const along = legs.total ? (lead.offset + clock * lead.speed) % legs.total : 0;
 
   /* ── the map ─────────────────────────────────────────────────────────── */
 
@@ -97,10 +97,11 @@ export function RouteMap({ locale }: { locale: Locale }) {
           map = new maplibre.Map({
             container: holder,
             style: darkStyle(),
-            center: [127.6, 36.4],
-            zoom: 6.1,
-            // Roads are the point, so the ceiling is well past the zoom where
-            // individual streets resolve.
+            // Framed to include Jeju: the island is a region the form offers
+            // and a route the fleet drives, so cutting it off would be a map of
+            // most of the country.
+            center: [127.5, 35.9],
+            zoom: 5.95,
             maxZoom: 18,
             attributionControl: { compact: true },
             // A map inside a scrolling page should not swallow the scroll.
@@ -112,62 +113,88 @@ export function RouteMap({ locale }: { locale: Locale }) {
 
           map.on("load", () => {
             if (cancelled || !map) return;
-            map.addSource("route", {
-              type: "geojson",
-              data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } },
-            });
-            map.addSource("done", {
-              type: "geojson",
-              data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } },
-            });
-            map.addSource("car", {
-              type: "geojson",
-              data: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [0, 0] } },
-            });
 
-            // The whole route, dim: where the drive is going.
-            map.addLayer({
-              id: "route-line",
-              type: "line",
-              source: "route",
-              layout: { "line-cap": "round", "line-join": "round" },
-              paint: {
-                "line-color": "#2f6f66",
-                "line-width": ["interpolate", ["linear"], ["zoom"], 6, 2, 16, 8],
-                "line-opacity": 0.55,
+            map.addSource("roads", {
+              type: "geojson",
+              data: {
+                type: "FeatureCollection",
+                features: ROUTES.map((r, i) => ({
+                  type: "Feature" as const,
+                  properties: { i },
+                  geometry: { type: "LineString" as const, coordinates: r.points },
+                })),
               },
             });
-            // The part already driven, bright: where it has been.
+            map.addSource("trace", {
+              type: "geojson",
+              data: {
+                type: "Feature",
+                properties: {},
+                geometry: { type: "LineString", coordinates: [] },
+              },
+            });
+            map.addSource("fleet", {
+              type: "geojson",
+              data: { type: "FeatureCollection", features: [] },
+            });
+
+            // Every road the fleet uses, dim: the network it runs on.
             map.addLayer({
-              id: "done-line",
+              id: "roads-line",
               type: "line",
-              source: "done",
+              source: "roads",
+              layout: { "line-cap": "round", "line-join": "round" },
+              paint: {
+                "line-color": "#24564f",
+                "line-width": ["interpolate", ["linear"], ["zoom"], 6, 1.4, 16, 6],
+                "line-opacity": 0.5,
+              },
+            });
+            // The followed car's road, brighter.
+            map.addLayer({
+              id: "trace-line",
+              type: "line",
+              source: "trace",
               layout: { "line-cap": "round", "line-join": "round" },
               paint: {
                 "line-color": "#00c2a8",
-                "line-width": ["interpolate", ["linear"], ["zoom"], 6, 3, 16, 11],
+                "line-width": ["interpolate", ["linear"], ["zoom"], 6, 2.6, 16, 10],
               },
             });
+            /*
+             * One source, two layers, and the lead car told apart by a feature
+             * property rather than by a source of its own. Keeping it in the
+             * same collection means one `setData` per frame for the whole
+             * fleet instead of two.
+             */
             map.addLayer({
-              id: "car-glow",
+              id: "fleet-glow",
               type: "circle",
-              source: "car",
+              source: "fleet",
               paint: {
-                "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 9, 16, 22],
-                "circle-color": "#ffb020",
+                "circle-radius": [
+                  "interpolate", ["linear"], ["zoom"],
+                  6, ["case", ["get", "lead"], 9, 5],
+                  16, ["case", ["get", "lead"], 22, 12],
+                ],
+                "circle-color": ["case", ["get", "lead"], "#ffb020", "#00c2a8"],
                 "circle-opacity": 0.22,
-                "circle-blur": 0.8,
+                "circle-blur": 0.85,
               },
             });
             map.addLayer({
-              id: "car-dot",
+              id: "fleet-dot",
               type: "circle",
-              source: "car",
+              source: "fleet",
               paint: {
-                "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 4, 16, 8],
-                "circle-color": "#ffb020",
+                "circle-radius": [
+                  "interpolate", ["linear"], ["zoom"],
+                  6, ["case", ["get", "lead"], 4.4, 2.6],
+                  16, ["case", ["get", "lead"], 9, 5],
+                ],
+                "circle-color": ["case", ["get", "lead"], "#ffb020", "#7fe6d4"],
                 "circle-stroke-color": "#0b1016",
-                "circle-stroke-width": 1.5,
+                "circle-stroke-width": ["case", ["get", "lead"], 1.6, 0.8],
               },
             });
 
@@ -196,16 +223,10 @@ export function RouteMap({ locale }: { locale: Locale }) {
     };
   }, []);
 
-  /** Draw the selected route and frame it. */
+  /** Frame the followed route when it changes. */
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !ready) return;
-
-    (map.getSource("route") as GeoJSONSource | undefined)?.setData({
-      type: "Feature",
-      properties: {},
-      geometry: { type: "LineString", coordinates: route.points },
-    });
+    if (!map || !ready || !chosen) return;
 
     const lons = route.points.map((p) => p[0]);
     const lats = route.points.map((p) => p[1]);
@@ -214,102 +235,87 @@ export function RouteMap({ locale }: { locale: Locale }) {
         [Math.min(...lons), Math.min(...lats)],
         [Math.max(...lons), Math.max(...lats)],
       ],
-      { padding: 56, duration: 700 },
+      // Capped, so following a 4km hop across Busan does not throw the rest of
+      // the fleet off the screen.
+      { padding: 64, duration: 800, maxZoom: 11.5 },
     );
+  }, [route, ready, chosen]);
 
-    setTravelled(0);
-    setPlaying(false);
-  }, [route, ready]);
-
-  /** Push the travelled portion and the car to the map. */
+  /** Push the fleet and the followed car's trace to the map. */
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
 
-    const line = path(travelled);
-    (map.getSource("done") as GeoJSONSource | undefined)?.setData({
+    (map.getSource("fleet") as GeoJSONSource | undefined)?.setData({
+      type: "FeatureCollection",
+      features: fleetAt(clock).map(({ car, at }) => ({
+        type: "Feature",
+        properties: { lead: car.id === lead.id },
+        geometry: { type: "Point", coordinates: at },
+      })),
+    });
+
+    (map.getSource("trace") as GeoJSONSource | undefined)?.setData({
       type: "Feature",
       properties: {},
-      geometry: { type: "LineString", coordinates: line },
+      geometry: {
+        type: "LineString",
+        coordinates: sliceTo(route.points, legs.cum, legs.total, along),
+      },
     });
-    (map.getSource("car") as GeoJSONSource | undefined)?.setData({
-      type: "Feature",
-      properties: {},
-      geometry: { type: "Point", coordinates: line[line.length - 1] },
-    });
-  }, [travelled, path, ready]);
+  }, [clock, ready, lead, route, legs, along]);
 
   /* ── playback ────────────────────────────────────────────────────────── */
 
-  /*
-   * Reduced motion is decided here, at the press, rather than inside the
-   * animation effect. Handling it in the effect meant the effect's only job on
-   * that path was to set state and immediately undo itself, which is both a
-   * lint error and a description of a loop that should never have started.
-   *
-   * The drive still plays out — it simply arrives finished. The information is
-   * the route; the motion is only how it is delivered.
-   */
   const togglePlay = useCallback(() => {
     if (playing) {
       setPlaying(false);
       return;
     }
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setTravelled(legs.total);
+      // Advance the clock without animating. The fleet is the information;
+      // the motion is only how it is delivered.
+      setClock((c) => c + 240);
       return;
     }
     setPlaying(true);
-  }, [playing, legs.total]);
+  }, [playing]);
 
   useEffect(() => {
     if (!playing) return;
 
-    const from = travelled >= legs.total ? 0 : travelled;
-    startedRef.current = performance.now();
-    const metresPerMs = (PLAYBACK_KMH * 1000) / 3_600_000;
+    const from = clockRef.current;
+    originRef.current = performance.now();
 
     const step = (now: number) => {
-      /*
-       * Clamped at zero.
-       *
-       * `requestAnimationFrame` hands the callback the time the *frame* began,
-       * which can be a fraction of a millisecond earlier than the
-       * `performance.now()` captured just before the frame was requested. The
-       * elapsed time then comes out negative, the travelled distance with it,
-       * and the path slice reaches for the point before the first one.
-       *
-       * It never reproduced locally and threw on the first click in
-       * production, which is the shape of every timing bug: the machine that
-       * finds it is the one you are not testing on.
-       */
-      const at = Math.max(0, from + (now - startedRef.current) * metresPerMs);
-      if (at >= legs.total) {
-        setTravelled(legs.total);
-        setPlaying(false);
-        return;
-      }
-      setTravelled(at);
+      // Clamped: rAF reports the time the frame began, which can precede the
+      // `performance.now()` captured just before it was requested.
+      const next = from + Math.max(0, now - originRef.current) / 1000;
+      clockRef.current = next;
+      setClock(next);
       rafRef.current = requestAnimationFrame(step);
     };
 
     rafRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafRef.current);
-    // `travelled` is deliberately not a dependency: it changes every frame, and
-    // depending on it would tear the loop down and rebuild it sixty times a
-    // second.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, legs]);
+    // The loop reads the clock from a ref rather than from state precisely so
+    // it does not have to depend on it — `clock` changes every frame, and a
+    // dependency would tear this down and rebuild it sixty times a second.
+  }, [playing]);
 
-  /** Zoom to the car, close enough that the road under it is legible. */
+  useEffect(() => {
+    clockRef.current = clock;
+  }, [clock]);
+
+  /** Zoom to the followed car, close enough that the road under it is legible. */
   const closeUp = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
-    const line = path(travelled);
-    map.easeTo({ center: line[line.length - 1], zoom: 16.5, duration: 900 });
-  }, [path, travelled]);
+    const head = sliceTo(route.points, legs.cum, legs.total, along).at(-1);
+    if (head) map.easeTo({ center: head, zoom: 16.5, duration: 900 });
+  }, [route, legs, along]);
 
-  const share = legs.total ? travelled / legs.total : 0;
+  const share = legs.total ? along / legs.total : 0;
   const drivenKm = route.km * share;
   const earnedDrv = drivenKm * drvPerKm;
 
@@ -331,7 +337,10 @@ export function RouteMap({ locale }: { locale: Locale }) {
             type="button"
             role="tab"
             aria-selected={i === active}
-            onClick={() => setActive(i)}
+            onClick={() => {
+              setActive(i);
+              setChosen(true);
+            }}
           >
             <span>{r.label[locale]}</span>
             <span className="rmap__chipkm">{r.km}km</span>
@@ -345,18 +354,17 @@ export function RouteMap({ locale }: { locale: Locale }) {
 
         <div className="rmap__hud">
           <p className="rmap__flag">{t.flag}</p>
+          <p className="rmap__count">
+            <b>{FLEET.length}</b>
+            <span>{t.running}</span>
+          </p>
           <p className="rmap__note">{route.note[locale]}</p>
         </div>
       </div>
 
       <div className="rmap__bar">
-        <button
-          className="rmap__btn"
-          type="button"
-          onClick={togglePlay}
-          disabled={!ready}
-        >
-          {playing ? t.pause : share >= 1 ? t.again : t.play}
+        <button className="rmap__btn" type="button" onClick={togglePlay} disabled={!ready}>
+          {playing ? t.pause : t.play}
         </button>
         <button
           className="rmap__btn rmap__btn--ghost"

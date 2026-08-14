@@ -71,11 +71,11 @@ export const home: HomeContent = {
   routes: {
     eyebrow: "Where it went",
     title: "The roads this car used today",
-    sub: "Drawn on the real network. Zoom in and you can see which lane it took.",
+    sub: "Dozens of cars moving across the real road network at once. Zoom in and you can see the lane.",
     flag: "Illustrative drive — not a registrant's travel history",
     play: "Play the drive",
     pause: "Pause",
-    again: "Play again",
+    running: "driving now",
     closeUp: "Zoom right in",
     distance: "Driven",
     earned: "Earned",

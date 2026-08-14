@@ -1428,3 +1428,17 @@
   .item { transition: none; }
   .item:hover { transform: none; }
 }
+
+/* The fleet count, over the map. The number is the headline of this section:
+   dozens at once is the thing that reads as a service running. */
+.rmap__count {
+  align-self: start;
+  display: inline-flex; align-items: baseline; gap: .35rem;
+  background: color-mix(in srgb, var(--ink0) 76%, transparent);
+  border-radius: 3px; padding: .18rem .5rem;
+}
+.rmap__count b {
+  font-family: var(--font-mono); font-size: 1.05rem; color: var(--mint);
+  font-variant-numeric: tabular-nums;
+}
+.rmap__count span { font-size: .7rem; color: var(--tx2); }

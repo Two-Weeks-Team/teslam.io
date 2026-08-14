@@ -69,3 +69,36 @@ export function sliceTo(
 
   return out.length ? out : [points[0]];
 }
+
+/**
+ * Just the moving head, without building the path behind it.
+ *
+ * The fleet view animates dozens of cars at once and only needs each one's
+ * current position; slicing every route in full sixty times a second would
+ * allocate thousands of points per frame to draw forty dots.
+ */
+export function pointAt(
+  points: Point[],
+  cum: number[],
+  total: number,
+  metres: number,
+): Point {
+  const along = Math.min(total, Math.max(0, metres));
+
+  // Binary search rather than a walk: the long routes carry hundreds of
+  // points and this runs once per car per frame.
+  let lo = 0;
+  let hi = points.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (cum[mid] < along) lo = mid + 1;
+    else hi = mid;
+  }
+  if (lo === 0) return points[0];
+
+  const span = cum[lo] - cum[lo - 1];
+  const k = span > 0 ? (along - cum[lo - 1]) / span : 0;
+  const [ax, ay] = points[lo - 1];
+  const [bx, by] = points[lo];
+  return [ax + (bx - ax) * k, ay + (by - ay) * k];
+}
