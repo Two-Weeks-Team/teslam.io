@@ -39,7 +39,7 @@ export function Cohort({ locale }: { locale: Locale }) {
           taken={taken}
           justSeat={justTook?.seatNo ?? null}
           label={`${t.genesis.seatGridLabel}: ${n(locale, taken)} / ${n(locale, seats)}`}
-          credit={CAR_CREDIT}
+          credit={{ label: t.carCredit, ...CAR_CREDIT }}
         >
           <div className="seats__grid" role="img" aria-label={t.genesis.seatGridLabel}>
             {Array.from({ length: seats }, (_, i) => (

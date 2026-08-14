@@ -17,7 +17,8 @@ import cm from "@/data/community.json";
  * facts belong in front of the reader.
  */
 export function CFooter({ locale }: { locale: Locale }) {
-  const t = getContent(locale).footer;
+  const content = getContent(locale);
+  const t = content.footer;
   const l = getLegal(locale);
 
   return (
@@ -60,7 +61,7 @@ export function CFooter({ locale }: { locale: Locale }) {
             rather than tucked into a corner: it is a licence term, not a
             credit we are being generous about. */}
         <p className="cmfoot__d">
-          {CAR_CREDIT.text}{" "}
+          {content.carCredit}{" "}
           <a href={CAR_CREDIT.href} rel="noopener noreferrer nofollow" target="_blank">
             {CAR_CREDIT.author}
           </a>{" "}

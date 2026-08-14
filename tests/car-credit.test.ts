@@ -1,6 +1,8 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CAR_CREDIT } from "@/lib/car-credit";
+
+const CAR = "public/car/model3.bin";
 
 /**
  * Attribution is a licence term, not a courtesy.
@@ -16,7 +18,7 @@ import { CAR_CREDIT } from "@/lib/car-credit";
  * author is filled in.
  */
 describe("the car's attribution", () => {
-  const converted = existsSync("public/car/model3.bin");
+  const converted = existsSync(CAR);
 
   it("names an author whenever there is a downloaded body to credit", () => {
     if (!converted) {
@@ -47,5 +49,36 @@ describe("the car's attribution", () => {
     // Tens of megabytes of mesh and textures in every clone, to serve a
     // hundred and thirty kilobytes to a reader.
     expect(readFileSync(".gitignore", "utf8")).toContain("/assets/");
+  });
+});
+
+/**
+ * The car has a weight budget too.
+ *
+ * 287 KB is a lot next to the rest of this site — every image on the page put
+ * together is smaller. Three things make it payable, and all three have to
+ * stay true or the number stops being defensible:
+ *
+ *   It is fetched, never bundled, and only when the section scrolls into
+ *   view. A reader who stops at the board downloads none of it.
+ *
+ *   Failing to arrive costs nothing. `loadCar()` resolves null and the
+ *   generated car draws instead, so this is an enhancement rather than a
+ *   dependency.
+ *
+ *   It replaces nothing else. There is no photograph of a car on this page and
+ *   there was never going to be one — a real Tesla photograph on a site that
+ *   says it is unaffiliated is the contradiction the whole footer exists to
+ *   avoid.
+ *
+ * The ceiling is the current size plus a little room to re-convert. Raising it
+ * means raising the triangle budget in `scripts/build-car.mjs`, which is a
+ * decision, not a side effect.
+ */
+describe("the converted car's weight", () => {
+  it("stays inside its budget", () => {
+    if (!existsSync(CAR)) return;
+    const kb = statSync(CAR).size / 1024;
+    expect(kb).toBeLessThan(320);
   });
 });

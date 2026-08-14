@@ -97,6 +97,11 @@ function sampleSeats(
   const cumulative: number[] = [];
   let total = 0;
 
+  // The car's central axis, for the outward test below.
+  let midY = 0;
+  for (let i = 1; i < positions.length; i += 3) midY += positions[i];
+  midY /= positions.length / 3;
+
   for (let f = 0; f + 2 < indices.length; f += 3) {
     const a = indices[f];
     const b = indices[f + 1];
@@ -115,6 +120,32 @@ function sampleSeats(
     const nz = ux * vy - uy * vx;
     const area = Math.hypot(nx, ny, nz) / 2;
     if (!(area > 0)) continue;
+
+    /*
+     * Outward-facing only.
+     *
+     * Dropping the cabin by material name catches the carpet and the seats and
+     * misses the rest — a door card, the underside of a bonnet, the inner face
+     * of a wing. Those are painted surfaces too, so they pass the class test,
+     * and a seat placed on one lights up behind an opaque panel where nobody
+     * can see it. A third of the cohort could go that way and the only symptom
+     * would be a car that fills too slowly.
+     *
+     * The test is geometric: a point on the outside of a car has a normal
+     * pointing away from the car's own axis. Roof panels point up and sit above
+     * the axis; door skins point sideways; a cabin floor points up and sits
+     * below it, so it fails, which is exactly right.
+     */
+    // x is not part of the test: the outward direction is measured in the
+    // cross-section, and a nose panel points along x with no radial component
+    // at all.
+    const my = (ay + by + cy) / 3;
+    const mz = (az + bz + cz) / 3;
+    const outY = my - midY;
+    const outLen = Math.hypot(outY, mz) || 1;
+    const faceLen = Math.hypot(nx, ny, nz) || 1;
+    const facing = (ny * outY + nz * mz) / (faceLen * outLen);
+    if (facing < 0.2) continue;
 
     faces.push(f);
     total += area;
@@ -218,7 +249,11 @@ export const CAR_URL = "/car/model3.bin";
  */
 export async function loadCar(signal?: AbortSignal): Promise<LoadedCar | null> {
   try {
-    const res = await fetch(CAR_URL, { signal, cache: "force-cache" });
+    // Ordinary caching, not `force-cache`. Forcing it skips revalidation
+    // entirely, so a rebuilt car kept serving the previous one out of the disk
+    // cache — which looks exactly like a conversion that changed nothing, and
+    // cost an hour of staring at an unchanged render.
+    const res = await fetch(CAR_URL, { signal });
     if (!res.ok) return null;
     return decodeCar(await res.arrayBuffer());
   } catch {

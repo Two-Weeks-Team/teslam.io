@@ -206,6 +206,7 @@ uniform vec3 uGlass;
 uniform vec3 uEdge;
 uniform vec3 uTyre;
 uniform vec3 uAlloy;
+uniform vec3 uTrim;
 
 out vec4 outColour;
 
@@ -247,12 +248,17 @@ void main() {
    */
   float tyre = clamp(1.0 - abs(vMaterial - 1.0), 0.0, 1.0);
   float alloy = clamp(1.0 - abs(vMaterial - 2.0), 0.0, 1.0);
+  // Satin black plastic — valances, window surrounds, mirror caps, underbody.
+  // In body paint it lifts the whole lower half of the car to the colour of
+  // the roof, and the lower half of this car is not that colour.
+  float trim = clamp(1.0 - abs(vMaterial - 4.0), 0.0, 1.0);
 
   vec3 base = mix(uBody, uGlass, glass);
   base = mix(base, uTyre, tyre);
   base = mix(base, uAlloy, alloy);
+  base = mix(base, uTrim, trim);
 
-  float gloss = mix(mix(0.62, 0.3, glass), 0.14, tyre);
+  float gloss = mix(mix(mix(0.62, 0.3, glass), 0.14, tyre), 0.24, trim);
   vec3 c = base * (0.3 + key * gloss + fill * (1.0 - tyre * 0.7));
   c += vec3(1.0) * spec * mix(mix(0.1, 0.42, glass), 0.02, tyre);
   c += uEdge * rim * mix(mix(0.55, 0.8, glass), 0.3, tyre);
@@ -370,7 +376,7 @@ export function SeatField({
   /** The seat confirmed a moment ago, for the burst. */
   justSeat: number | null;
   /** Attribution for the downloaded body, shown only once it is on screen. */
-  credit?: { text: string; author: string; href: string; licence: string };
+  credit?: { label: string; author: string; href: string; licence: string };
   /** The server-rendered grid, shown until the canvas takes over. */
   children: React.ReactNode;
 }) {
@@ -550,6 +556,7 @@ export function SeatField({
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uEdge"), 0.72, 0.8, 0.88);
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uTyre"), 0.055, 0.06, 0.07);
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uAlloy"), 0.42, 0.46, 0.52);
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uTrim"), 0.1, 0.11, 0.13);
 
     /* ── the shadow ─────────────────────────────────────────────────────── */
 
@@ -853,7 +860,7 @@ export function SeatField({
           to credit — the generated body is nobody's but ours. */}
       {real && credit ? (
         <p className="sfield__credit">
-          {credit.text}{" "}
+          {credit.label}{" "}
           <a href={credit.href} rel="noopener noreferrer nofollow" target="_blank">
             {credit.author}
           </a>{" "}

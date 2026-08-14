@@ -34,6 +34,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
+import { simplify } from "./simplify.mjs";
 
 /* ── glTF ─────────────────────────────────────────────────────────────── */
 
@@ -117,11 +118,50 @@ function accessor(gltf, index) {
  * and the cost of a wrong guess is a panel shaded like the wrong thing rather
  * than a crash.
  */
+/*
+ * Word boundaries, not substrings.
+ *
+ * `rim` without one matches inside "primary" — which is what this model calls
+ * its body paint. Every painted panel on the car came back classed as a wheel,
+ * and the radius pass downstream then decided most of it was rubber, so the
+ * whole body rendered as a tyre. The lesson is not about this model: a bare
+ * three-letter alternative in a regex over artist-supplied names will always
+ * find a word it was not looking for.
+ */
+/**
+ * A separator is anything that is not a letter — including the underscore.
+ *
+ * `\b` treats `_` as a word character, so `\bblack` does not match
+ * "JUST_BLACK", which is precisely how an artist names the black trim on a car.
+ */
+const edge = (...words) => new RegExp(`(?:^|[^a-z])(${words.join("|")})`, "i");
+
 const CLASSES = [
-  [3, /glass|window|windscreen|windshield|verre|vidrio|glas|유리/i],
-  [1, /tyre|tire|rubber|wheel_?rubber|고무|타이어/i],
-  [2, /rim|alloy|wheel|hub|caliper|brake|휠/i],
-];
+  [3, edge("glass", "window", "windscreen", "windshield", "verre", "vidrio", "glas")],
+  [1, edge("tyre", "tire", "rubber")],
+  // Everything round. Whether a given face is rubber or alloy cannot be told
+  // from a name — this model calls them all `wheels.N` — so it is decided
+  // later, by radius.
+  [2, edge("rim", "alloy", "wheel", "hub", "caliper", "brake")],
+  // Satin black plastic: bumper valances, window surrounds, mirror caps, the
+  // underbody. Rendered in body paint it lifts the whole lower half of the car
+  // to the colour of the roof, and a Model 3's lower half is not that colour.
+  [4, edge("black", "hitam", "plastic", "chassis", "suspensi", "trim")],
+]
+
+/**
+ * The cabin, which is in the file and has no business on the screen.
+ *
+ * A downloaded car is usually modelled inside and out. Every one of those
+ * triangles is behind an opaque body panel and invisible, and they compete for
+ * a budget the outside of the car needs — this model spends a fifth of itself
+ * on carpet, seat leather, a dashboard and an LCD nobody will ever see.
+ *
+ * Worse than the cost: the seats are sampled from painted surfaces, and an
+ * interior panel is a painted surface. A third of the cohort would have landed
+ * inside the car, lighting up where no one could see them.
+ */
+const INTERIOR = /carpet|seat_?leather|lcd|button|steer|mirror_inside|dashboard|interior|belt\.|headliner/i;
 
 function classify(name = "") {
   for (const [id, re] of CLASSES) if (re.test(name)) return id;
@@ -182,6 +222,8 @@ const rotate = (m, [x, y, z]) => {
 
 /* ── collect ──────────────────────────────────────────────────────────── */
 
+let dropped = 0;
+
 function collect(gltf) {
   const tris = [];
   const scene = gltf.json.scenes?.[gltf.json.scene ?? 0];
@@ -203,6 +245,10 @@ function collect(gltf) {
           : pos.map((_, i) => i);
 
         const material = gltf.json.materials?.[prim.material]?.name ?? "";
+        if (INTERIOR.test(material)) {
+          dropped += 1;
+          continue;
+        }
         const cls = classify(material);
 
         for (let i = 0; i + 2 < idx.length; i += 3) {
@@ -306,16 +352,149 @@ function normalise(tris) {
   return { size, order, scale };
 }
 
+/* ── tyres ────────────────────────────────────────────────────────────── */
+
+/**
+ * Split the wheels into rubber and alloy, by radius.
+ *
+ * No exporter agrees on what to call these — this model names all six of them
+ * `wheels.N` — and the base colours live in textures, so neither the name nor
+ * the material factors can tell them apart. The geometry can: a wheel is a disc
+ * about its axle, the tyre is the outer band of that disc, and the face is
+ * everything inside it.
+ *
+ * Runs after the pose is normalised, so the axle is along z and the disc lies
+ * in x-y. Each wheel is found by clustering on the two signs, which is all four
+ * of them and needs no threshold.
+ */
+function splitWheels(tris) {
+  const groups = new Map();
+  for (const t of tris) {
+    if (t.cls !== 2) continue;
+    const mid = t.face.reduce(
+      (acc, v) => [acc[0] + v.p[0] / 3, acc[1] + v.p[1] / 3, acc[2] + v.p[2] / 3],
+      [0, 0, 0],
+    );
+    const key = `${mid[0] > 0 ? "f" : "r"}${mid[2] > 0 ? "l" : "r"}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ t, mid });
+  }
+
+  let tyres = 0;
+  for (const members of groups.values()) {
+    const cx = members.reduce((s, m) => s + m.mid[0], 0) / members.length;
+    const cy = members.reduce((s, m) => s + m.mid[1], 0) / members.length;
+
+    const radii = members
+      .map((m) => Math.hypot(m.mid[0] - cx, m.mid[1] - cy))
+      .sort((a, b) => a - b);
+    // The 96th percentile, not the maximum: one stray face on a brake duct
+    // would otherwise set the scale and leave the whole tyre classed as alloy.
+    const outer = radii[Math.floor(radii.length * 0.96)] || radii[radii.length - 1];
+
+    for (const { t, mid } of members) {
+      const r = Math.hypot(mid[0] - cx, mid[1] - cy);
+      if (r > outer * 0.74) {
+        t.cls = 1;
+        tyres += 1;
+      }
+    }
+  }
+  return tyres;
+}
+
+/**
+ * Throw away the inside of the glass.
+ *
+ * Car glass is modelled as a solid: an outer surface and an inner one a few
+ * millimetres behind it. Both survive simplification, both end up nearly
+ * coincident, and the depth buffer cannot separate them — so the greenhouse
+ * renders as a field of black shards with lit edges, which is z-fighting and
+ * looks exactly like a mesh that has been torn.
+ *
+ * The inner surface is the one whose normal points back toward the car's own
+ * axis. Nobody can see it through an opaque outer pane, so it goes.
+ */
+function shellGlass(tris) {
+  let midY = 0;
+  let n = 0;
+  for (const { face } of tris) {
+    for (const v of face) {
+      midY += v.p[1];
+      n += 1;
+    }
+  }
+  midY /= Math.max(1, n);
+
+  let dropped = 0;
+  const kept = tris.filter(({ face, cls }) => {
+    if (cls !== 3) return true;
+    const mid = face.reduce(
+      (acc, v) => [acc[0] + v.p[0] / 3, acc[1] + v.p[1] / 3, acc[2] + v.p[2] / 3],
+      [0, 0, 0],
+    );
+    const [a, b, c] = face.map((v) => v.p);
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    const outY = mid[1] - midY;
+    const outLen = Math.hypot(outY, mid[2]) || 1;
+    const facing = (ny * outY + nz * mid[2]) / (len * outLen);
+    if (facing < -0.05) {
+      dropped += 1;
+      return false;
+    }
+    return true;
+  });
+  return { kept, dropped };
+}
+
 /* ── decimate ─────────────────────────────────────────────────────────── */
 
 /**
- * Vertex clustering onto a grid.
+ * Weld exact duplicates into an indexed mesh.
  *
- * Not a quadric-error simplifier — those are three hundred lines and a
- * dependency, and at nine hundred pixels wide nobody can see the difference.
- * Clustering snaps every vertex to a cell, averages what lands there, and drops
- * the triangles that collapse. Material class is part of the key, so glass
- * never welds into paint and a wheel never welds into the arch behind it.
+ * The simplifier needs to know which triangles share an edge, and a glTF export
+ * arrives with every triangle carrying its own three vertices split by UV seam
+ * and smoothing group. Without welding first, no two faces share anything, every
+ * edge is a boundary, and the collapse has nothing to work on.
+ *
+ * The tolerance is a hair under a millimetre on a real car — enough to close a
+ * seam, far too little to merge two surfaces that were meant to be apart.
+ */
+function weld(tris) {
+  const key = new Map();
+  const verts = [];
+  const faces = [];
+
+  for (const { face, cls } of tris) {
+    const ids = face.map((vert) => {
+      const k = `${cls}|${Math.round(vert.p[0] * 5000)}|${Math.round(vert.p[1] * 5000)}|${Math.round(vert.p[2] * 5000)}`;
+      let id = key.get(k);
+      if (id == null) {
+        id = verts.length;
+        key.set(k, id);
+        verts.push({ p: [...vert.p], n: vert.n ? [...vert.n] : [0, 1, 0], cls });
+      }
+      return id;
+    });
+    if (ids[0] === ids[1] || ids[1] === ids[2] || ids[0] === ids[2]) continue;
+    faces.push(ids);
+  }
+  return { verts, faces };
+}
+
+/**
+ * Vertex clustering onto a grid — the fallback, no longer the main path.
+ *
+ * Kept because it is O(n) and cannot fail, so it is what runs when a source is
+ * too large to simplify properly inside a reasonable time. Its weakness is
+ * exactly why the simplifier exists: a cell coarse enough to hit the budget is
+ * larger than a glass roof is thick, so the panel welds through itself and the
+ * roof comes back torn into holes.
  */
 function decimate(tris, cells) {
   const key = new Map();
@@ -451,22 +630,42 @@ if (!source) {
  * anybody can see, and this is an asset a reader downloads before they have
  * decided whether they care.
  */
-const BUDGET = 14_000;
+const BUDGET = 26_000;
 
 const gltf = readGltf(resolve(source));
 const tris = collect(gltf);
 if (!tris.length) throw new Error("no triangles found — is this a scene with a mesh in it?");
 
 const pose = normalise(tris);
+const tyreFaces = splitWheels(tris);
+// Reassign rather than splicing in place: `push(...half a million)` puts every
+// element on the call stack as an argument and throws.
+const glazing = shellGlass(tris);
+const body = glazing.kept;
 
-// Walk the grid up until the result fits the budget. Clustering is cheap and
-// this converges in a handful of passes.
-let cells = 96;
-let mesh = decimate(tris, cells);
-while (mesh.tris.length > BUDGET && cells > 24) {
-  cells = Math.round(cells * 0.86);
-  mesh = decimate(tris, cells);
+/*
+ * Weld, then collapse edges by quadric error.
+ *
+ * Clustering runs first only as a pre-pass on very large sources: a million
+ * triangles through a priority queue is minutes, and knocking the count down
+ * on a fine grid first costs almost nothing in quality because the cells are
+ * still far smaller than any feature.
+ */
+let raw = body;
+if (body.length > 260_000) {
+  const pre = decimate(body, 220);
+  raw = pre.tris.map((ids) => ({
+    face: ids.map((i) => ({ p: pre.verts[i].p, n: pre.verts[i].n })),
+    cls: pre.verts[ids[0]].cls,
+  }));
+  console.log(`prepass    clustered ${body.length.toLocaleString()} → ${raw.length.toLocaleString()} before collapse`);
 }
+
+const welded = weld(raw);
+console.log(`welded     ${welded.verts.length.toLocaleString()} vertices, ${welded.faces.length.toLocaleString()} faces`);
+
+const mesh = simplify(welded.verts, welded.faces, BUDGET);
+const cells = "qem";
 
 const out = resolve("public/car/model3.bin");
 mkdirSync(dirname(out), { recursive: true });
@@ -479,7 +678,10 @@ for (const v of mesh.verts) byClass[v.cls] += 1;
 console.log(`source     ${basename(source)}`);
 console.log(`            ${tris.length.toLocaleString()} triangles in`);
 console.log(`pose       longest axis ${pose.order[0]}, up ${pose.order[2]}, scale ${pose.scale.toExponential(3)}`);
-console.log(`decimated  grid ${cells} → ${mesh.tris.length.toLocaleString()} triangles, ${mesh.verts.length.toLocaleString()} vertices`);
+console.log(`cabin      ${dropped} interior primitives dropped`);
+console.log(`wheels     ${tyreFaces.toLocaleString()} faces reclassified as rubber by radius`);
+console.log(`glazing    ${glazing.dropped.toLocaleString()} inward-facing glass faces dropped`);
+console.log(`simplified ${cells} → ${mesh.tris.length.toLocaleString()} triangles, ${mesh.verts.length.toLocaleString()} vertices`);
 console.log(`materials  paint ${byClass[0]}  tyre ${byClass[1]}  alloy ${byClass[2]}  glass ${byClass[3]}`);
 console.log(`wrote      public/car/model3.bin  ${(buf.length / 1024).toFixed(0)} KB`);
 if (byClass[3] === 0) console.warn("warning: no glass — check the material names in the source");
