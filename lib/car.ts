@@ -571,7 +571,16 @@ export function carCells(): Cell[] {
 
       if (part.startsWith("wheel")) {
         const front = part.includes("Front");
-        const side = part.endsWith("L") ? 1 : -1;
+        /*
+         * L is the same side of the car everywhere.
+         *
+         * The door bands put `doorL` at negative z (v = 0.42..0.58 is the far
+         * flank) while this put `wheelFrontL` at positive z, so one suffix
+         * meant opposite sides depending on which part you asked about. The
+         * body is symmetric so nothing rendered wrong, and nothing would have
+         * until the first consumer used `part` to label or highlight a side.
+         */
+        const side = part.endsWith("L") ? -1 : 1;
         point = wheel(2 * (front ? FRONT_AXLE_T : REAR_AXLE_T) - 1, side, count, i);
       } else {
         const band = BANDS[part]!;

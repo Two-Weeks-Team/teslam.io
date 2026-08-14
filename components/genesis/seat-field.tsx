@@ -675,6 +675,17 @@ export function SeatField({
       const view = multiply(translate(0, -0.3, -EYE), model);
       const vp = multiply(perspective(0.21, aspect, 0.1, 40), view);
 
+      /*
+       * Depth writes back on before the clear.
+       *
+       * `glClear` honours the depth write mask, and the seat pass leaves it
+       * false. So from the second frame onward the depth buffer was never
+       * actually cleared: the body and its seats were tested against an
+       * accumulation of every earlier orientation, and as the car turned it
+       * clipped itself away against its own past. Invisible on frame one,
+       * which is the only frame a still screenshot shows.
+       */
+      gl.depthMask(true);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -705,6 +716,17 @@ export function SeatField({
       gl.useProgram(program);
       gl.bindVertexArray(vao);
       gl.enable(gl.BLEND);
+      /*
+       * Additive again.
+       *
+       * `blendFunc` is global — it belongs to neither the program nor the
+       * vertex array — and the shadow pass above sets it to straight alpha. So
+       * after the first frame the seats were compositing with SRC_ALPHA,
+       * ONE_MINUS_SRC_ALPHA: the halo pass drew first and the core pass painted
+       * over it instead of adding to it, the glow stopped accumulating, and the
+       * "order does not matter" argument two comments below stopped being true.
+       */
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
       // Tested against the body, but not written: five hundred additive quads
       // writing depth would occlude each other and the glow would come apart.
       gl.depthMask(false);

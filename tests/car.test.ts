@@ -111,3 +111,28 @@ describe("the cohort car", () => {
     expect(mesh.material.length).toBe(mesh.positions.length / 3);
   });
 });
+
+/**
+ * `L` means one side of the car.
+ *
+ * The door bands and the wheel placement disagreed about which one, which the
+ * symmetry hid completely: nothing rendered wrong and nothing would have, right
+ * up until something used `part` to say "your side" or to highlight a panel.
+ */
+describe("part names", () => {
+  it("put every L on the same flank as every other L", () => {
+    const cells = carCells();
+    const sideOf = (part: string) => {
+      const own = cells.filter((c) => c.part === part);
+      const mean = own.reduce((sum, c) => sum + c.z, 0) / own.length;
+      return Math.sign(mean);
+    };
+
+    const left = ["doorL", "wheelFrontL", "wheelRearL"].map(sideOf);
+    const right = ["doorR", "wheelFrontR", "wheelRearR"].map(sideOf);
+
+    expect(new Set(left).size, "the L parts are not all on one side").toBe(1);
+    expect(new Set(right).size, "the R parts are not all on one side").toBe(1);
+    expect(left[0]).toBe(-right[0]);
+  });
+});
