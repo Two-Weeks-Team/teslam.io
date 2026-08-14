@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useLive } from "@/components/community/live-provider";
 import { getContent, type Locale } from "@/lib/i18n";
+import { SHOWCASE } from "@/lib/showcase";
 
 /**
  * Play and stop for the rehearsed run.
@@ -26,9 +27,16 @@ export function DemoTransport({ locale }: { locale: Locale }) {
   const { demo } = useLive();
   const t = getContent(locale).demo;
 
+  // Rehearsed playback is invented content in motion, so it lives behind the
+  // same switch as the invented content that sits still. Gated here rather
+  // than at the call site because there is exactly one way to start it, and a
+  // control that cannot be reached is a feature that cannot be turned on.
+  const enabled = SHOWCASE;
+
   // Space toggles playback, which is the convention every transport control on
   // the web already trained people into.
   useEffect(() => {
+    if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== "Space") return;
       const el = document.activeElement;
@@ -39,7 +47,9 @@ export function DemoTransport({ locale }: { locale: Locale }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [demo]);
+  }, [demo, enabled]);
+
+  if (!enabled) return null;
 
   return (
     <div className={demo.playing ? "dt dt--on" : "dt"}>

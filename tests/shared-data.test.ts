@@ -52,11 +52,58 @@ describe("data shared by both locales carries no display strings", () => {
     }
   });
 
-  it("the nameplate stores a region id, not a region name", () => {
+  /**
+   * Every region in shared data is an id.
+   *
+   * The first pass at this fixed the nameplate and missed the leaderboard, the
+   * rail and the sample regions — which is how /en went on printing 수도권 in
+   * the ranking table after the bug was "fixed". So the check is over every
+   * region-bearing collection at once rather than the one that was noticed.
+   */
+  it.each([
+    ["nameplate", [cm.nameplate.region]],
+    ["leaderboard", cm.leaderboard.map((r) => r.region)],
+    ["regions", cm.regions.map((r) => r.id)],
+  ])("%s stores region ids, not region names", (_name, values) => {
+    for (const v of values) {
+      expect(
+        REGION_IDS as readonly string[],
+        `"${v}" is not a region in lib/genesis, so it cannot be localised`,
+      ).toContain(v);
+    }
+  });
+
+  /**
+   * The catch-all.
+   *
+   * Any *new* Hangul that appears in a field named like a system value is the
+   * same bug again. Fields that legitimately hold Korean prose — a sample post
+   * title, a member's handle, a ledger line — are named and excluded, so adding
+   * one is a deliberate act rather than an oversight.
+   */
+  it("keeps Hangul out of fields that identify rather than describe", () => {
+    const PROSE = new Set([
+      "title", "sub", "name", "tag", "author", "ago", "handle", "trim", "_note",
+    ]);
+    const offenders: string[] = [];
+
+    const walk = (node: unknown, path: string) => {
+      if (typeof node === "string") {
+        const key = path.split(".").pop()!.replace(/\[\d+\]$/, "");
+        if (!PROSE.has(key) && HANGUL.test(node)) offenders.push(`${path} = ${node}`);
+        return;
+      }
+      if (Array.isArray(node)) return node.forEach((v, i) => walk(v, `${path}[${i}]`));
+      if (node && typeof node === "object") {
+        for (const [k, v] of Object.entries(node)) walk(v, `${path}.${k}`);
+      }
+    };
+
+    walk(cm, "cm");
     expect(
-      REGION_IDS as readonly string[],
-      "nameplate.region must be one of lib/genesis REGIONS so it can be localised",
-    ).toContain(cm.nameplate.region);
+      offenders,
+      "these look like identifiers holding a Korean label, which renders verbatim on /en",
+    ).toEqual([]);
   });
 });
 

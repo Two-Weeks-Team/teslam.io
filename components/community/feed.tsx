@@ -1,12 +1,49 @@
 import { getContent, type Locale } from "@/lib/i18n";
 import { Mark } from "@/components/community/mark";
+import { LiveFeed } from "@/components/community/live-feed";
 import { n } from "@/lib/format";
+import { BOARDS } from "@/lib/board";
+import type { Mode } from "@/lib/showcase";
+import type { Page } from "@/lib/posts";
 import cm from "@/data/community.json";
+
+/**
+ * The board. On a community site this is the product, so it gets the middle.
+ *
+ * Three states, and which one appears is not this component's decision — it is
+ * the API's, relayed through `mode`. When the board is live these are rows
+ * somebody wrote. When it is not, and invented content is permitted, the sample
+ * below stands in with a label. When it is not and invented content is
+ * forbidden, nothing is drawn at all: an empty page is a truthful page, and a
+ * page of plausible fiction is not.
+ */
+export function Feed({
+  locale,
+  mode,
+  initial,
+  now,
+}: {
+  locale: Locale;
+  mode: Mode;
+  initial: Page;
+  now: number;
+}) {
+  if (mode === "hidden") return null;
+  if (mode === "real") return <LiveFeed locale={locale} initial={initial} now={now} />;
+  return <SampleFeed locale={locale} />;
+}
 
 const TOP_VOTES = Math.max(...cm.posts.map((p) => p.votes));
 
-/** The board. On a community site this is the product, so it gets the middle. */
-export function Feed({ locale }: { locale: Locale }) {
+/**
+ * What the board looks like populated.
+ *
+ * Kept, rather than deleted the moment the real one worked, because a board
+ * with four posts on it tells a visitor nothing about what they are joining.
+ * It carries the sample mark and it is behind the switch — turn the switch off
+ * and this never renders.
+ */
+function SampleFeed({ locale }: { locale: Locale }) {
   const t = getContent(locale).feed;
 
   return (
@@ -56,7 +93,9 @@ export function Feed({ locale }: { locale: Locale }) {
 
           <div className="post__b">
             <div className="post__tags">
-              <span className="chip">{p.board}</span>
+              <span className="chip">
+                {BOARDS.find((b) => b.id === p.board)?.[locale] ?? p.board}
+              </span>
               {p.pinned ? <span className="chip chip--pin">📌 {t.pinned}</span> : null}
               {p.staff ? <span className="chip chip--staff">{t.staff}</span> : null}
               {p.genesis ? (

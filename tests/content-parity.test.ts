@@ -60,6 +60,14 @@ const SHARED = new Set([
   // languages — a translated date would mean two different policies.
   "legal.privacy.updated",
   "legal.terms.updated",
+  // The ticker's amounts ("+500 DRV") are figures with a unit, and its names
+  // are names: 배터리아껴쓰기 is what that member calls themselves, and
+  // romanising it on /en would be inventing a person who does not exist. Only
+  // the sentence around the name is translated, which the `t` values show.
+  ...Array.from({ length: 6 }, (_, i) => [
+    `home.live.items[${i}].v`,
+    `home.live.items[${i}].t`,
+  ]).flat(),
 ]);
 
 const MODULES: Array<[string, unknown, unknown]> = [

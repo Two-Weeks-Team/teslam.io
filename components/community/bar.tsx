@@ -1,15 +1,18 @@
 "use client";
 
-import { genesisPathFor, getContent, modelPathFor, type Locale } from "@/lib/i18n";
+import { boardPathFor, genesisPathFor, getContent, modelPathFor, type Locale } from "@/lib/i18n";
 import { n } from "@/lib/format";
 import { useLive } from "@/components/community/live-provider";
-import cm from "@/data/community.json";
+import { SHOWCASE } from "@/lib/showcase";
+import { BOARDS } from "@/lib/board";
 
 /** Top bar, then the live ticker. Both are chrome the board sits under. */
 export function Bar({ locale }: { locale: Locale }) {
   const { watching } = useLive();
   const t = getContent(locale);
-  const boards = cm.boards.slice(1, 6);
+  // Board links in the chrome, from the real vocabulary rather than from the
+  // sample list — the nav is not sample content even when the board is empty.
+  const boards = BOARDS.slice(1, 6);
 
   return (
     <>
@@ -25,8 +28,8 @@ export function Bar({ locale }: { locale: Locale }) {
 
           <div className="cmbar__nav">
             {boards.map((b) => (
-              <a key={b.id} href="#feed">
-                {b.name}
+              <a key={b.id} href={`${boardPathFor(locale)}?board=${b.id}`}>
+                {b[locale]}
               </a>
             ))}
             <a href={modelPathFor(locale)}>{t.nav.model}</a>
@@ -66,7 +69,9 @@ export function Bar({ locale }: { locale: Locale }) {
         </div>
       </nav>
 
-      <Ticker locale={locale} />
+      {/* Invented activity. It reads as a live feed, which is exactly why it
+          may not survive the switch that removes invented content. */}
+      {SHOWCASE ? <Ticker locale={locale} /> : null}
     </>
   );
 }
@@ -77,7 +82,7 @@ export function Bar({ locale }: { locale: Locale }) {
  */
 function Ticker({ locale }: { locale: Locale }) {
   const t = getContent(locale).live;
-  const items = cm.live;
+  const items = t.items;
 
   return (
     <div className="tick">

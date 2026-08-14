@@ -36,6 +36,20 @@ export const REGIONS = [
 
 export type RegionId = (typeof REGIONS)[number]["id"];
 
+/**
+ * The one place a region id becomes words.
+ *
+ * Lives here, beside the list, because every component that showed a region
+ * used to carry its own Korean string — and each of those rendered verbatim on
+ * /en. Falling back to the id rather than throwing keeps an unknown region
+ * visible instead of blanking a row, which is what makes the mistake findable.
+ *
+ * Typed structurally rather than against `Locale` so the Worker, which imports
+ * this module, does not pull in the site's content bundle.
+ */
+export const regionLabel = (locale: "ko" | "en", id: string): string =>
+  REGIONS.find((r) => r.id === id)?.[locale] ?? id;
+
 export const MODELS = [
   "Model 3",
   "Model Y",

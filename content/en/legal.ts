@@ -85,7 +85,16 @@ export const legal: LegalContent = {
       },
       {
         h: "9. Automatic collection",
-        p: "No cookies, no local storage, no analytics of any kind. There is no advertising identifier and no visitor-tracking script, so there is no setting for you to refuse and nothing to change in your browser. This is verified in code: a test fails the build if a tracking tool is ever added.",
+        // Rewritten when the board grew a sign-in. The previous sentence was
+        // "no cookies", which the session cookie made false. A strictly
+        // necessary cookie is exempt from consent, not from disclosure.
+        p: "No analytics of any kind, no advertising identifier, no visitor-tracking script, and no local storage. This is verified in code: a test fails the build if a tracking tool is ever added.",
+        items: [
+          "Browsing sets no cookie at all.",
+          "Signing in to the board sets exactly one (tsl_session). It keeps you signed in and does nothing else — it tracks no behaviour and is shared with nobody.",
+          "It is HttpOnly, so no script can read it; it expires after 30 days, and signing out deletes it from your browser and from our database at once.",
+          "It is strictly necessary to provide the service, so it is not subject to separate consent. To refuse it, do not sign in — reading the board needs no account.",
+        ],
       },
       {
         h: "10. Rights of users and legal guardians",
