@@ -7,6 +7,7 @@ import type { Map as MapLibreMap, GeoJSONSource } from "maplibre-gl";
 // the map loading and the CSS arriving.
 import "maplibre-gl/dist/maplibre-gl.css";
 import { ROUTES } from "@/lib/map/routes";
+import { cumulative, sliceTo } from "@/lib/map/slice";
 import { darkStyle } from "@/lib/map/style";
 import { drvPerKm, krwPerDrv } from "@/lib/economics";
 import { getContent, type Locale } from "@/lib/i18n";
@@ -56,39 +57,10 @@ export function RouteMap({ locale }: { locale: Locale }) {
    * down the straight motorway sections, because the simplifier leaves points
    * where the road bends and removes them where it does not.
    */
-  const legs = useMemo(() => {
-    const cum = [0];
-    let total = 0;
-    for (let i = 1; i < route.points.length; i += 1) {
-      const [ax, ay] = route.points[i - 1];
-      const [bx, by] = route.points[i];
-      // Good enough for pacing: degrees scaled to metres at Korea's latitude.
-      const dx = (bx - ax) * 88_800;
-      const dy = (by - ay) * 111_000;
-      total += Math.hypot(dx, dy);
-      cum.push(total);
-    }
-    return { cum, total };
-  }, [route]);
+  const legs = useMemo(() => cumulative(route.points), [route]);
 
-  /** The path up to `metres`, with the final point interpolated. */
-  const sliceTo = useCallback(
-    (metres: number): Array<[number, number]> => {
-      const { cum } = legs;
-      const out: Array<[number, number]> = [];
-      for (let i = 0; i < route.points.length; i += 1) {
-        if (cum[i] <= metres) out.push(route.points[i]);
-        else {
-          const span = cum[i] - cum[i - 1];
-          const k = span > 0 ? (metres - cum[i - 1]) / span : 0;
-          const [ax, ay] = route.points[i - 1];
-          const [bx, by] = route.points[i];
-          out.push([ax + (bx - ax) * k, ay + (by - ay) * k]);
-          break;
-        }
-      }
-      return out.length ? out : [route.points[0]];
-    },
+  const path = useCallback(
+    (metres: number) => sliceTo(route.points, legs.cum, legs.total, metres),
     [route, legs],
   );
 
@@ -254,18 +226,18 @@ export function RouteMap({ locale }: { locale: Locale }) {
     const map = mapRef.current;
     if (!map || !ready) return;
 
-    const path = sliceTo(travelled);
+    const line = path(travelled);
     (map.getSource("done") as GeoJSONSource | undefined)?.setData({
       type: "Feature",
       properties: {},
-      geometry: { type: "LineString", coordinates: path },
+      geometry: { type: "LineString", coordinates: line },
     });
     (map.getSource("car") as GeoJSONSource | undefined)?.setData({
       type: "Feature",
       properties: {},
-      geometry: { type: "Point", coordinates: path[path.length - 1] },
+      geometry: { type: "Point", coordinates: line[line.length - 1] },
     });
-  }, [travelled, sliceTo, ready]);
+  }, [travelled, path, ready]);
 
   /* ── playback ────────────────────────────────────────────────────────── */
 
@@ -298,7 +270,20 @@ export function RouteMap({ locale }: { locale: Locale }) {
     const metresPerMs = (PLAYBACK_KMH * 1000) / 3_600_000;
 
     const step = (now: number) => {
-      const at = from + (now - startedRef.current) * metresPerMs;
+      /*
+       * Clamped at zero.
+       *
+       * `requestAnimationFrame` hands the callback the time the *frame* began,
+       * which can be a fraction of a millisecond earlier than the
+       * `performance.now()` captured just before the frame was requested. The
+       * elapsed time then comes out negative, the travelled distance with it,
+       * and the path slice reaches for the point before the first one.
+       *
+       * It never reproduced locally and threw on the first click in
+       * production, which is the shape of every timing bug: the machine that
+       * finds it is the one you are not testing on.
+       */
+      const at = Math.max(0, from + (now - startedRef.current) * metresPerMs);
       if (at >= legs.total) {
         setTravelled(legs.total);
         setPlaying(false);
@@ -320,9 +305,9 @@ export function RouteMap({ locale }: { locale: Locale }) {
   const closeUp = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
-    const path = sliceTo(travelled);
-    map.easeTo({ center: path[path.length - 1], zoom: 16.5, duration: 900 });
-  }, [sliceTo, travelled]);
+    const line = path(travelled);
+    map.easeTo({ center: line[line.length - 1], zoom: 16.5, duration: 900 });
+  }, [path, travelled]);
 
   const share = legs.total ? travelled / legs.total : 0;
   const drivenKm = route.km * share;
