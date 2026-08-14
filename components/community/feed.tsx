@@ -22,18 +22,64 @@ export function Feed({
   mode,
   initial,
   now,
+  example,
 }: {
   locale: Locale;
   mode: Mode;
   initial: Page;
   now: number;
+  /** Show what the board looks like populated, under the real one. */
+  example?: boolean;
 }) {
   if (mode === "hidden") return null;
-  if (mode === "real") return <LiveFeed locale={locale} initial={initial} now={now} />;
+
+  if (mode === "real") {
+    return (
+      <>
+        <LiveFeed locale={locale} initial={initial} now={now} />
+        {/* A real board with four posts on it — or none — tells a visitor
+            nothing about what they are joining. This sits below the real one
+            under its own heading, so the two are never mistaken for each
+            other, and it leaves with the switch. */}
+        {example ? <SampleFeed locale={locale} asExample /> : null}
+      </>
+    );
+  }
+
   return <SampleFeed locale={locale} />;
 }
 
 const TOP_VOTES = Math.max(...cm.posts.map((p) => p.votes));
+
+/**
+ * In the example, a link is not a link.
+ *
+ * The first attempt suppressed these with `pointer-events: none`, which stops
+ * a mouse and does nothing whatever to a keyboard: every tab, title and "more"
+ * stayed focusable and Enter jumped to the real #feed without doing the thing
+ * it advertised. A control that is inert to one kind of reader and live to
+ * another is the worse defect, because only one of them ever finds out.
+ *
+ * So the link semantics are dropped rather than painted over. Standing alone
+ * the sample feed *is* the board and its anchors are real, which is why this
+ * takes `inert` rather than always rendering a span.
+ */
+function FeedLink({
+  className,
+  inert,
+  children,
+}: {
+  className: string;
+  inert: boolean;
+  children: React.ReactNode;
+}) {
+  if (inert) return <span className={className}>{children}</span>;
+  return (
+    <a className={className} href="#feed">
+      {children}
+    </a>
+  );
+}
 
 /**
  * What the board looks like populated.
@@ -43,30 +89,40 @@ const TOP_VOTES = Math.max(...cm.posts.map((p) => p.votes));
  * It carries the sample mark and it is behind the switch — turn the switch off
  * and this never renders.
  */
-function SampleFeed({ locale }: { locale: Locale }) {
+function SampleFeed({ locale, asExample = false }: { locale: Locale; asExample?: boolean }) {
   const t = getContent(locale).feed;
 
   return (
-    <section className="feed" id="feed" aria-labelledby="feed-h">
-      <p className="fd__mark">
-        <Mark locale={locale} kind="sample" />
-      </p>
-      <h2 className="skip" id="feed-h">
-        {t.title}
-      </h2>
+    <section
+      className={asExample ? "feed feed--eg" : "feed"}
+      // Only one element may own #feed, and when a real board is on the page
+      // that is the real one. The skip link and every "back to the board"
+      // anchor must land on the thing somebody can actually post to.
+      id={asExample ? undefined : "feed"}
+      aria-labelledby={asExample ? "feed-eg-h" : "feed-h"}
+    >
+      {asExample ? (
+        <p className="feed__egh" id="feed-eg-h">
+          <Mark locale={locale} kind="sample" />
+          {t.exampleTitle}
+        </p>
+      ) : (
+        <>
+          <p className="fd__mark">
+            <Mark locale={locale} kind="sample" />
+          </p>
+          <h2 className="skip" id="feed-h">
+            {t.title}
+          </h2>
+        </>
+      )}
 
       <div className="feed__top">
         <div className="tabs">
           <span className="tab tab--on">🔥 {t.tabs.hot}</span>
-          <a className="tab" href="#feed">
-            {t.tabs.latest}
-          </a>
-          <a className="tab" href="#feed">
-            {t.tabs.shots}
-          </a>
-          <a className="tab" href="#feed">
-            {t.tabs.quest}
-          </a>
+          <FeedLink className="tab" inert={asExample}>{t.tabs.latest}</FeedLink>
+          <FeedLink className="tab" inert={asExample}>{t.tabs.shots}</FeedLink>
+          <FeedLink className="tab" inert={asExample}>{t.tabs.quest}</FeedLink>
         </div>
         <p className="feed__meta">
           {t.lastHour} · {t.newPosts} 42
@@ -103,10 +159,10 @@ function SampleFeed({ locale }: { locale: Locale }) {
               ) : null}
             </div>
 
-            <a className="post__t" href="#feed">
+            <FeedLink className="post__t" inert={asExample}>
               {p.title}
               <span className="post__c">[{n(locale, p.comments)}]</span>
-            </a>
+            </FeedLink>
 
             <p className="post__m">
               {p.author}
@@ -117,9 +173,7 @@ function SampleFeed({ locale }: { locale: Locale }) {
         </article>
       ))}
 
-      <a className="feed__more" href="#feed">
-        {t.more} →
-      </a>
+      <FeedLink className="feed__more" inert={asExample}>{t.more} →</FeedLink>
     </section>
   );
 }

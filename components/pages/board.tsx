@@ -4,7 +4,7 @@ import { Feed } from "@/components/community/feed";
 import { LeftRail } from "@/components/community/rails";
 import { SessionProvider } from "@/components/community/session";
 import { getBoardCounts, getPosts } from "@/lib/posts";
-import { getCapabilities, modeFor } from "@/lib/showcase";
+import { getCapabilities, modeFor, showExample } from "@/lib/showcase";
 import { isBoard, isSort, type BoardId, type Sort } from "@/lib/board";
 import { getContent, type Locale } from "@/lib/i18n";
 import { getGenesisStats } from "@/lib/stats";
@@ -68,6 +68,7 @@ export async function BoardPage({
                   mode={mode}
                   initial={posts}
                   now={posts.now}
+                  example={showExample(caps, "board")}
                 />
               </main>
             </div>

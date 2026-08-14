@@ -13,7 +13,7 @@ import { JsonLd } from "@/components/jsonld";
 import { type Locale } from "@/lib/i18n";
 import { getGenesisStats } from "@/lib/stats";
 import { getBoardCounts, getPosts, type Page } from "@/lib/posts";
-import { getCapabilities, modeFor, SHOWCASE, type Capabilities } from "@/lib/showcase";
+import { getCapabilities, modeFor, showExample, SHOWCASE, type Capabilities } from "@/lib/showcase";
 import { LiveProvider } from "@/components/community/live-provider";
 import { SessionProvider } from "@/components/community/session";
 import { PreviewBanner } from "@/components/community/preview-banner";
@@ -102,7 +102,13 @@ function HomeBoard({
         <div className="cols">
           <LeftRail locale={locale} counts={boardCounts} live={caps.live.board} />
           <main>
-            <Feed locale={locale} mode={mode("board")} initial={posts} now={posts.now} />
+            <Feed
+              locale={locale}
+              mode={mode("board")}
+              initial={posts}
+              now={posts.now}
+              example={showExample(caps, "board")}
+            />
           </main>
           <RightRail locale={locale} caps={caps} />
         </div>

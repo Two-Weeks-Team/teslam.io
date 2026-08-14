@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { modeFor, SHOWCASE, type Capabilities, type Capability } from "@/lib/showcase";
+import { modeFor, showExample, SHOWCASE, type Capabilities, type Capability } from "@/lib/showcase";
 import { BOARDS, BOARD_IDS, LIMITS, countChars, handleProblem, isBoard, isSort } from "@/lib/board";
 
 /**
@@ -63,6 +63,74 @@ describe("what a section draws", () => {
         `${cap} claimed a real source while the API was unreachable`,
       ).not.toBe("real");
     }
+  });
+});
+
+/**
+ * Full wherever it can be, emptiable everywhere.
+ *
+ * The scheme's first version treated a live source as the end of the question,
+ * and a live source with nothing in it rendered as a truthful dead room. A
+ * visitor who lands on an empty board learns nothing about what they are being
+ * asked to join, and the honest empty state does them no favours.
+ *
+ * So a real section may also show what it looks like populated — labelled,
+ * beside the real thing rather than mixed into it, and gone the moment the
+ * switch goes off. That last part is the whole contract: one setting still
+ * strips the site back to what it can prove.
+ */
+describe("a real section may also show what it looks like full", () => {
+  it("offers the example only where the source is live", () => {
+    // Where the source is absent the section is already drawing sample
+    // content, and a second example under it is the same thing twice.
+    expect(showExample(caps({}), "board")).toBe(false);
+    expect(showExample(caps({ board: true }), "board")).toBe(SHOWCASE);
+  });
+
+  it("is removed entirely by the switch, like everything else invented", () => {
+    if (SHOWCASE) {
+      expect(showExample(caps({ board: true }), "board")).toBe(true);
+    } else {
+      for (const cap of ["board", "league", "wallet"] as Capability[]) {
+        expect(
+          showExample(caps({ [cap]: true }), cap),
+          `${cap} kept an example alive with the switch off`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("never lets the example claim the anchor the real board owns", () => {
+    // Two elements with id="feed" is not a styling problem: the skip link and
+    // every "back to the board" href would land on posts nobody can reply to.
+    const feed = readFileSync("components/community/feed.tsx", "utf8");
+    expect(feed).toContain('id={asExample ? undefined : "feed"}');
+  });
+
+  /**
+   * The example's controls are inert in the markup, not in the stylesheet.
+   *
+   * They were `pointer-events: none` for one commit. That stops a mouse and
+   * does nothing at all to a keyboard: every tab, title and "more" stayed
+   * focusable and Enter jumped to the real board without doing the thing it
+   * advertised — and the three tab anchors were not even covered by the rule.
+   * A control that is dead to one kind of reader and live to another is the
+   * worse defect, because only one of them ever finds out.
+   */
+  it("strips link semantics from the example rather than painting over them", () => {
+    const feed = readFileSync("components/community/feed.tsx", "utf8");
+    const css = readFileSync("app/community.css", "utf8");
+
+    // Exactly one anchor remains, inside the branch that runs when the sample
+    // feed is standing in for the board and its links are real.
+    const anchors = feed.match(/<a\s/g) ?? [];
+    expect(anchors, "an anchor escaped the asExample branch").toHaveLength(1);
+    expect(feed, "the inert branch must render a span, not a styled anchor").toMatch(/if \(inert\) return <span/);
+
+    expect(
+      /\.feed--eg[^{]*\{[^}]*pointer-events\s*:\s*none/.test(css),
+      "pointer-events cannot make a control inert — drop the link instead",
+    ).toBe(false);
   });
 });
 
