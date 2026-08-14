@@ -45,17 +45,21 @@ export type Part =
  * least legible version of the picture.
  */
 const PLAN: Array<[Part, number]> = [
-  ["nose", 26],
-  ["hood", 44],
+  ["nose", 24],
+  ["hood", 28],
   ["wheelFrontL", 26],
   ["wheelFrontR", 26],
-  ["doorL", 62],
-  ["doorR", 62],
-  ["cabin", 92],
-  ["rear", 52],
+  ["doorL", 58],
+  ["doorR", 58],
+  // The greenhouse takes nearly a third of the cohort, because it is nearly a
+  // third of the car and it is the part that says which car. Ninety-two cells
+  // spread over that arc came out as a haze; the shape only appears once the
+  // line through it is dense enough to be a line.
+  ["cabin", 158],
+  ["rear", 44],
   ["wheelRearL", 26],
   ["wheelRearR", 26],
-  ["tail", 58],
+  ["tail", 26],
 ];
 
 export type Cell = {
@@ -88,34 +92,109 @@ function ramp(t: number, a: number, b: number, ya: number, yb: number): number {
   return ya + (yb - ya) * k * k * (3 - 2 * k);
 }
 
+/*
+ * The proportions.
+ *
+ * The first version of this was a deliberately generic fastback, on the theory
+ * that a vague car was the safe thing to draw. It was not safe, it was just
+ * vague: it read as a hatchback, and a cohort of Tesla owners looking at their
+ * own front page could not tell what it was. A drawing that fails to say what
+ * it is has no compensating virtue.
+ *
+ * So these are the real proportions of the car this community drives, worked
+ * out from its published dimensions and normalised so the body spans x = -1 to
+ * 1. Everything else follows from these four numbers.
+ *
+ *   overall length   4694 mm  →  2.000   (the unit the rest is measured in)
+ *   overall width    1849 mm  →  0.788
+ *   overall height   1443 mm  →  0.615
+ *   wheelbase        2875 mm  →  1.225
+ *
+ * The geometry is still generated rather than modelled — there is no
+ * manufacturer's mesh in this repository and none is needed. Proportions are
+ * measurements, not authorship. teslam.io remains unaffiliated with Tesla, Inc.
+ * and says so in the footer of every page.
+ */
+const MM = 2 / 4694;
+
+/** Front and rear axle positions in t, from the published overhangs. */
+export const FRONT_AXLE_T = 1 - 841 * MM * 0.5;
+export const REAR_AXLE_T = 978 * MM * 0.5;
+
 /**
  * Roofline height at t, where t = 0 is the tail and t = 1 is the nose.
  *
- * The numbers are a fastback saloon in profile: a long rear glass falling from
- * a roof that peaks just behind the driver, and a short blunt nose. Read them
- * as a curve, not as measurements of anything.
+ * Four things make this car recognisable from across a room, and all four are
+ * in this function:
+ *
+ *   One arc.        Windscreen, roof and rear glass are a single sweep, not a
+ *                   roof with a screen glued to each end. The crown is nearly
+ *                   flat over the front seats and the two ramps meet it with
+ *                   zero slope, so the whole greenhouse is one continuous line.
+ *   Cab forward.    The windscreen base sits behind the front axle by about a
+ *                   quarter of a metre, which is what throws the cabin forward
+ *                   and shortens the bonnet to almost nothing.
+ *   A low nose.     No grille to hold the leading edge up, so it dives — the
+ *                   bonnet's front lip is barely half the height of the roof.
+ *   A ducktail.     The boot lid rises at its trailing edge instead of falling
+ *                   away. Without it the tail reads as a hatchback, which is
+ *                   the single most common way to draw this car wrong.
  */
 function roof(t: number): number {
-  if (t < 0.06) return ramp(t, 0, 0.06, 0.3, 0.36);
-  if (t < 0.3) return ramp(t, 0.06, 0.3, 0.36, 0.43);
-  if (t < 0.52) return ramp(t, 0.3, 0.52, 0.43, 0.62);
-  if (t < 0.64) return 0.62;
-  if (t < 0.82) return ramp(t, 0.64, 0.82, 0.62, 0.42);
-  if (t < 0.94) return ramp(t, 0.82, 0.94, 0.42, 0.37);
-  return ramp(t, 0.94, 1, 0.37, 0.31);
+  // Trailing edge, then the lip. The rise is small and it is the whole
+  // difference between a saloon and a hatch.
+  if (t < 0.03) return ramp(t, 0, 0.03, 0.425, 0.449);
+  if (t < 0.2) return ramp(t, 0.03, 0.2, 0.449, 0.432);
+  // Rear glass, long and shallow.
+  if (t < 0.46) return ramp(t, 0.2, 0.46, 0.432, 0.615);
+  // The crown, over the front seats.
+  if (t < 0.58) return 0.615;
+  // Windscreen, raked about 25° from horizontal.
+  if (t < 0.78) return ramp(t, 0.58, 0.78, 0.615, 0.43);
+  // Bonnet: short, and nearly level until it falls over the nose.
+  if (t < 0.93) return ramp(t, 0.78, 0.93, 0.43, 0.4);
+  return ramp(t, 0.93, 1, 0.4, 0.3);
 }
 
-/** Sill height — where the body stops and the air under the car begins. */
+/**
+ * How far the body's lower edge lifts to clear a wheel.
+ *
+ * Arches were missing entirely, and a body with a flat bottom edge running
+ * past two floating hoops is the other half of why the old shape did not read
+ * as a car. The tyre tops out at 0.298; the arch clears it.
+ */
+function arch(t: number, centre: number): number {
+  const half = 0.09;
+  const d = Math.abs(t - centre);
+  if (d >= half) return 0;
+  const k = 1 - d / half;
+  return 0.15 * k * k * (3 - 2 * k);
+}
+
+/**
+ * Sill height — where the body stops and the air under the car begins.
+ *
+ * Flat along the rocker, dropping at both ends where the bumpers hang below
+ * it, and lifting over each axle into an arch.
+ */
 function sill(t: number): number {
-  if (t < 0.08) return ramp(t, 0, 0.08, 0.19, 0.15);
-  if (t > 0.92) return ramp(t, 0.92, 1, 0.15, 0.19);
-  return 0.15;
+  const rocker = 0.166;
+  let base = rocker;
+  if (t < 0.08) base = ramp(t, 0, 0.08, 0.105, rocker);
+  else if (t > 0.92) base = ramp(t, 0.92, 1, rocker, 0.1);
+  return base + arch(t, FRONT_AXLE_T) + arch(t, REAR_AXLE_T);
 }
 
-/** Half-width at t. Full through the middle, tapered at both ends. */
+/**
+ * Half-width at t.
+ *
+ * Widest at the shoulders and tapered toward both ends, but never to a point:
+ * the old curve went to zero at the nose and the tail, which is a boat. The
+ * nose of this car is still about four-fifths of its widest section.
+ */
 function halfWidth(t: number): number {
   const s = 2 * t - 1;
-  return 0.4 * Math.sqrt(Math.max(0, 1 - s * s * s * s));
+  return 0.394 * (1 - 0.19 * Math.abs(s) ** 3.2);
 }
 
 /**
@@ -133,8 +212,10 @@ function shell(t: number, v: number, cabin: boolean): Point {
   const cy = (top + bottom) / 2;
   const ry = (top - bottom) / 2;
   // The greenhouse is inset from the shoulder line, which is most of what makes
-  // a car look like a car from three-quarters on.
-  const rz = halfWidth(t) * (cabin ? 0.78 : 1);
+  // a car look like a car from three-quarters on. This one is a single pane of
+  // glass from the windscreen header to the rear screen, so it is wide for a
+  // greenhouse — narrow it further and the roof stops reading as glass.
+  const rz = halfWidth(t) * (cabin ? 0.74 : 1);
 
   const a = v * Math.PI * 2;
   const c = Math.cos(a);
@@ -167,29 +248,50 @@ function shell(t: number, v: number, cabin: boolean): Point {
  * the wheels came out as scribbles, which is the sort of thing that only shows
  * up when you look at the render.
  */
-const TYRE_SHARE = 0.62;
+const TYRE_SHARE = 0.54;
+const RIM_SHARE = 0.35;
 
 function wheel(cx: number, side: number, count: number, index: number): Point {
-  const tyreCount = Math.ceil(count * TYRE_SHARE);
-  const onTyre = index < tyreCount;
+  const tyre = Math.round(count * TYRE_SHARE);
+  const rim = Math.round(count * RIM_SHARE);
 
-  const n = onTyre ? tyreCount : count - tyreCount;
-  const i = onTyre ? index : index - tyreCount;
-  const r = onTyre ? 0.15 : 0.078;
+  // Three radii rather than two. A pair of concentric hoops reads as a hoop;
+  // what makes a wheel is the dark gap between the tyre and a face that is
+  // filled in toward its middle, so the third group closes the centre.
+  let n: number;
+  let i: number;
+  let r: number;
+  if (index < tyre) {
+    n = tyre;
+    i = index;
+    r = TYRE_R;
+  } else if (index < tyre + rim) {
+    n = rim;
+    i = index - tyre;
+    r = TYRE_R * 0.63;
+  } else {
+    n = count - tyre - rim;
+    i = index - tyre - rim;
+    r = TYRE_R * 0.26;
+  }
 
-  const a = (i / n) * Math.PI * 2;
+  // Offset each ring's start so the three do not line up into spokes, which
+  // would read as a ship's wheel.
+  const a = ((i + 0.37 * (index < tyre ? 0 : 1)) / Math.max(1, n)) * Math.PI * 2;
   return {
-    p: [cx + Math.cos(a) * r, WHEEL_Y + Math.sin(a) * r, side * 0.355],
+    p: [cx + Math.cos(a) * r, WHEEL_Y + Math.sin(a) * r, side * 0.362],
     // A wheel face points outward along the axle. The tyre ring leans a little
     // toward its own rim so the outer ring still catches the rim light.
-    n: onTyre
-      ? [Math.cos(a) * 0.5, Math.sin(a) * 0.5, side * 0.7]
-      : [0, 0, side],
+    n:
+      index < tyre
+        ? [Math.cos(a) * 0.5, Math.sin(a) * 0.5, side * 0.7]
+        : [0, 0, side],
   };
 }
 
-/** Hub height. The tyre top rises into the body, which is what an arch is. */
-const WHEEL_Y = 0.15;
+/** Hub height, and the tyre that reaches up into the arch. 700mm diameter. */
+const TYRE_R = 349 * MM;
+const WHEEL_Y = TYRE_R;
 
 /* ── assembly ─────────────────────────────────────────────────────────── */
 
@@ -200,17 +302,38 @@ const WHEEL_Y = 0.15;
  * the left shoulder — so a door is a band down one side and the cabin is a
  * band across the top.
  */
-const BANDS: Partial<Record<Part, { t: [number, number]; v: [number, number]; cabin?: boolean }>> = {
-  nose: { t: [0.95, 1], v: [0, 1] },
-  hood: { t: [0.82, 0.95], v: [0.08, 0.42] },
-  cabin: { t: [0.48, 0.82], v: [0.12, 0.38], cabin: true },
+const BANDS: Partial<Record<
+  Part,
+  { t: [number, number]; v: [number, number]; cabin?: boolean; rows?: number }
+>> = {
+  // `rows` is forced on the two end caps. The default splits a panel into
+  // roughly equal rows and columns, which for a band that wraps the whole
+  // section gives three samples around the ring — an end that reads as a
+  // scatter rather than as a face. Around the ring is the dimension that
+  // matters here, so it gets the samples.
+  nose: { t: [0.9, 1], v: [0, 1], rows: 8 },
+  // Almost nothing. That is the point — the bonnet on this car is a lid over a
+  // boot, and drawing it long is drawing a different car.
+  hood: { t: [0.78, 0.9], v: [0.08, 0.42] },
+  /*
+   * The greenhouse, as one band from the windscreen base to the rear screen.
+   * Splitting it into a roof and two screens is what produced a silhouette
+   * with a bump on it instead of a single arc.
+   *
+   * Narrow in v and forced to five rows, which is the whole trick: the same
+   * cells spread nine deep across the roof came out as a haze, and gathered
+   * into five long runs along the crown they draw the arc as a line. A point
+   * cloud reads as a shape when its edges are lines, not when its surface is
+   * evenly sampled.
+   */
+  cabin: { t: [0.22, 0.78], v: [0.17, 0.33], cabin: true, rows: 5 },
   // Tight bands down each flank. Widening them filled the sides evenly and
   // lost the shoulder line, which is most of what makes the shape read as a
   // body rather than as a cloud.
-  doorL: { t: [0.34, 0.82], v: [0.42, 0.58] },
-  doorR: { t: [0.34, 0.82], v: [-0.08, 0.08] },
-  rear: { t: [0.14, 0.5], v: [0.08, 0.42] },
-  tail: { t: [0, 0.16], v: [0, 1] },
+  doorL: { t: [0.24, 0.8], v: [0.42, 0.58] },
+  doorR: { t: [0.24, 0.8], v: [-0.08, 0.08] },
+  rear: { t: [0.06, 0.24], v: [0.08, 0.42] },
+  tail: { t: [0, 0.06], v: [0, 1], rows: 9 },
 };
 
 /**
@@ -238,12 +361,12 @@ export function carCells(): Cell[] {
       if (part.startsWith("wheel")) {
         const front = part.includes("Front");
         const side = part.endsWith("L") ? 1 : -1;
-        point = wheel(front ? 0.6 : -0.62, side, count, i);
+        point = wheel(2 * (front ? FRONT_AXLE_T : REAR_AXLE_T) - 1, side, count, i);
       } else {
         const band = BANDS[part]!;
         // Rows across the band and columns along it, so a panel fills as a
         // panel rather than as a spray.
-        const rows = Math.max(2, Math.round(Math.sqrt(count / 2)));
+        const rows = band.rows ?? Math.max(2, Math.round(Math.sqrt(count / 2)));
         const cols = Math.ceil(count / rows);
         const row = i % rows;
         const col = Math.floor(i / rows);

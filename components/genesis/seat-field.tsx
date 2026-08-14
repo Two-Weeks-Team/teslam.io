@@ -387,8 +387,11 @@ export function SeatField({
        * A full rotation spends a third of its time with the car pointing at
        * the reader, where a fastback is two feet wide and unreadable — the
        * first screenshot of this caught exactly that and showed a smudge.
-       * Oscillating between about 10° and 60° keeps the shape legible in every
-       * frame and still moves.
+       * Oscillating between about 7° and 41° keeps the shape legible in every
+       * frame and still moves. The range sits nearer profile than it used to:
+       * this car is recognised from the side, where the roofline is one arc
+       * and the tail is a deck rather than a hatch, and a three-quarter view
+       * steep enough to show the bonnet throws all of that away.
        */
       if (!still) clock += dt;
       const spin = 0.62 + Math.sin(clock * 0.32) * 0.45;
@@ -399,7 +402,19 @@ export function SeatField({
       const aspect = width / Math.max(height, 1);
       // The model rotation on its own, so the shader can turn a cell's normal
       // into view space without inverting the whole view-projection.
+      // Nearer eye level than before. Looking down at a car foreshortens the
+      // roofline into a plan view, and the roofline is the whole point.
       const model = multiply(rotateX(-0.2 + leanY), rotateY(spin + leanX));
+      /*
+       * Closer, and looking at the car rather than down at it.
+       *
+       * The old placement left the body filling about half the frame with the
+       * rest empty sky, which costs the shape the pixels it needs: five
+       * hundred points can only describe a silhouette if the silhouette is
+       * large enough for the gaps between them to close. Dropping the eye
+       * height as well flattens the plan view and lets the roofline read as a
+       * profile, which is the view this car is recognised from.
+       */
       const view = multiply(translate(0, -0.3, -2.05), model);
       const vp = multiply(perspective(0.62, aspect, 0.1, 20), view);
 
