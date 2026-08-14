@@ -110,6 +110,8 @@ export const home: HomeContent = {
     foot: "Redeeming burns the DRV, and the partner's commission is what pays the API bill. The won conversion uses the operating model's peg exactly.",
   },
 
+  carCredit: "Vehicle 3D model",
+
   signals: {
     eyebrow: "What travels",
     title: "Four, and only while it moves.",

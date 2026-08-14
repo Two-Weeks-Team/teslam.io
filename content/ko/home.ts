@@ -121,6 +121,8 @@ export const home = {
     foot: "교환하면 DRV는 소각되고, 제휴사 수수료가 API 비용을 냅니다. 원화 환산은 운영 모델의 페그를 그대로 씁니다.",
   },
 
+  carCredit: "차량 3D 모델",
+
   signals: {
     eyebrow: "무엇이 오가나",
     title: "달릴 때만, 네 개.",

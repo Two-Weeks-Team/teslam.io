@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { carCells, carMesh, FRONT_AXLE_T, REAR_AXLE_T } from "@/lib/car";
+import { loadCar } from "@/lib/car-load";
 
 /**
  * The cohort, drawn as the car it is a cohort of.
@@ -205,6 +206,7 @@ uniform vec3 uGlass;
 uniform vec3 uEdge;
 uniform vec3 uTyre;
 uniform vec3 uAlloy;
+uniform vec3 uTrim;
 
 out vec4 outColour;
 
@@ -246,12 +248,17 @@ void main() {
    */
   float tyre = clamp(1.0 - abs(vMaterial - 1.0), 0.0, 1.0);
   float alloy = clamp(1.0 - abs(vMaterial - 2.0), 0.0, 1.0);
+  // Satin black plastic — valances, window surrounds, mirror caps, underbody.
+  // In body paint it lifts the whole lower half of the car to the colour of
+  // the roof, and the lower half of this car is not that colour.
+  float trim = clamp(1.0 - abs(vMaterial - 4.0), 0.0, 1.0);
 
   vec3 base = mix(uBody, uGlass, glass);
   base = mix(base, uTyre, tyre);
   base = mix(base, uAlloy, alloy);
+  base = mix(base, uTrim, trim);
 
-  float gloss = mix(mix(0.62, 0.3, glass), 0.14, tyre);
+  float gloss = mix(mix(mix(0.62, 0.3, glass), 0.14, tyre), 0.24, trim);
   vec3 c = base * (0.3 + key * gloss + fill * (1.0 - tyre * 0.7));
   c += vec3(1.0) * spec * mix(mix(0.1, 0.42, glass), 0.02, tyre);
   c += uEdge * rim * mix(mix(0.55, 0.8, glass), 0.3, tyre);
@@ -361,17 +368,24 @@ export function SeatField({
   taken,
   label,
   justSeat,
+  credit,
   children,
 }: {
   taken: number;
   label: string;
   /** The seat confirmed a moment ago, for the burst. */
   justSeat: number | null;
+  /** Attribution for the downloaded body, shown only once it is on screen. */
+  credit?: { label: string; author: string; href: string; licence: string };
   /** The server-rendered grid, shown until the canvas takes over. */
   children: React.ReactNode;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [live, setLive] = useState(false);
+  /** True once the downloaded body has replaced the generated one. The credit
+   *  line beside the car appears with it and not before, because there is
+   *  nothing to credit until then. */
+  const [real, setReal] = useState(false);
 
   // Read by the animation loop without restarting it. Re-running the whole
   // WebGL setup every time a seat is confirmed would rebuild the buffers and
@@ -461,15 +475,17 @@ export function SeatField({
     gl.bindVertexArray(vao);
 
     const corners = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
+    const seatBuffers: Record<string, WebGLBuffer> = {};
     const attach = (
       data: Float32Array,
       name: string,
       size: number,
       divisor: number,
     ) => {
-      const buffer = gl.createBuffer();
+      const buffer = gl.createBuffer()!;
+      seatBuffers[name] = buffer;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
       const loc = gl.getAttribLocation(program, name);
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
@@ -506,10 +522,12 @@ export function SeatField({
     const bodyVao = gl.createVertexArray();
     gl.bindVertexArray(bodyVao);
 
+    const bodyBuffers: Record<string, WebGLBuffer> = {};
     const meshAttrib = (data: Float32Array, name: string, size: number) => {
-      const buffer = gl.createBuffer();
+      const buffer = gl.createBuffer()!;
+      bodyBuffers[name] = buffer;
       gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
       const loc = gl.getAttribLocation(bodyProgram, name);
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
@@ -521,7 +539,11 @@ export function SeatField({
 
     const elements = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elements);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.DYNAMIC_DRAW);
+
+    // Counts, not constants: the downloaded car has its own.
+    let indexCount = mesh.indices.length;
+    const seatCount = cells.length;
 
     gl.useProgram(bodyProgram);
     const bVP = gl.getUniformLocation(bodyProgram, "uVP");
@@ -534,6 +556,7 @@ export function SeatField({
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uEdge"), 0.72, 0.8, 0.88);
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uTyre"), 0.055, 0.06, 0.07);
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uAlloy"), 0.42, 0.46, 0.52);
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uTrim"), 0.1, 0.11, 0.13);
 
     /* ── the shadow ─────────────────────────────────────────────────────── */
 
@@ -606,6 +629,47 @@ export function SeatField({
     };
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerleave", onLeave);
+
+    /*
+     * Swap in the real car, if there is one.
+     *
+     * The generated body draws immediately, so the panel is never empty and a
+     * reader on a slow connection sees a car rather than a hole. When the
+     * downloaded mesh arrives its vertices replace what is in the buffers and
+     * the draw counts move with them; when it does not arrive — no file, a
+     * failed fetch, a decoder that refuses the version — the generated one
+     * simply stays, which is why this is a swap and not a dependency.
+     */
+    const abort = new AbortController();
+    void loadCar(abort.signal).then((real) => {
+      if (!real || abort.signal.aborted) return;
+
+      const put = (buffer: WebGLBuffer | undefined, data: Float32Array) => {
+        if (!buffer) return;
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      };
+
+      gl.bindVertexArray(bodyVao);
+      put(bodyBuffers.aPos, real.positions);
+      put(bodyBuffers.aNormal, real.normals);
+      put(bodyBuffers.aMaterial, real.material);
+      // The downloaded mesh carries a material class and no separate glass
+      // gradient, so glass is derived from the class rather than interpolated
+      // across the shoulder — a hard edge, which is what a window has.
+      put(bodyBuffers.aGlass, real.material.map((m) => (m === 3 ? 1 : 0)));
+
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elements);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, real.indices, gl.STATIC_DRAW);
+      indexCount = real.indices.length;
+
+      gl.bindVertexArray(vao);
+      put(seatBuffers.aPos, real.cells);
+      put(seatBuffers.aNormal, real.cellNormals);
+
+      gl.bindVertexArray(null);
+      setReal(true);
+    });
 
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -711,7 +775,7 @@ export function SeatField({
       gl.disable(gl.BLEND);
       gl.uniformMatrix4fv(bVP, false, vpArray);
       gl.uniformMatrix4fv(bModel, false, modelArray);
-      gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+      gl.drawElements(gl.TRIANGLES, indexCount, gl.UNSIGNED_SHORT, 0);
 
       gl.useProgram(program);
       gl.bindVertexArray(vao);
@@ -764,10 +828,10 @@ export function SeatField({
        * keeps the bright core on top where overlaps pile up.
        */
       gl.uniform1f(uHalo, 3.4);
-      gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, cells.length);
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, seatCount);
 
       gl.uniform1f(uHalo, 1.0);
-      gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, cells.length);
+      gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, seatCount);
 
       raf = requestAnimationFrame(frame);
     };
@@ -776,6 +840,7 @@ export function SeatField({
     raf = requestAnimationFrame(frame);
 
     return () => {
+      abort.abort();
       cancelAnimationFrame(raf);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerleave", onLeave);
@@ -791,6 +856,17 @@ export function SeatField({
         role="img"
         aria-label={label}
       />
+      {/* The licence requires this and it appears only when there is something
+          to credit — the generated body is nobody's but ours. */}
+      {real && credit ? (
+        <p className="sfield__credit">
+          {credit.label}{" "}
+          <a href={credit.href} rel="noopener noreferrer nofollow" target="_blank">
+            {credit.author}
+          </a>{" "}
+          <span>{credit.licence}</span>
+        </p>
+      ) : null}
       {/* Hidden from assistive technology only once the canvas is carrying the
           same information under its own label. */}
       <div className="sfield__flat" aria-hidden={live || undefined}>

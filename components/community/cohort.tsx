@@ -6,6 +6,7 @@ import { useLive } from "@/components/community/live-provider";
 import { Mark } from "@/components/community/mark";
 import { Odometer } from "@/components/community/odometer";
 import { SeatField } from "@/components/genesis/seat-field";
+import { CAR_CREDIT } from "@/lib/car-credit";
 
 /**
  * Genesis 500, given the width it needs.
@@ -38,6 +39,7 @@ export function Cohort({ locale }: { locale: Locale }) {
           taken={taken}
           justSeat={justTook?.seatNo ?? null}
           label={`${t.genesis.seatGridLabel}: ${n(locale, taken)} / ${n(locale, seats)}`}
+          credit={{ label: t.carCredit, ...CAR_CREDIT }}
         >
           <div className="seats__grid" role="img" aria-label={t.genesis.seatGridLabel}>
             {Array.from({ length: seats }, (_, i) => (

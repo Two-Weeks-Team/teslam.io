@@ -1943,3 +1943,15 @@ button.feed__more:disabled { color: var(--tx3); cursor: progress; }
   margin-block-start: 1.1rem; font-size: .78rem; color: var(--tx3);
 }
 .sig2__foot a { color: var(--mint); }
+
+/* The licence line, on the model. Small, out of the way, and unmissable if
+   you look — which is the whole of what attribution has to be. */
+.sfield__credit {
+  margin-block-start: .5rem;
+  font-family: var(--font-mono);
+  font-size: .64rem;
+  color: var(--tx3);
+}
+.sfield__credit a { color: var(--tx2); }
+.sfield__credit a:hover { color: var(--mint); }
+.sfield__credit span { opacity: .75; }

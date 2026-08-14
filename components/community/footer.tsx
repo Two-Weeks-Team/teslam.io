@@ -6,6 +6,7 @@ import {
   type Locale,
 } from "@/lib/i18n";
 import { CONTACT_EMAIL, REPO } from "@/lib/site";
+import { CAR_CREDIT } from "@/lib/car-credit";
 import cm from "@/data/community.json";
 
 /**
@@ -16,7 +17,8 @@ import cm from "@/data/community.json";
  * facts belong in front of the reader.
  */
 export function CFooter({ locale }: { locale: Locale }) {
-  const t = getContent(locale).footer;
+  const content = getContent(locale);
+  const t = content.footer;
   const l = getLegal(locale);
 
   return (
@@ -55,6 +57,16 @@ export function CFooter({ locale }: { locale: Locale }) {
       <div className="cmfoot__legal">
         <p className="cmfoot__d">{t.disclaimerTrademark}</p>
         <p className="cmfoot__d">{t.disclaimerFinancial}</p>
+        {/* The Creative Commons condition, kept with the other two notices
+            rather than tucked into a corner: it is a licence term, not a
+            credit we are being generous about. */}
+        <p className="cmfoot__d">
+          {content.carCredit}{" "}
+          <a href={CAR_CREDIT.href} rel="noopener noreferrer nofollow" target="_blank">
+            {CAR_CREDIT.author}
+          </a>{" "}
+          · {CAR_CREDIT.licence}
+        </p>
       </div>
 
       <div className="cmfoot__bot">
