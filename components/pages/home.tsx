@@ -46,12 +46,12 @@ function HomeBoard({ locale }: { locale: Locale }) {
         {cm.isPreview ? <PreviewBanner locale={locale} /> : null}
 
         <MapHero locale={locale} />
-        <Cohort locale={locale} />
         <RouteMap locale={locale} />
         <Quests locale={locale} />
         <League locale={locale} />
         <Badges locale={locale} />
         <Shop locale={locale} />
+        <Cohort locale={locale} />
 
         <div className="cols">
           <LeftRail locale={locale} />
