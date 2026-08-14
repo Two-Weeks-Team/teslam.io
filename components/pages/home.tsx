@@ -1,6 +1,8 @@
 import { Bar } from "@/components/community/bar";
 import { MapHero } from "@/components/community/map-hero";
 import { Cohort } from "@/components/community/cohort";
+import { RouteMap } from "@/components/community/route-map";
+import { Badges, Quests, Shop } from "@/components/community/perks";
 import { League } from "@/components/community/league";
 import { Feed } from "@/components/community/feed";
 import { LeftRail, RightRail } from "@/components/community/rails";
@@ -45,7 +47,11 @@ function HomeBoard({ locale }: { locale: Locale }) {
 
         <MapHero locale={locale} />
         <Cohort locale={locale} />
+        <RouteMap locale={locale} />
+        <Quests locale={locale} />
         <League locale={locale} />
+        <Badges locale={locale} />
+        <Shop locale={locale} />
 
         <div className="cols">
           <LeftRail locale={locale} />

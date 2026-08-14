@@ -21,9 +21,12 @@
     "cf:migrate:preview": "wrangler d1 migrations apply teslam-genesis-preview --config cloudflare/wrangler.jsonc --env preview --remote",
     "cf:migrate:production": "wrangler d1 migrations apply teslam-genesis-production --config cloudflare/wrangler.jsonc --env=\"\" --remote",
     "cf:deploy:preview": "wrangler deploy --config cloudflare/wrangler.jsonc --env preview",
-    "cf:deploy:production": "wrangler deploy --config cloudflare/wrangler.jsonc --env=\"\""
+    "cf:deploy:production": "wrangler deploy --config cloudflare/wrangler.jsonc --env=\"\"",
+    "prebuild": "node scripts/copy-map-worker.mjs",
+    "predev": "node scripts/copy-map-worker.mjs"
   },
   "dependencies": {
+    "maplibre-gl": "^6.3.0",
     "next": "16.2.12",
     "react": "19.2.8",
     "react-dom": "19.2.8"

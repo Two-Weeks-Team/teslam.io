@@ -450,6 +450,123 @@
 .seats__cta { margin-block-start: 1rem; }
 .seats__note { margin-block-start: .7rem; font-size: .72rem; color: var(--tx3); line-height: 1.6; }
 
+/* ── route map ───────────────────────────────────────────────────────── */
+
+.rmap {
+  margin-block-start: 1.25rem;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  background: var(--ink1);
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+}
+.rmap__eyebrow {
+  font-family: var(--font-mono); font-size: .7rem; letter-spacing: .12em;
+  color: var(--mint); text-transform: uppercase;
+}
+.rmap__h { font-size: clamp(1.15rem, 2.4vw, 1.6rem); letter-spacing: -.02em; margin-block-start: .3rem; }
+.rmap__sub { font-size: .8125rem; color: var(--tx3); margin-block-start: .3rem; }
+
+.rmap__pick { display: flex; flex-wrap: wrap; gap: .4rem; margin-block-start: .9rem; }
+.rmap__chip {
+  display: inline-flex; align-items: baseline; gap: .45rem;
+  padding: .38rem .8rem; border-radius: 999px;
+  border: 1px solid var(--hair2); background: transparent; color: var(--tx2);
+  font-size: .8rem; cursor: pointer;
+}
+.rmap__chip:hover { border-color: var(--mint); color: var(--tx); }
+.rmap__chip.is-on { border-color: var(--mint); background: color-mix(in srgb, var(--mint) 14%, transparent); color: var(--tx); }
+.rmap__chipkm { font-family: var(--font-mono); font-size: .68rem; color: var(--tx3); }
+
+.rmap__stage {
+  position: relative;
+  margin-block-start: .9rem;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--hair);
+}
+.rmap__canvas { block-size: clamp(20rem, 52vh, 34rem); background: #0b1016; }
+
+/*
+ * The label the section depends on.
+ *
+ * Over the map, not under it — a reader who screenshots the drive should
+ * capture the sentence saying it is illustrative in the same frame.
+ */
+.rmap__hud {
+  position: absolute; inset-block-start: .6rem; inset-inline-start: .6rem;
+  display: flex; flex-direction: column; gap: .25rem;
+  pointer-events: none;
+}
+.rmap__flag {
+  align-self: start;
+  font-family: var(--font-mono); font-size: .66rem; letter-spacing: .04em;
+  color: var(--gold);
+  background: color-mix(in srgb, var(--ink0) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  border-radius: 3px; padding: .22rem .5rem;
+}
+.rmap__note {
+  align-self: start;
+  font-size: .7rem; color: var(--tx2);
+  background: color-mix(in srgb, var(--ink0) 72%, transparent);
+  border-radius: 3px; padding: .15rem .45rem;
+}
+.rmap__fail {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: .85rem; color: var(--tx3); background: var(--ink0);
+}
+
+.rmap__bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6rem;
+  margin-block-start: .8rem;
+}
+.rmap__btn {
+  padding: .5rem .95rem; border-radius: 999px;
+  border: 1px solid var(--mint); background: color-mix(in srgb, var(--mint) 16%, transparent);
+  color: var(--tx); font-size: .82rem; font-weight: 600; cursor: pointer;
+}
+.rmap__btn--ghost { border-color: var(--hair2); background: transparent; color: var(--tx2); }
+.rmap__btn:disabled { opacity: .4; cursor: default; }
+.rmap__btn:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+
+.rmap__track {
+  flex: 1; min-inline-size: 6rem; block-size: 4px;
+  border-radius: 999px; background: var(--ink2); overflow: hidden;
+}
+.rmap__fill {
+  display: block; block-size: 100%;
+  background: linear-gradient(90deg, var(--mint), var(--gold));
+  transform-origin: left; transform: scaleX(0);
+}
+
+.rmap__read {
+  display: flex; gap: 1.25rem; margin: 0;
+  inline-size: 100%;
+  padding-block-start: .7rem; border-block-start: 1px solid var(--hair);
+}
+@media (min-width: 48rem) {
+  .rmap__read { inline-size: auto; padding-block-start: 0; border-block-start: 0; margin-inline-start: auto; }
+}
+.rmap__read dt {
+  font-family: var(--font-mono); font-size: .64rem; letter-spacing: .08em;
+  color: var(--tx3); text-transform: uppercase;
+}
+.rmap__read dd {
+  margin: .15rem 0 0;
+  font-family: var(--font-mono); font-size: 1.05rem; color: var(--tx);
+  font-variant-numeric: tabular-nums;
+}
+.rmap__read dd.is-gold { color: var(--gold); }
+.rmap__read dd span { font-size: .62em; color: var(--tx3); margin-inline-start: .3em; }
+
+.rmap__foot { margin-block-start: .8rem; font-size: .72rem; color: var(--tx3); line-height: 1.65; }
+
+/* MapLibre's own chrome, brought into the board's palette. */
+.rmap .maplibregl-ctrl-group { background: var(--ink1); border: 1px solid var(--hair2); }
+.rmap .maplibregl-ctrl-group button + button { border-block-start: 1px solid var(--hair2); }
+.rmap .maplibregl-ctrl-attrib { background: color-mix(in srgb, var(--ink0) 78%, transparent); }
+.rmap .maplibregl-ctrl-attrib a { color: var(--tx3); }
+
 /* ── cohort section ──────────────────────────────────────────────────── */
 
 .coh {
@@ -1151,4 +1268,163 @@
     color-mix(in srgb, var(--ink1) 88%, transparent) 42%,
     color-mix(in srgb, var(--ink1) 45%, transparent) 100%
   );
+}
+
+/* ── quests · badges · redemption ────────────────────────────────────────
+   The three answers to "what is the driving for". Shared shape: an eyebrow, a
+   heading carrying its own sample mark, and a grid of cards that encode their
+   own progress rather than printing it.
+--------------------------------------------------------------------------- */
+
+.qb, .bd, .sc2 {
+  margin-block-start: 1.25rem;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  background: var(--ink1);
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+}
+.qb__eyebrow, .bd__eyebrow, .sc2__eyebrow {
+  font-family: var(--font-mono); font-size: .7rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mint);
+}
+.bd__eyebrow { color: var(--gold); }
+.sc2__eyebrow { color: var(--ember); }
+.qb__h, .bd__h, .sc2__h {
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  font-size: clamp(1.15rem, 2.4vw, 1.6rem); letter-spacing: -.02em;
+  margin-block-start: .3rem;
+}
+.qb__sub, .bd__sub, .sc2__sub { font-size: .8125rem; color: var(--tx3); margin-block-start: .3rem; }
+
+/* ── quests ── */
+
+.qb__grid {
+  display: grid; gap: .75rem; margin-block-start: 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+.quest {
+  position: relative;
+  border: 1px solid var(--hair); border-radius: 6px;
+  background: var(--ink0); padding: .9rem;
+  display: grid; grid-template-columns: 1fr auto; gap: .15rem .8rem;
+  align-items: center;
+}
+.quest.is-done { border-color: color-mix(in srgb, var(--mint) 55%, transparent); }
+.quest__t { font-weight: 700; font-size: .9rem; }
+.quest__s { font-size: .72rem; color: var(--tx3); grid-column: 1; }
+
+/*
+ * A conic ring rather than a bar.
+ *
+ * Four bars stacked in a grid read as one chart of unrelated things; four
+ * dials read as four separate goals, which is what they are.
+ */
+.quest__ring {
+  grid-column: 2; grid-row: 1 / span 3;
+  inline-size: 3.4rem; block-size: 3.4rem; border-radius: 50%;
+  display: grid; place-items: center;
+  background: conic-gradient(var(--mint) calc(var(--v, 0) * 360deg), var(--ink2) 0);
+}
+.quest__ring::before {
+  content: ""; position: absolute; inline-size: 2.5rem; block-size: 2.5rem;
+  border-radius: 50%; background: var(--ink0);
+}
+.quest__pct {
+  position: relative;
+  font-family: var(--font-mono); font-size: .72rem; color: var(--tx);
+  font-variant-numeric: tabular-nums;
+}
+.quest.is-done .quest__ring { background: conic-gradient(var(--mint) 360deg, var(--mint) 0); }
+.quest__n { grid-column: 1; font-family: var(--font-mono); font-size: .82rem; color: var(--tx2); margin-block-start: .35rem; }
+.quest__n b { color: var(--tx); font-size: 1.05rem; }
+.quest__n span { color: var(--tx3); margin-inline-start: .25em; }
+.quest__r { grid-column: 1; font-family: var(--font-mono); font-size: .78rem; color: var(--gold); }
+.quest__r span { color: var(--tx3); font-size: .85em; }
+
+/* ── badges ── */
+
+.bd__case {
+  display: grid; gap: .75rem; margin-block-start: 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+.badge {
+  border: 1px solid var(--hair); border-radius: 6px;
+  background: var(--ink0); padding: .9rem; text-align: center;
+}
+/* Unearned badges are present but unlit — an empty slot says nothing about
+   what could fill it. */
+.badge:not(.is-got) { opacity: .5; }
+.badge__disc {
+  display: grid; place-items: center;
+  inline-size: 3rem; block-size: 3rem; margin-inline: auto;
+  border-radius: 50%;
+  background: var(--ink2);
+  border: 2px solid var(--hair2);
+}
+.badge__face { inline-size: 1.15rem; block-size: 1.15rem; border-radius: 50%; background: var(--hair2); }
+.badge--bronze.is-got .badge__disc { border-color: #b87333; box-shadow: 0 0 14px -4px #b87333; }
+.badge--bronze.is-got .badge__face { background: #b87333; }
+.badge--silver.is-got .badge__disc { border-color: #c7ced6; box-shadow: 0 0 14px -4px #c7ced6; }
+.badge--silver.is-got .badge__face { background: #c7ced6; }
+.badge--gold.is-got .badge__disc { border-color: var(--gold); box-shadow: 0 0 16px -3px var(--gold); }
+.badge--gold.is-got .badge__face { background: var(--gold); }
+.badge--genesis .badge__disc { border-style: dashed; }
+.badge--genesis.is-got .badge__disc { border-color: var(--mint); border-style: solid; }
+.badge__n { font-weight: 700; font-size: .85rem; margin-block-start: .6rem; }
+.badge__s { font-size: .7rem; color: var(--tx3); margin-block-start: .15rem; line-height: 1.5; }
+.badge__got {
+  font-family: var(--font-mono); font-size: .64rem; letter-spacing: .1em;
+  color: var(--mint); text-transform: uppercase; margin-block-start: .5rem;
+}
+.badge__left { font-family: var(--font-mono); font-size: .7rem; color: var(--tx3); margin-block-start: .5rem; }
+
+/* ── redemption ── */
+
+.sc2__bal { display: flex; align-items: baseline; gap: .4rem; margin-block-start: .8rem; }
+.sc2__bal .odo { font-size: 1.7rem; }
+.sc2__bal span { font-family: var(--font-mono); font-size: .8rem; color: var(--tx3); }
+
+.sc2__shelf {
+  display: grid; gap: .75rem; margin-block-start: 1.1rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+.item {
+  position: relative; overflow: hidden;
+  border: 1px solid var(--hair); border-radius: 6px;
+  background: linear-gradient(180deg, var(--ink2), var(--ink0));
+  padding: .9rem;
+  transition: transform .25s ease, border-color .25s ease;
+}
+.item:hover { transform: translateY(-3px); border-color: var(--hair2); }
+.item.is-ok { border-color: color-mix(in srgb, var(--mint) 45%, transparent); }
+.item__tag {
+  position: absolute; inset-block-start: .5rem; inset-inline-end: .5rem;
+  font-family: var(--font-mono); font-size: .6rem; letter-spacing: .06em;
+  color: var(--ink0); background: var(--ember); border-radius: 2px; padding: .1rem .32rem;
+}
+.item__n { font-size: .85rem; font-weight: 600; line-height: 1.45; min-block-size: 2.4em; }
+.item__p {
+  font-family: var(--font-mono); font-size: 1.15rem; color: var(--tx);
+  margin-block-start: .5rem; font-variant-numeric: tabular-nums;
+}
+.item__p span { font-size: .55em; color: var(--tx3); margin-inline-start: .3em; }
+.item__w { font-size: .72rem; color: var(--tx3); }
+/* How close the wallet is to this shelf item. */
+.item__bar {
+  display: block; block-size: 3px; border-radius: 2px;
+  margin-block-start: .6rem; background: var(--ink2);
+  position: relative; overflow: hidden;
+}
+.item__bar::after {
+  content: ""; position: absolute; inset-block: 0; inset-inline-start: 0;
+  inline-size: calc(var(--v, 0) * 100%);
+  background: linear-gradient(90deg, var(--mint), var(--gold));
+}
+.item__need { font-family: var(--font-mono); font-size: .66rem; color: var(--tx3); margin-block-start: .4rem; }
+.item.is-ok .item__need { color: var(--mint); }
+.sc2__foot { margin-block-start: .9rem; font-size: .72rem; color: var(--tx3); line-height: 1.65; }
+
+@media (prefers-reduced-motion: reduce) {
+  .item { transition: none; }
+  .item:hover { transform: none; }
 }
