@@ -415,6 +415,98 @@ function splitWheels(tris) {
  * The inner surface is the one whose normal points back toward the car's own
  * axis. Nobody can see it through an opaque outer pane, so it goes.
  */
+/**
+ * Drop the back half of every coincident double shell.
+ *
+ * `shellGlass` fixed the greenhouse by judging each face on its own — does its
+ * normal point away from the car's axis? — and that test is only confident on
+ * the flanks and the roof. At the nose and the tail the outward direction is
+ * almost entirely along x, where the radial test has nothing to measure, so it
+ * cannot be trusted to delete anything there and the doors kept their second
+ * skin: small dark shards with lit edges along every shut line, the same
+ * z-fighting signature the windows had.
+ *
+ * This pass judges faces in *pairs* instead. Two triangles at the same place
+ * with opposing normals are a double shell by construction, and deciding which
+ * of the two faces outward is a comparison rather than a threshold — one of
+ * them points away from the car's centre and the other points into it, and
+ * that stays true at the nose, at the tail, and on the underside. The test is
+ * at its most confident exactly where the single-face test is at its weakest.
+ *
+ * Nothing is dropped without a partner, so a single-skinned panel is never at
+ * risk however it happens to be oriented.
+ */
+function dedupeShells(tris) {
+  // Two millimetres, in the units `normalise` left behind. Shells further
+  // apart than that do not z-fight — they have real thickness, and the inner
+  // surface of a genuinely thick panel is somebody's design decision rather
+  // than a duplicate.
+  const TOL = 8e-4;
+
+  let cx = 0, cy = 0, cz = 0, n = 0;
+  for (const { face } of tris) {
+    for (const v of face) {
+      cx += v.p[0]; cy += v.p[1]; cz += v.p[2]; n += 1;
+    }
+  }
+  n = Math.max(1, n);
+  cx /= n; cy /= n; cz /= n;
+
+  const meta = tris.map(({ face }) => {
+    const m = [0, 0, 0];
+    for (const v of face) for (let a = 0; a < 3; a += 1) m[a] += v.p[a] / 3;
+    const [a, b, c] = face.map((v) => v.p);
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    let nx = uy * vz - uz * vy;
+    let ny = uz * vx - ux * vz;
+    let nz = ux * vy - uy * vx;
+    const len = Math.hypot(nx, ny, nz) || 1;
+    nx /= len; ny /= len; nz /= len;
+    // How far outward this face looks, measured from the car's own centre.
+    const ox = m[0] - cx, oy = m[1] - cy, oz = m[2] - cz;
+    const olen = Math.hypot(ox, oy, oz) || 1;
+    return { m, nrm: [nx, ny, nz], out: (nx * ox + ny * oy + nz * oz) / olen };
+  });
+
+  const cell = (v) => Math.round(v / TOL);
+  const buckets = new Map();
+  meta.forEach((f, i) => {
+    const k = `${cell(f.m[0])},${cell(f.m[1])},${cell(f.m[2])}`;
+    const at = buckets.get(k);
+    if (at) at.push(i);
+    else buckets.set(k, [i]);
+  });
+
+  const drop = new Uint8Array(tris.length);
+  let dropped = 0;
+
+  for (let i = 0; i < meta.length; i += 1) {
+    if (drop[i]) continue;
+    const f = meta[i];
+    const bx = cell(f.m[0]), by = cell(f.m[1]), bz = cell(f.m[2]);
+    for (let dx = -1; dx <= 1; dx += 1)
+      for (let dy = -1; dy <= 1; dy += 1)
+        for (let dz = -1; dz <= 1; dz += 1) {
+          const near = buckets.get(`${bx + dx},${by + dy},${bz + dz}`);
+          if (!near) continue;
+          for (const j of near) {
+            if (j <= i || drop[j] || drop[i]) continue;
+            const g = meta[j];
+            if (Math.hypot(g.m[0] - f.m[0], g.m[1] - f.m[1], g.m[2] - f.m[2]) > TOL) continue;
+            // Back to back, not merely adjacent.
+            const dot = f.nrm[0] * g.nrm[0] + f.nrm[1] * g.nrm[1] + f.nrm[2] * g.nrm[2];
+            if (dot > -0.85) continue;
+            const loser = f.out >= g.out ? j : i;
+            drop[loser] = 1;
+            dropped += 1;
+          }
+        }
+  }
+
+  return { kept: tris.filter((_, i) => !drop[i]), dropped };
+}
+
 function shellGlass(tris) {
   let midY = 0;
   let n = 0;
@@ -536,13 +628,245 @@ function decimate(tris, cells) {
   return { verts, tris: out };
 }
 
+/* ── seats ────────────────────────────────────────────────────────────── */
+
+/**
+ * Place the five hundred, here rather than in the browser.
+ *
+ * The reader's copy of this used to sample the mesh on load, and it could only
+ * ever use tests cheap enough to run on the main thread: paint class, and a
+ * normal pointing away from the car's centre. Both are necessary and together
+ * they are not sufficient, because a car door has *two* outward-facing painted
+ * skins — the outer one you can see and the inner one three centimetres behind
+ * it — and nothing in either test can tell them apart. A third of the cohort
+ * was landing on the inside of the bodywork, buried under the panel it belongs
+ * to, and the only seats that survived the depth test were the ones that
+ * happened to sit on a shut line where the geometry steps forward. The render
+ * came back with five hundred seats tracing every door seam and leaving the
+ * door skins bare.
+ *
+ * The test that separates them is a ray: stand on the face, walk out along its
+ * own normal, and see whether any other triangle is in the way. That is
+ * O(candidates × triangles) and there is no version of it that belongs on a
+ * page load, but it costs a couple of seconds here, once, for everyone.
+ *
+ * So the seats are baked. The browser reads a list.
+ */
+function placeSeats(verts, tris, count) {
+  const centre = [0, 0, 0];
+  for (const v of verts) for (let a = 0; a < 3; a += 1) centre[a] += v.p[a] / verts.length;
+  let loY = Infinity;
+  let hiY = -Infinity;
+  for (const v of verts) {
+    if (v.p[1] < loY) loY = v.p[1];
+    if (v.p[1] > hiY) hiY = v.p[1];
+  }
+  // Under the sill is outward-facing, painted, and under the car.
+  const sill = loY + (hiY - loY) * 0.22;
+
+  const face = tris.map((t) => {
+    const [a, b, c] = t.map((i) => verts[i].p);
+    const sn = [0, 1, 2].map((x) => t.reduce((acc, i) => acc + verts[i].n[x] / 3, 0));
+    const sl = Math.hypot(...sn);
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2];
+    const vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    const nx = uy * vz - uz * vy;
+    const ny = uz * vx - ux * vz;
+    const nz = ux * vy - uy * vx;
+    const len = Math.hypot(nx, ny, nz);
+    const m = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3];
+    const wind = len > 0 ? [nx / len, ny / len, nz / len] : [0, 1, 0];
+    const shade = sl > 0.35 ? sn.map((v) => v / sl) : wind;
+    return { a, b, c, n: wind, shade, area: len / 2, m };
+  });
+
+  /*
+   * A uniform grid over the triangles, so the ray only meets the ones near it.
+   * Brute force is a hundred million intersection tests and about half a minute;
+   * this is a second.
+   */
+  const CELL = 0.05;
+  const key = (x, y, z) => `${Math.floor(x / CELL)},${Math.floor(y / CELL)},${Math.floor(z / CELL)}`;
+  const grid = new Map();
+  face.forEach((f, i) => {
+    // Walk the triangle's bounding box. These are small next to a cell.
+    const lo = [0, 1, 2].map((a) => Math.min(f.a[a], f.b[a], f.c[a]));
+    const hi = [0, 1, 2].map((a) => Math.max(f.a[a], f.b[a], f.c[a]));
+    for (let x = Math.floor(lo[0] / CELL); x <= Math.floor(hi[0] / CELL); x += 1)
+      for (let y = Math.floor(lo[1] / CELL); y <= Math.floor(hi[1] / CELL); y += 1)
+        for (let z = Math.floor(lo[2] / CELL); z <= Math.floor(hi[2] / CELL); z += 1) {
+          const k = `${x},${y},${z}`;
+          const at = grid.get(k);
+          if (at) at.push(i);
+          else grid.set(k, [i]);
+        }
+  });
+
+  /*
+   * Möller–Trumbore, front and back faces alike — a wall is a wall.
+   *
+   * `minT` is not an epsilon against self-intersection; that is what `skip` is
+   * for. It exists because a ray leaving a *concave* patch — the inside of a
+   * wheel arch, the gutter where the roof meets the glass — runs straight into
+   * the triangle next door, which is a neighbour rather than a wall. Without
+   * it the test called ninety-three per cent of the bodywork buried.
+   */
+  const hits = (o, d, maxT, skip, minT) => {
+    const steps = Math.ceil(maxT / CELL) + 1;
+    const seen = new Set();
+    for (let s = 0; s <= steps; s += 1) {
+      const t = (s / steps) * maxT;
+      const near = grid.get(key(o[0] + d[0] * t, o[1] + d[1] * t, o[2] + d[2] * t));
+      if (!near) continue;
+      for (const i of near) {
+        if (i === skip || seen.has(i)) continue;
+        seen.add(i);
+        const f = face[i];
+        const e1 = [f.b[0] - f.a[0], f.b[1] - f.a[1], f.b[2] - f.a[2]];
+        const e2 = [f.c[0] - f.a[0], f.c[1] - f.a[1], f.c[2] - f.a[2]];
+        const px = d[1] * e2[2] - d[2] * e2[1];
+        const py = d[2] * e2[0] - d[0] * e2[2];
+        const pz = d[0] * e2[1] - d[1] * e2[0];
+        const det = e1[0] * px + e1[1] * py + e1[2] * pz;
+        if (Math.abs(det) < 1e-12) continue;
+        const inv = 1 / det;
+        const tv = [o[0] - f.a[0], o[1] - f.a[1], o[2] - f.a[2]];
+        const u = (tv[0] * px + tv[1] * py + tv[2] * pz) * inv;
+        if (u < 0 || u > 1) continue;
+        const qx = tv[1] * e1[2] - tv[2] * e1[1];
+        const qy = tv[2] * e1[0] - tv[0] * e1[2];
+        const qz = tv[0] * e1[1] - tv[1] * e1[0];
+        const v = (d[0] * qx + d[1] * qy + d[2] * qz) * inv;
+        if (v < 0 || u + v > 1) continue;
+        const hit = (e2[0] * qx + e2[1] * qy + e2[2] * qz) * inv;
+        if (hit > minT && hit < maxT) return true;
+      }
+    }
+    return false;
+  };
+
+  /*
+   * How far out to look.
+   *
+   * Far enough to find the outer skin standing in front of an inner one — a
+   * door cavity is a few centimetres, a wing maybe ten — and short enough not
+   * to find the *other side of the car*, which every face on the near flank
+   * would otherwise hit. Sixty centimetres in real terms.
+   */
+  const REACH = 0.25;
+
+  /*
+   * How close is "next door" rather than "in the way".
+   *
+   * A door cavity on this mesh is about three centimetres; a triangle sharing
+   * an edge with this one is within one. This constant lives in the gap.
+   *
+   * Swept across the whole body, of 4,018 candidate faces it keeps 272 at
+   * 0.0001, then 869 · 1,299 · 1,388 · 1,540 · 1,708 at 0.002 · 0.004 · 0.006
+   * · 0.010 · 0.016. The curve is a cliff up to about 0.004 and a shrug after
+   * it, which is the signature of a threshold that has stopped rejecting
+   * neighbours and started rejecting nothing in particular. 0.006 sits just
+   * past the knee, at one and a half centimetres.
+   *
+   * That still leaves well over half the candidates buried, and they should
+   * be: a model at this detail carries door inner panels, boot lining, arch
+   * liners and bay walls, all of them painted, all of them facing outward, all
+   * of them under something.
+   */
+  const NEAR = 0.006;
+
+  const keep = [];
+  const cum = [];
+  let total = 0;
+  let buried = 0;
+  for (let i = 0; i < face.length; i += 1) {
+    const f = face[i];
+    if (tris[i].some((v) => verts[v].cls !== 0)) continue;
+    if (!(f.area > 0)) continue;
+    if (f.m[1] < sill) continue;
+    /*
+     * Which way is out, and who gets to say.
+     *
+     * Neither normal on this mesh can be trusted alone. Of 12,012 painted
+     * faces above the sill, the winding calls 4,018 outward and the shading
+     * normals call 3,591 outward, and the two only agree on 2,812 — they are
+     * picking out *different shells*, because a model assembled from a few
+     * dozen separate pieces has a few dozen chances to get the winding
+     * backwards, and a renderer that lights from the vertex normals will never
+     * complain.
+     *
+     * So orientation is not taken from the mesh at all. A face is oriented by
+     * geometry — away from the car's centre, which is a fact about where it
+     * sits rather than a claim the file makes — and whether it is *visible* is
+     * settled by the ray below. Flipping a normal outward cannot smuggle an
+     * inner panel in: the outer skin is still standing in front of it, and the
+     * ray still finds it.
+     */
+    const out = [f.m[0] - centre[0], f.m[1] - centre[1], f.m[2] - centre[2]];
+    const oLen = Math.hypot(...out) || 1;
+    const seed0 = Math.abs(f.shade[0]) + Math.abs(f.shade[1]) + Math.abs(f.shade[2]) > 0
+      ? f.shade
+      : f.n;
+    const sign = seed0[0] * out[0] + seed0[1] * out[1] + seed0[2] * out[2] < 0 ? -1 : 1;
+    const dir = [seed0[0] * sign, seed0[1] * sign, seed0[2] * sign];
+    // Still reject the tangential: a face edge-on to the outward direction is
+    // a shut line or a jamb, and a seat on one sits in a crack.
+    if ((dir[0] * out[0] + dir[1] * out[1] + dir[2] * out[2]) / oLen < 0.2) continue;
+    if (hits(f.m, dir, REACH, i, NEAR)) {
+      buried += 1;
+      continue;
+    }
+    f.dir = dir;
+    keep.push(i);
+    total += f.area;
+    cum.push(total);
+  }
+
+  // Deterministic: the same car on the server and in the browser, every render.
+  let seed = 0x9e3779b9;
+  const rand = () => {
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    return ((seed >>> 0) % 100_000) / 100_000;
+  };
+
+  const picked = [];
+  for (let i = 0; i < count && keep.length; i += 1) {
+    const target = ((i + rand() * 0.9) / count) * total;
+    let lo = 0;
+    let hi = cum.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (cum[mid] < target) lo = mid + 1;
+      else hi = mid;
+    }
+    const f = face[keep[lo]];
+    let u = rand();
+    let v = rand();
+    if (u + v > 1) {
+      u = 1 - u;
+      v = 1 - v;
+    }
+    const w = 1 - u - v;
+    picked.push({
+      p: [0, 1, 2].map((a) => f.a[a] * w + f.b[a] * u + f.c[a] * v),
+      n: f.dir,
+    });
+  }
+
+  // Nose first: the car assembles from the front as the cohort fills.
+  picked.sort((p, q) => q.p[0] - p.p[0]);
+  return { seats: picked, buried, kept: keep.length };
+}
+
 /* ── write ────────────────────────────────────────────────────────────── */
 
 /**
  * A flat little format, because the browser should do no parsing.
  *
  *   0   magic "TCAR"
- *   4   u16 version   6  u16 flags
+ *   4   u16 version   6  u16 seatCount
  *   8   u32 vertexCount
  *   12  u32 triangleCount
  *   16  f32 bounds × 6        (lo x y z, hi x y z — the quantisation frame)
@@ -551,6 +875,8 @@ function decimate(tris, cells) {
  *   i8  normal   × 3 × vertexCount
  *   u8  class        × vertexCount
  *   u16 index    × 3 × triangleCount
+ *   i16 seat pos × 3 × seatCount
+ *   i8  seat nrm × 3 × seatCount
  *
  * Positions are quantised into the bounding box. Sixteen bits across two units
  * is a step of sixty microns on a car that renders nine hundred pixels wide —
@@ -560,7 +886,7 @@ function decimate(tris, cells) {
  * Indices are u16, which caps the mesh at 65,535 vertices. That is far above
  * the budget and the encoder refuses rather than silently wrapping.
  */
-function encode({ verts, tris }) {
+function encode({ verts, tris, seats }) {
   if (verts.length > 65_535) throw new Error(`${verts.length} vertices — too many for u16 indices`);
 
   const lo = [Infinity, Infinity, Infinity];
@@ -574,11 +900,13 @@ function encode({ verts, tris }) {
   const span = [0, 1, 2].map((a) => Math.max(1e-6, hi[a] - lo[a]));
 
   const HEADER = 40;
-  const buf = Buffer.alloc(HEADER + verts.length * (6 + 3 + 1) + tris.length * 6);
+  const buf = Buffer.alloc(
+    HEADER + verts.length * (6 + 3 + 1) + tris.length * 6 + seats.length * (6 + 3),
+  );
 
   buf.write("TCAR", 0, "ascii");
-  buf.writeUInt16LE(1, 4);
-  buf.writeUInt16LE(0, 6);
+  buf.writeUInt16LE(2, 4);
+  buf.writeUInt16LE(seats.length, 6);
   // Both counts live in the fixed header so the reader can size every array
   // before it touches the body. These two were briefly written to the same
   // offset, which is a class of bug that produces a file the writer is happy
@@ -610,6 +938,21 @@ function encode({ verts, tris }) {
     buf.writeUInt16LE(t[2], at + 4);
     at += 6;
   }
+  // The seats share the body's quantisation frame, so a seat and the panel it
+  // sits on round the same way and the two can never drift apart.
+  for (const s of seats) {
+    for (let a = 0; a < 3; a += 1) {
+      const q = Math.round(((s.p[a] - lo[a]) / span[a]) * 65_534) - 32_767;
+      buf.writeInt16LE(Math.max(-32_767, Math.min(32_767, q)), at + a * 2);
+    }
+    at += 6;
+  }
+  for (const s of seats) {
+    for (let a = 0; a < 3; a += 1) {
+      buf.writeInt8(Math.max(-127, Math.min(127, Math.round(s.n[a] * 127))), at + a);
+    }
+    at += 3;
+  }
   return buf;
 }
 
@@ -632,6 +975,9 @@ if (!source) {
  */
 const BUDGET = 26_000;
 
+/** The cohort. One number, shared with `lib/genesis.ts` by being the same number. */
+const SEATS = 500;
+
 const gltf = readGltf(resolve(source));
 const tris = collect(gltf);
 if (!tris.length) throw new Error("no triangles found — is this a scene with a mesh in it?");
@@ -641,7 +987,8 @@ const tyreFaces = splitWheels(tris);
 // Reassign rather than splicing in place: `push(...half a million)` puts every
 // element on the call stack as an argument and throws.
 const glazing = shellGlass(tris);
-const body = glazing.kept;
+const shells = dedupeShells(glazing.kept);
+const body = shells.kept;
 
 /*
  * Weld, then collapse edges by quadric error.
@@ -667,20 +1014,24 @@ console.log(`welded     ${welded.verts.length.toLocaleString()} vertices, ${weld
 const mesh = simplify(welded.verts, welded.faces, BUDGET);
 const cells = "qem";
 
+const seating = placeSeats(mesh.verts, mesh.tris, SEATS);
+
 const out = resolve("public/car/model3.bin");
 mkdirSync(dirname(out), { recursive: true });
-const buf = encode(mesh);
+const buf = encode({ ...mesh, seats: seating.seats });
 writeFileSync(out, buf);
 
 const byClass = [0, 0, 0, 0];
 for (const v of mesh.verts) byClass[v.cls] += 1;
 
+console.log(`seats      ${seating.seats.length} placed on ${seating.kept.toLocaleString()} visible faces, ${seating.buried.toLocaleString()} buried faces skipped`);
 console.log(`source     ${basename(source)}`);
 console.log(`            ${tris.length.toLocaleString()} triangles in`);
 console.log(`pose       longest axis ${pose.order[0]}, up ${pose.order[2]}, scale ${pose.scale.toExponential(3)}`);
 console.log(`cabin      ${dropped} interior primitives dropped`);
 console.log(`wheels     ${tyreFaces.toLocaleString()} faces reclassified as rubber by radius`);
 console.log(`glazing    ${glazing.dropped.toLocaleString()} inward-facing glass faces dropped`);
+console.log(`shells     ${shells.dropped.toLocaleString()} back-to-back duplicate faces dropped`);
 console.log(`simplified ${cells} → ${mesh.tris.length.toLocaleString()} triangles, ${mesh.verts.length.toLocaleString()} vertices`);
 console.log(`materials  paint ${byClass[0]}  tyre ${byClass[1]}  alloy ${byClass[2]}  glass ${byClass[3]}`);
 console.log(`wrote      public/car/model3.bin  ${(buf.length / 1024).toFixed(0)} KB`);
