@@ -369,7 +369,7 @@
       "title": "7.0km/kWh 돌파",
       "sub": "단일 주행 전비",
       "have": 6.8,
-      "need": 7.0,
+      "need": 7,
       "reward": 150,
       "unit": "DRV",
       "kind": "eff"
@@ -444,5 +444,69 @@
       "have": 0,
       "need": 1
     }
-  ]
+  ],
+  "nameplate": {
+    "handle": "광교전비장인",
+    "trim": "Model 3 Long Range",
+    "region": "capital",
+    "since": "2026-03",
+    "odo": 38228,
+    "totalDrv": 152840,
+    "bestEff": 8.42
+  },
+  "streak": {
+    "days": [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "current": 6,
+    "best": 23
+  },
+  "tiers": [
+    {
+      "id": "bronze",
+      "need": 0
+    },
+    {
+      "id": "silver",
+      "need": 2000
+    },
+    {
+      "id": "gold",
+      "need": 8000
+    },
+    {
+      "id": "teslam",
+      "need": 20000
+    }
+  ],
+  "tierProgress": 5250
 }

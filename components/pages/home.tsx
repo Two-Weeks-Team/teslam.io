@@ -3,6 +3,8 @@ import { MapHero } from "@/components/community/map-hero";
 import { Cohort } from "@/components/community/cohort";
 import { RouteMap } from "@/components/community/route-map";
 import { Badges, Quests, Shop } from "@/components/community/perks";
+import { Onboard, Proof } from "@/components/community/proof";
+import { Ladder, Nameplate, Stake, Streak } from "@/components/community/identity";
 import { League } from "@/components/community/league";
 import { Feed } from "@/components/community/feed";
 import { LeftRail, RightRail } from "@/components/community/rails";
@@ -47,10 +49,16 @@ function HomeBoard({ locale }: { locale: Locale }) {
 
         <MapHero locale={locale} />
         <RouteMap locale={locale} />
+        <Proof locale={locale} />
+        <Onboard locale={locale} />
         <Quests locale={locale} />
         <League locale={locale} />
+        <Streak locale={locale} />
         <Badges locale={locale} />
+        <Ladder locale={locale} />
+        <Nameplate locale={locale} />
         <Shop locale={locale} />
+        <Stake locale={locale} />
         <Cohort locale={locale} />
 
         <div className="cols">

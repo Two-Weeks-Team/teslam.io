@@ -107,6 +107,101 @@ export const home: HomeContent = {
     foot: "Redeeming burns the DRV, and the partner's commission is what pays the API bill. The won conversion uses the operating model's peg exactly.",
   },
 
+  proof: {
+    eyebrow: "Verification",
+    title: "GPS can be faked. An odometer cannot.",
+    sub: "A league only works if the record cannot be manufactured. That is why this site does not use GPS.",
+    gps: {
+      tag: "Scored on a GPS trace",
+      claim: "The coordinates the app sent are the score",
+      items: [
+        "Mock-location apps can invent the coordinates",
+        "Laps of a car park accumulate distance",
+        "Hard to tell from a bicycle or a walk",
+        "You have to trust the trace the app sent",
+      ],
+    },
+    odo: {
+      tag: "Scored on the odometer",
+      claim: "The car reports its own dashboard number",
+      items: [
+        "It is the vehicle's own record; no app sits in between",
+        "Only the difference between two readings counts, so it cannot be rewound",
+        "It moves only if that car actually moved",
+        "The odometer difference alone sets what is earned",
+      ],
+    },
+    // Do not write that coordinates are never collected. The operating model
+    // reads latitude and longitude once a minute and /model says so. What this
+    // section can claim is only that coordinates are not what the score is
+    // computed from.
+    foot: "Four signals once a minute. Latitude, longitude and speed are cross-checks; the odometer alone sets what is earned. The costs are worked through in",
+    footLink: "the operating model",
+  },
+
+  onboard: {
+    eyebrow: "Getting started",
+    title: "Three steps onto the board",
+    sub: "No developer account, no API bill, no hardware to fit.",
+    steps: [
+      { title: "Link a Tesla account", body: "One official sign-in. Your password never reaches us." },
+      { title: "Pick the car", body: "Choose one of the cars on the account. We never take a VIN." },
+      { title: "Just drive", body: "While the car moves the odometer reports every 60 seconds. Up to {km}km a day, which is at most {drv} DRV." },
+    ],
+    cta: "What Genesis 500 is",
+    note: "Only pre-registration is open. Linking begins when the closed beta does.",
+  },
+
+  nameplate: {
+    eyebrow: "My garage",
+    title: "What you drove becomes a nameplate",
+    sub: "Not a profile — a record. Built to be shown to someone.",
+    awaitingSeat: "NO GENESIS SEAT",
+    odo: "Total distance",
+    best: "Best efficiency",
+    since: "Since",
+    foot: "Every figure on the plate comes from odometer-verified segments only.",
+  },
+
+  streak: {
+    eyebrow: "Streak",
+    title: "Breaking it stings",
+    sub: "The last 30 days. The gaps are the point of the picture.",
+    current: "Current",
+    best: "Best",
+    dayUnit: "d",
+  },
+
+  ladder: {
+    eyebrow: "Tiers",
+    title: "Bronze to Teslam",
+    sub: "Climbed on accrued DRV alone. No tier is for sale.",
+    start: "start",
+    at: "At",
+    foot: "keep driving and the next one arrives.",
+    // Tier names and perks are display strings, so they live per locale.
+    // data/community.json keeps only the identifier and the threshold — Korean
+    // left in there renders verbatim on /en.
+    tiers: {
+      bronze: { name: "Bronze", perk: "Base accrual" },
+      silver: { name: "Silver", perk: "Double weekly quests" },
+      gold: { name: "Gold", perk: "First call at the exchange" },
+      teslam: { name: "Teslam", perk: "Hall of fame · governance vote" },
+    },
+  },
+
+  stake: {
+    eyebrow: "TSLM",
+    title: "Lock it up and it becomes a vote",
+    sub: "DRV is the money you spend. TSLM is the say in how this board is run.",
+    flow: [
+      { title: "Lock DRV for 30 days", body: "While it is locked it cannot be redeemed." },
+      { title: "TSLM comes out", body: "Supply is fixed at 100 million. None is ever minted beyond it." },
+      { title: "Use the vote", body: "On reward rates, caps and redemption partners. It also carries ad placement." },
+    ],
+    warn: "DRV and TSLM have not been issued. This section describes a design; it is not investment advice and not a guarantee of return.",
+  },
+
   density: {
     title: "Who is near you",
     sub: "Confirmed seats by region. A province the registrant chose, never a coordinate.",
