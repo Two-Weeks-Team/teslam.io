@@ -35,9 +35,12 @@ export const home: HomeContent = {
 
   hero: {
     badge: "Tesla owners, Korea",
-    h1: "This is where the owners are.",
-    h1b: "Distance driven does not lie.",
-    sub: "Link a Tesla account once and you are done. While the car moves, the odometer reports every 60 seconds, proves your kilometres for you, and accrues them as DRV. No developer account, no API bill.",
+    // "Where the owners are" was what the site called itself, not something a
+    // visitor could check. There is exactly one claim here that is checkable:
+    // the numbers on this page were made by a car, not by an app.
+    h1: "Driving is",
+    h1b: "the proof.",
+    sub: "Link a Tesla account once and drive as you already do. While the car moves, the odometer reports every 60 seconds, proves your kilometres for you, and accrues them as DRV. No developer account, no API bill.",
     ctaPrimary: "Join Genesis 500",
     ctaPrimaryClosed: "What Genesis 500 is",
     ctaSecondary: "How does it accrue?",
@@ -105,6 +108,39 @@ export const home: HomeContent = {
     canBuy: "affordable now",
     short: "short by",
     foot: "Redeeming burns the DRV, and the partner's commission is what pays the API bill. The won conversion uses the operating model's peg exactly.",
+  },
+
+  signals: {
+    eyebrow: "What travels",
+    title: "Four, and only while it moves.",
+    sub: "A parked car sends nothing. While the wheels turn, four signals go up once a minute — and exactly one of them decides what is earned.",
+    car: "Your car",
+    moving: "only while moving",
+    everySeconds: "s apart",
+    pays: "sets the accrual",
+    checks: "cross-check only",
+    codes: {
+      latitude: "LAT",
+      longitude: "LNG",
+      vehicleSpeed: "SPD",
+      odometer: "ODO",
+    },
+    names: {
+      latitude: "Latitude",
+      longitude: "Longitude",
+      vehicleSpeed: "Vehicle speed",
+      odometer: "Odometer",
+    },
+    parked: {
+      title: "Parked is zero signals",
+      body: "Nothing leaves the car once it is switched off. What this site knows is that you drove, and how far — that is the whole of it.",
+    },
+    oneWay: {
+      title: "An odometer only counts up",
+      body: "It cannot be rewound, so the difference between two readings is the distance. Invent all the coordinates you like; this number will not move.",
+    },
+    foot: "{n} signals, 60 seconds apart. The cost per car, worked through, is in",
+    footLink: "the operating model",
   },
 
   proof: {
