@@ -563,18 +563,46 @@
 .league__sub { font-size: .8125rem; color: var(--tx3); }
 .league__clock { margin-inline-start: auto; font-family: var(--font-mono); font-size: .78rem; color: var(--gold); }
 
-.podium { display: grid; gap: 1px; background: var(--hair); }
-@media (min-width: 46rem) { .podium { grid-template-columns: repeat(3, 1fr); } }
-.pod { background: var(--ink1); padding: 1rem 1.1rem; display: flex; gap: .9rem; align-items: flex-start; }
-.pod--1 { background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 11%, var(--ink1)), var(--ink1)); }
-.pod__r { font-family: var(--font-mono); font-size: 2.25rem; font-weight: 700; line-height: 1; color: var(--tx3); }
-.pod--1 .pod__r { color: var(--gold); }
-.pod--2 .pod__r { color: #c7ced6; }
-.pod--3 .pod__r { color: var(--ember); }
-.pod__n { font-weight: 700; font-size: .95rem; }
-.pod__m { font-size: .75rem; color: var(--tx3); margin-block-start: .15rem; }
-.pod__e { font-family: var(--font-mono); font-size: 1.5rem; color: var(--mint); margin-block-start: .5rem; line-height: 1; }
-.pod__eu { font-size: .6em; color: var(--tx3); margin-inline-start: .2em; }
+/* Replay control, in the header beside the week. */
+.league__replay {
+  inline-size: 100%;
+  margin-block-start: .5rem;
+  align-self: start;
+  padding: .35rem .75rem; border-radius: 999px;
+  border: 1px solid var(--hair2); background: transparent; color: var(--tx2);
+  font-size: .74rem; cursor: pointer;
+}
+@media (min-width: 46rem) { .league__replay { inline-size: auto; margin-inline-start: auto; } }
+.league__replay:hover:not(:disabled) { border-color: var(--mint); color: var(--mint); }
+.league__replay:disabled { opacity: .45; cursor: default; }
+.league__replay:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+
+/*
+ * The race.
+ *
+ * Rows are always in this week's order in the markup — the transform is what
+ * puts them back into last week's for a moment. Doing it the other way round
+ * would mean the server sent standings that were out of date, and a crawler or
+ * a reader without JavaScript would take last week's table as the answer.
+ */
+.lgrow { transition: transform .95s cubic-bezier(.22, 1, .36, 1); }
+.lgbody.is-moving .lgrow { transition: none; }
+.lgrow__trim {
+  display: block; font-size: .7rem; color: var(--tx3); margin-block-start: .1rem;
+}
+.pos__n { font-family: var(--font-mono); font-size: 1.05rem; }
+
+/* What the podium was actually carrying: the top three read differently. */
+.lgrow--1 { background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 10%, transparent), transparent 45%); }
+.lgrow--2 { background: linear-gradient(90deg, color-mix(in srgb, var(--mint) 8%, transparent), transparent 45%); }
+.lgrow--3 { background: linear-gradient(90deg, color-mix(in srgb, var(--ember) 8%, transparent), transparent 45%); }
+.lgrow--1 .pos__n { color: var(--gold); font-size: 1.5rem; }
+.lgrow--2 .pos__n { color: #c7ced6; font-size: 1.35rem; }
+.lgrow--3 .pos__n { color: var(--ember); font-size: 1.25rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lgrow { transition: none; }
+}
 
 .lgtable { inline-size: 100%; border-collapse: collapse; font-size: .85rem; }
 .lgtable th, .lgtable td { padding: .6rem .75rem; text-align: start; border-block-end: 1px solid var(--hair); white-space: nowrap; }
@@ -622,6 +650,24 @@
   opacity: .55;
 }
 
+.podium { display: grid; gap: 1px; background: var(--hair); }
+@media (min-width: 46rem) { .podium { grid-template-columns: repeat(3, 1fr); } }
+.pod { background: var(--ink1); padding: 1rem 1.1rem; display: flex; gap: .9rem; align-items: flex-start; }
+.pod--1 { background: linear-gradient(135deg, color-mix(in srgb, var(--gold) 11%, var(--ink1)), var(--ink1)); }
+.pod__r { font-family: var(--font-mono); font-size: 2.25rem; font-weight: 700; line-height: 1; color: var(--tx3); }
+.pod--1 .pod__r { color: var(--gold); }
+.pod--2 .pod__r { color: #c7ced6; }
+.pod--3 .pod__r { color: var(--ember); }
+.pod__n { font-weight: 700; font-size: .95rem; }
+.pod__m { font-size: .75rem; color: var(--tx3); margin-block-start: .15rem; }
+.pod__e { font-family: var(--font-mono); font-size: 1.5rem; color: var(--mint); margin-block-start: .5rem; line-height: 1; }
+.pod__eu { font-size: .6em; color: var(--tx3); margin-inline-start: .2em; }
+.pod__d {
+  margin-block-start: .45rem;
+  font-family: var(--font-mono); font-size: .74rem; color: var(--tx2);
+}
+.pod__d span { color: var(--tx3); margin-inline-start: .35em; font-size: .92em; }
+
 /* The podium's own bar, in the tier colour rather than the table's mint. */
 .pod__bar {
   display: block;
@@ -640,8 +686,14 @@
   inline-size: calc(var(--v, 0) * 100%);
   background: var(--gold);
 }
-.pod--2 .pod__bar::after { background: var(--mint); }
+.pod--2 .pod__bar::after { background: #c7ced6; }
 .pod--3 .pod__bar::after { background: var(--ember); }
+
+/* The top three take their tier colour on the efficiency bar too, so the
+   underline says both "how fast" and "which tier" without a second element. */
+.lgrow--1 .eff::before { background: var(--gold); }
+.lgrow--2 .eff::before { background: #c7ced6; }
+.lgrow--3 .eff::before { background: var(--ember); }
 
 .gaprow td {
   text-align: center; color: var(--tx3); font-family: var(--font-mono);
