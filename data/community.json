@@ -444,5 +444,77 @@
       "have": 0,
       "need": 1
     }
-  ]
+  ],
+  "nameplate": {
+    "handle": "광교전비장인",
+    "trim": "Model 3 Long Range",
+    "region": "수도권",
+    "since": "2026-03",
+    "odo": 38228,
+    "totalDrv": 152840,
+    "bestEff": 8.42
+  },
+  "streak": {
+    "days": [
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "current": 6,
+    "best": 23
+  },
+  "tiers": [
+    {
+      "id": "bronze",
+      "name": "브론즈",
+      "need": 0,
+      "perk": "기본 적립"
+    },
+    {
+      "id": "silver",
+      "name": "실버",
+      "need": 2000,
+      "perk": "주간 퀘스트 2배"
+    },
+    {
+      "id": "gold",
+      "name": "골드",
+      "need": 8000,
+      "perk": "교환소 우선권"
+    },
+    {
+      "id": "teslam",
+      "name": "테슬람",
+      "need": 20000,
+      "perk": "명예의 전당 · 운영 투표"
+    }
+  ],
+  "tierProgress": 5250
 }

@@ -1442,3 +1442,198 @@
   font-variant-numeric: tabular-nums;
 }
 .rmap__count span { font-size: .7rem; color: var(--tx2); }
+
+/* ── verification · onboarding · identity ────────────────────────────────
+   Harvested from the alt directions: alt6/alt7's odometer argument, alt5's
+   onboarding and tier ladder, alt2's nameplate and streak. Same section shell
+   as the rest of the board so they read as part of one page.
+--------------------------------------------------------------------------- */
+
+.pf, .ob, .np, .stk, .ld, .stake {
+  margin-block-start: 1.25rem;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  background: var(--ink1);
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+}
+.pf__eyebrow, .ob__eyebrow, .np__eyebrow, .stk__eyebrow, .ld__eyebrow, .stake__eyebrow {
+  font-family: var(--font-mono); font-size: .7rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mint);
+}
+.np__eyebrow { color: var(--gold); }
+.stake__eyebrow { color: var(--ember); }
+.pf__h, .ob__h, .np__h, .stk__h, .ld__h, .stake__h {
+  display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  font-size: clamp(1.15rem, 2.4vw, 1.6rem); letter-spacing: -.02em;
+  margin-block-start: .3rem; text-wrap: balance;
+}
+.pf__sub, .ob__sub, .np__sub, .stk__sub, .ld__sub, .stake__sub {
+  font-size: .8125rem; color: var(--tx3); margin-block-start: .3rem; line-height: 1.6;
+}
+
+/* ── verification ── */
+
+.pf__pair {
+  display: grid; gap: .75rem; margin-block-start: 1.1rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 46rem) { .pf__pair { grid-template-columns: 1fr 1fr; } }
+.pf__side { border: 1px solid var(--hair); border-radius: 6px; padding: 1rem; background: var(--ink0); }
+.pf__side--bad { border-color: color-mix(in srgb, var(--ember) 30%, var(--hair)); }
+.pf__side--good { border-color: color-mix(in srgb, var(--mint) 42%, var(--hair)); }
+.pf__tag {
+  font-family: var(--font-mono); font-size: .66rem; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--tx3);
+}
+.pf__side--bad .pf__tag { color: var(--ember); }
+.pf__side--good .pf__tag { color: var(--mint); }
+.pf__claim { font-weight: 700; font-size: .95rem; margin-block-start: .35rem; }
+.pf__list { list-style: none; margin: .8rem 0 0; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
+.pf__list li {
+  display: flex; gap: .5rem; font-size: .82rem; color: var(--tx2); line-height: 1.55;
+}
+.pf__side--bad .pf__list li::before { content: "✕"; color: var(--ember); flex: none; }
+.pf__side--good .pf__list li::before { content: "✓"; color: var(--mint); flex: none; }
+.pf__foot { margin-block-start: .9rem; font-size: .76rem; color: var(--tx3); }
+.pf__foot a { color: var(--mint); }
+
+/* ── onboarding ── */
+
+.ob__steps {
+  list-style: none; margin: 1.1rem 0 0; padding: 0;
+  display: grid; gap: .75rem;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+}
+.ob__step {
+  display: flex; gap: .8rem; align-items: flex-start;
+  border: 1px solid var(--hair); border-radius: 6px; padding: .9rem; background: var(--ink0);
+}
+.ob__n {
+  flex: none; inline-size: 1.9rem; block-size: 1.9rem; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: .85rem;
+  color: var(--ink0); background: var(--mint);
+}
+.ob__t { font-weight: 700; font-size: .9rem; }
+.ob__b { font-size: .8rem; color: var(--tx2); margin-block-start: .25rem; line-height: 1.6; }
+.ob__cta { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-block-start: 1.1rem; }
+.ob__note { font-size: .75rem; color: var(--tx3); }
+
+/* ── nameplate ── */
+
+/* A plate, not a profile card: brushed ground, hard edge, numbers stamped. */
+.plate {
+  margin-block-start: 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--gold) 34%, var(--hair));
+  border-radius: 6px;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--gold) 7%, transparent), transparent 55%),
+    repeating-linear-gradient(90deg, var(--ink0), var(--ink0) 2px, var(--ink2) 2px, var(--ink2) 3px);
+}
+.plate__top { display: flex; flex-wrap: wrap; align-items: baseline; gap: .6rem; }
+.plate__handle { font-size: clamp(1.1rem, 3vw, 1.5rem); font-weight: 700; letter-spacing: -.02em; }
+.plate__slot {
+  margin-inline-start: auto;
+  font-family: var(--font-mono); font-size: .64rem; letter-spacing: .1em;
+  color: var(--tx3); border: 1px dashed var(--hair2); border-radius: 3px; padding: .15rem .45rem;
+}
+.plate__car { font-size: .82rem; color: var(--tx2); margin-block-start: .2rem; }
+.plate__grid {
+  display: flex; flex-wrap: wrap; gap: 1.4rem;
+  margin: 1rem 0 0; padding-block: .9rem;
+  border-block: 1px solid var(--hair);
+}
+.plate__grid dt {
+  font-family: var(--font-mono); font-size: .62rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--tx3);
+}
+.plate__grid dd {
+  margin: .2rem 0 0; font-family: var(--font-mono); font-size: 1rem; color: var(--tx);
+  font-variant-numeric: tabular-nums;
+}
+.plate__grid dd span { font-size: .62em; color: var(--tx3); margin-inline-start: .3em; }
+.plate__drv { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem; margin-block-start: .9rem; }
+.plate__drv .odo { font-size: 1.6rem; }
+.plate__unit { font-family: var(--font-mono); font-size: .76rem; color: var(--tx3); }
+.plate__krw { margin-inline-start: auto; font-size: .78rem; color: var(--tx3); }
+.plate__foot { margin-block-start: .8rem; font-size: .72rem; color: var(--tx3); }
+
+/* ── streak ── */
+
+.stk__grid {
+  display: grid; gap: 4px; margin-block-start: 1.1rem;
+  grid-template-columns: repeat(15, 1fr);
+}
+@media (min-width: 40rem) { .stk__grid { grid-template-columns: repeat(30, 1fr); } }
+.stk__d {
+  aspect-ratio: 1; border-radius: 2px;
+  background: var(--ink2); border: 1px solid var(--hair);
+}
+.stk__d.is-on {
+  background: color-mix(in srgb, var(--mint) 65%, transparent);
+  border-color: var(--mint);
+}
+.stk__read { display: flex; gap: 1.6rem; margin: 1rem 0 0; }
+.stk__read dt {
+  font-family: var(--font-mono); font-size: .62rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--tx3);
+}
+.stk__read dd {
+  margin: .2rem 0 0; font-family: var(--font-mono); font-size: 1.3rem; color: var(--tx);
+  font-variant-numeric: tabular-nums;
+}
+.stk__read dd.is-mint { color: var(--mint); }
+.stk__read dd span { font-size: .55em; color: var(--tx3); margin-inline-start: .2em; }
+
+/* ── tier ladder ── */
+
+.ld__rail {
+  position: relative;
+  margin-block: 2rem 0;
+  block-size: 4px; border-radius: 999px; background: var(--ink2);
+}
+.ld__fill {
+  position: absolute; inset-block: 0; inset-inline-start: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #b87333, var(--mint), var(--gold));
+}
+.ld__stop { position: absolute; inset-block-start: 0; transform: translateX(-50%); inline-size: 6.5rem; text-align: center; }
+.ld__stop:last-child { transform: translateX(-88%); }
+.ld__stop:first-child { transform: translateX(-12%); }
+.ld__dot {
+  display: block; inline-size: 12px; block-size: 12px; border-radius: 50%;
+  margin: -4px auto 0; background: var(--ink0); border: 2px solid var(--hair2);
+}
+.ld__stop.is-on .ld__dot { border-color: var(--mint); background: var(--mint); }
+.ld__stop--teslam.is-on .ld__dot { border-color: var(--gold); background: var(--gold); }
+.ld__n { font-size: .8rem; font-weight: 700; margin-block-start: .45rem; }
+.ld__stop:not(.is-on) .ld__n { color: var(--tx3); }
+.ld__need { font-family: var(--font-mono); font-size: .64rem; color: var(--tx3); }
+.ld__perk { font-size: .68rem; color: var(--tx3); margin-block-start: .25rem; line-height: 1.4; }
+.ld__foot { margin-block-start: 7.5rem; font-size: .78rem; color: var(--tx2); }
+.ld__foot b { color: var(--mint); font-family: var(--font-mono); }
+
+/* ── staking ── */
+
+.stake__flow {
+  list-style: none; margin: 1.1rem 0 0; padding: 0;
+  display: grid; gap: .75rem;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+.stake__step {
+  border: 1px solid var(--hair); border-radius: 6px; padding: .9rem; background: var(--ink0);
+}
+.stake__n {
+  display: inline-grid; place-items: center;
+  inline-size: 1.6rem; block-size: 1.6rem; border-radius: 50%;
+  font-family: var(--font-mono); font-size: .74rem;
+  color: var(--ember); border: 1px solid color-mix(in srgb, var(--ember) 45%, transparent);
+}
+.stake__t { font-weight: 700; font-size: .88rem; margin-block-start: .5rem; }
+.stake__b { font-size: .8rem; color: var(--tx2); margin-block-start: .25rem; line-height: 1.6; }
+.stake__warn {
+  margin-block-start: 1rem; padding: .7rem .9rem;
+  border: 1px dashed var(--hair2); border-radius: 4px;
+  font-size: .74rem; color: var(--tx3); line-height: 1.6;
+}
