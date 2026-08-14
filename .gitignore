@@ -27,3 +27,11 @@ coverage
 
 # Published from node_modules by scripts/copy-map-worker.mjs at build time.
 public/maplibre/
+
+# The downloaded car, and its conversion output.
+#
+# The source glb is tens of megabytes of somebody else's mesh and textures and
+# has no business in a clone; `scripts/build-car.mjs` turns it into
+# public/car/model3.bin, which is small enough to commit and is committed
+# deliberately — see the README. This entry keeps the source out.
+/assets/

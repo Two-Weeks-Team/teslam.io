@@ -195,3 +195,37 @@ curl -X POST localhost:8787/v1/genesis/invite \
 
 Then open the API leg of that link (`/v1/genesis/confirm?token=…`) to take the
 seat and receive the session.
+
+## The car on the Genesis panel
+
+The body is a downloaded glTF, converted at build time into a small binary the
+renderer uploads directly. The source is **not** in this repository — it is tens
+of megabytes of somebody else's mesh and textures, and `/assets` is gitignored.
+
+```bash
+# 1. Download a Model 3 under a licence that allows reuse. CC BY works;
+#    check the licence on the model page, not on the site's front page.
+#    Save it as assets/model3.glb  (glTF Binary)
+
+# 2. Convert. Writes public/car/model3.bin, which IS committed.
+node scripts/build-car.mjs assets/model3.glb
+
+# 3. Fill in lib/car-credit.ts with the author and the licence.
+#    Attribution is the condition of CC BY, not a courtesy, and
+#    tests/car-credit.test.ts fails the build while it is still a placeholder.
+```
+
+The converter is dependency-free — glTF 2.0 is a JSON header and a binary blob —
+and it does three things a straight export would not: welds and decimates to a
+triangle budget, classifies materials into paint, glass, rubber and alloy so the
+shader can tell them apart, and normalises the pose to the frame the camera and
+the shadow already expect (two units long, nose at +x, sitting on y = 0).
+
+If `public/car/model3.bin` is absent the page draws the generated body instead,
+which is the fallback and not a bug: the file is fetched only when the panel
+scrolls into view, and a reader whose network drops it still gets a car.
+
+**On the licence.** A CC BY grant covers the uploader's own work in the mesh. It
+is not a licence to Tesla's design rights in the vehicle — nobody but Tesla can
+give that. teslam.io draws the car this community drives, is not affiliated with
+Tesla, Inc., and says so on every page.
