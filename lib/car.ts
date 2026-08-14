@@ -84,6 +84,8 @@ export type Cell = {
 
 /* ── the silhouette ───────────────────────────────────────────────────── */
 
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
 /** Linear ramp between two points on the profile. */
 function ramp(t: number, a: number, b: number, ya: number, yb: number): number {
   const k = Math.min(1, Math.max(0, (t - a) / (b - a)));
@@ -117,9 +119,26 @@ function ramp(t: number, a: number, b: number, ya: number, yb: number): number {
  */
 const MM = 2 / 4694;
 
-/** Front and rear axle positions in t, from the published overhangs. */
+/** Front and rear axle positions in t, from the published overhangs. `t` spans
+ *  1 over a length that spans 2, hence the half. */
 export const FRONT_AXLE_T = 1 - 841 * MM * 0.5;
 export const REAR_AXLE_T = 978 * MM * 0.5;
+
+/** 700 mm wheels, so the hub sits one radius up and the tyre tops out at two. */
+const TYRE_R = 349 * MM;
+const WHEEL_Y = TYRE_R;
+
+/*
+ * Where the wheel sits across the car.
+ *
+ * Front track 1580 mm plus a 235 mm tyre puts the outer face 907 mm off the
+ * centreline, against 924 mm for the widest bodywork — so on this car the tyre
+ * is very nearly flush with the arch, not tucked under it. It was set 115 mm
+ * inboard of that, which buried the whole wheel inside the flank the moment the
+ * underbody was closed.
+ */
+const WHEEL_Z = 907 * MM;
+const TYRE_W = 235 * MM;
 
 /**
  * Roofline height at t, where t = 0 is the tail and t = 1 is the nose.
@@ -140,15 +159,37 @@ export const REAR_AXLE_T = 978 * MM * 0.5;
  *                   away. Without it the tail reads as a hatchback, which is
  *                   the single most common way to draw this car wrong.
  */
+/*
+ * The side elevation, in millimetres above the road, divided by 2347.
+ *
+ * Every one of these is a measurement rather than a taste. The first set was
+ * eyeballed and the side view it produced was a generic saloon: the bonnet ran
+ * flat and long before falling at the very tip, and the boot lid sloped away
+ * into the bumper so the back read as a hatchback with a bump on it.
+ *
+ *   1030 mm  rear face, at the top                     t = 0
+ *   1050 mm  the ducktail lip                          t = 0.025
+ *   1015 mm  the boot lid, flat                        t = 0.17
+ *   1420 mm  rear glass arriving at the roof           t = 0.40
+ *   1443 mm  the crown, over the B-pillar              t = 0.575
+ *   1020 mm  the cowl, at the windscreen base          t = 0.766
+ *    900 mm  the bonnet, sloping the whole way         t = 0.90
+ *    780 mm  the nose                                  t = 1
+ *
+ * The two glass surfaces come out at 21° and 25° from horizontal, the boot lid
+ * is flat rather than falling, and the bonnet slopes continuously from the cowl
+ * to a nose that is barely half the height of the roof. Those four facts are
+ * the side of this car.
+ */
 const ROOFLINE: Array<[number, number]> = [
-  [0.0, 0.425], // the trailing edge, falling off the back
-  [0.03, 0.449], // the ducktail lip — the whole difference from a hatchback
-  [0.2, 0.432], // the deck
-  [0.46, 0.614], // rear glass, long and shallow, arriving at the crown
-  [0.58, 0.615], // the crown, over the front seats
-  [0.78, 0.43], // the cowl: windscreen raked about 25° from horizontal
-  [0.93, 0.4], // the bonnet, short and nearly level
-  [1.0, 0.3], // and over the nose
+  [0.0, 0.439],
+  [0.025, 0.447],
+  [0.17, 0.432],
+  [0.4, 0.605],
+  [0.575, 0.615],
+  [0.766, 0.435],
+  [0.9, 0.383],
+  [1.0, 0.332],
 ];
 
 /**
@@ -213,18 +254,23 @@ function monotone(points: Array<[number, number]>, x: number): number {
 }
 
 /**
- * How far the body's lower edge lifts to clear a wheel.
+ * The bottom edge of the body over a wheel — a circle, concentric with it.
  *
- * Arches were missing entirely, and a body with a flat bottom edge running
- * past two floating hoops is the other half of why the old shape did not read
- * as a car. The tyre tops out at 0.298; the arch clears it.
+ * This was a smoothstep hump, which is tall in the middle and falls away far
+ * too quickly at its base: the arch cleared the top of the tyre and then cut
+ * through its shoulders, so the wheel was sliced by the bodywork on both sides.
+ * A wheel arch is an arc a little larger than the wheel it covers, and saying
+ * so directly is both simpler and right everywhere along it.
+ *
+ * Returns 0 outside the arch so the caller can take a maximum.
  */
+const ARCH_R = TYRE_R * 1.16;
+
 function arch(t: number, centre: number): number {
-  const half = 0.09;
-  const d = Math.abs(t - centre);
-  if (d >= half) return 0;
-  const k = 1 - d / half;
-  return 0.15 * k * k * (3 - 2 * k);
+  // t spans 1 where x spans 2, so a distance in t is half a distance in x.
+  const dx = Math.abs(t - centre) * 2;
+  if (dx >= ARCH_R) return 0;
+  return WHEEL_Y + Math.sqrt(ARCH_R * ARCH_R - dx * dx);
 }
 
 /**
@@ -234,11 +280,28 @@ function arch(t: number, centre: number): number {
  * it, and lifting over each axle into an arch.
  */
 function sill(t: number): number {
-  const rocker = 0.166;
-  let base = rocker;
-  if (t < 0.08) base = ramp(t, 0, 0.08, 0.105, rocker);
-  else if (t > 0.92) base = ramp(t, 0.92, 1, rocker, 0.1);
-  return base + arch(t, FRONT_AXLE_T) + arch(t, REAR_AXLE_T);
+  /*
+   * The floor, at ground clearance — not the rocker.
+   *
+   * This was the visible bottom edge of the flank, 390 mm up, and the loft
+   * simply stopped there. That left a 390 mm slot running the length of the
+   * car, and from any angle at all you could see straight under it to the far
+   * pair of wheels: the figure came out with four wheels in a row at two
+   * different heights, which is the single most confusing thing a drawing of a
+   * car can do.
+   *
+   * This car has a flat floor 140 mm off the road, so the underside is closed
+   * and the only openings are the arches. The rocker still reads, because the
+   * ambient gradient puts the bottom of the flank in shade.
+   */
+  const floor = 140 * MM;
+  let base = floor;
+  // Approach and departure: both bumpers hang lower than the floor.
+  if (t < 0.08) base = ramp(t, 0, 0.08, 0.105, floor);
+  else if (t > 0.92) base = ramp(t, 0.92, 1, floor, 0.1);
+  // A maximum, not a sum. Adding them made the arches interfere with the floor
+  // and with each other instead of simply being cut out of it.
+  return Math.max(base, arch(t, FRONT_AXLE_T), arch(t, REAR_AXLE_T));
 }
 
 /**
@@ -256,7 +319,47 @@ function halfWidth(t: number): number {
   // gives a tail that points, and a car whose tail points is a boat.
   const s = 2 * t - 1;
   const draw = s >= 0 ? 0.19 : 0.07;
-  return 0.394 * (1 - draw * Math.abs(s) ** 2.6);
+  let w = 0.394 * (1 - draw * Math.abs(s) ** 2.6);
+
+  /*
+   * The corners wrap.
+   *
+   * A bumper is not a flat panel across the end of the car; in plan it curves
+   * back from its widest point at the arches toward the centre. Without that,
+   * the loft has to be closed by a disc, and a disc at the back of a car is a
+   * tailgate on a van — which is exactly what the tail looked like. Closing it
+   * in the plan instead means the caps have almost nothing left to cover.
+   *
+   * The nose wraps hard and the tail barely at all, which is the difference
+   * between a prow and a boot.
+   */
+  w *= wrap(t, 0.84, 1, 0.78);
+  w *= wrap(t, 0.13, 0, 0.38);
+
+  /*
+   * And the arches flare.
+   *
+   * The widest part of this car is not the doors, it is the swelling over each
+   * wheel. Without it the tyres sit proud of the flanks and the car reads as a
+   * hot rod; with it they sit under a shoulder, which is what an arch is for.
+   */
+  w += 0.008 * (bump(t, FRONT_AXLE_T, 0.13) + bump(t, REAR_AXLE_T, 0.13));
+
+  return w;
+}
+
+/** How far the plan has closed at `t`, between `from` (open) and `to` (the end). */
+function wrap(t: number, from: number, to: number, depth: number): number {
+  const k = Math.min(1, Math.max(0, (t - from) / (to - from)));
+  return Math.sqrt(Math.max(0, 1 - depth * k * k));
+}
+
+/** A smooth hump of unit height centred on `centre`, `half` wide. */
+function bump(t: number, centre: number, half: number): number {
+  const d = Math.abs(t - centre);
+  if (d >= half) return 0;
+  const k = 1 - d / half;
+  return k * k * (3 - 2 * k);
 }
 
 /**
@@ -266,7 +369,13 @@ function halfWidth(t: number): number {
  * closer to a rounded rectangle, and a circular loft gives a smooth tube that
  * reads as a submarine.
  */
-type Point = { p: [number, number, number]; n: [number, number, number] };
+type Point = {
+  p: [number, number, number];
+  n: [number, number, number];
+  /** 0 below the shoulder line, 1 in the glass. Carried out of the section
+   *  function because that is the only place the beltline is known. */
+  glass: number;
+};
 
 function shell(t: number, v: number): Point {
   const top = roof(t);
@@ -303,9 +412,27 @@ function shell(t: number, v: number): Point {
    * float off the body. Making it a function of height instead means anything
    * that asks this function for a point gets the same car.
    */
-  const h = ry > 0 ? (y - bottom) / (2 * ry) : 0;
-  const k = Math.min(1, Math.max(0, (h - 0.55) / 0.45));
-  const rz = halfWidth(t) * (1 - 0.26 * k * k * (3 - 2 * k));
+  /*
+   * Where the glass is.
+   *
+   * Measured against the road, not against the height of whatever section
+   * happens to be under it. The first version normalised the height within
+   * each section, which makes the top of every section the top of the car —
+   * so the boot lid and the bonnet came out as windows, and the beltline ran
+   * from bumper to bumper like a racing stripe.
+   *
+   * A window is two facts at once: above the belt, and between the A- and
+   * C-pillars. Both are needed, and both are here.
+   */
+  const beltY = 0.402 + 0.018 * (1 - t);
+  const above = clamp01((y - beltY) / 0.035);
+  const cabin = Math.min(clamp01((t - 0.2) / 0.06), clamp01((0.8 - t) / 0.06));
+  const glass = above * above * (3 - 2 * above) * cabin;
+
+  // The roof also narrows toward the back, which is most of what the plan view
+  // of this car looks like: a glass teardrop sitting on a wide body.
+  const rearward = clamp01((0.62 - t) / 0.42);
+  const rz = halfWidth(t) * (1 - glass * (0.24 + 0.1 * rearward));
 
   const z = rz * Math.sign(c) * Math.abs(c) ** flankFlat;
 
@@ -320,6 +447,7 @@ function shell(t: number, v: number): Point {
   return {
     p: [2 * t - 1, y, z],
     n: [nx / len, ny / len, nz / len],
+    glass,
   };
 }
 
@@ -363,19 +491,18 @@ function wheel(cx: number, side: number, count: number, index: number): Point {
   // would read as a ship's wheel.
   const a = ((i + 0.37 * (index < tyre ? 0 : 1)) / Math.max(1, n)) * Math.PI * 2;
   return {
-    p: [cx + Math.cos(a) * r, WHEEL_Y + Math.sin(a) * r, side * 0.362],
+    p: [cx + Math.cos(a) * r, WHEEL_Y + Math.sin(a) * r, side * WHEEL_Z],
     // A wheel face points outward along the axle. The tyre ring leans a little
     // toward its own rim so the outer ring still catches the rim light.
     n:
       index < tyre
         ? [Math.cos(a) * 0.5, Math.sin(a) * 0.5, side * 0.7]
         : [0, 0, side],
+    glass: 0,
   };
 }
 
-/** Hub height, and the tyre that reaches up into the arch. 700mm diameter. */
-const TYRE_R = 349 * MM;
-const WHEEL_Y = TYRE_R;
+
 
 /* ── assembly ─────────────────────────────────────────────────────────── */
 
@@ -517,6 +644,18 @@ if (PLANNED_TOTAL !== SEATS) {
 export type Mesh = {
   positions: Float32Array;
   normals: Float32Array;
+  /** Per vertex: 0 for painted metal, 1 for glass. The window line does about
+   *  half the work of making a car look like a car, and it cannot be inferred
+   *  in the shader from a position. */
+  glass: Float32Array;
+  /**
+   * Per vertex: 0 body, 1 tyre, 2 alloy.
+   *
+   * Separate from `glass` because glass is a gradient across the shoulder and
+   * this is a choice of material. Overloading one attribute for both would
+   * blend rubber into paint across the triangles where they meet.
+   */
+  material: Float32Array;
   indices: Uint16Array;
 };
 
@@ -525,15 +664,13 @@ export type Mesh = {
 const LOFT_T = 96;
 const LOFT_V = 40;
 
-function pushRing(
-  pos: number[],
-  nor: number[],
-  t: number,
-): void {
+function pushRing(pos: number[], nor: number[], gls: number[], mat: number[], t: number): void {
   for (let j = 0; j < LOFT_V; j += 1) {
-    const { p, n } = shell(t, j / LOFT_V);
+    const { p, n, glass } = shell(t, j / LOFT_V);
     pos.push(p[0], p[1], p[2]);
     nor.push(n[0], n[1], n[2]);
+    gls.push(glass);
+    mat.push(0);
   }
 }
 
@@ -541,13 +678,15 @@ function pushRing(
 function pushWheel(
   pos: number[],
   nor: number[],
+  gls: number[],
+  mat: number[],
   idx: number[],
   cx: number,
   side: number,
 ): void {
   const N = 28;
-  const zOuter = side * 0.362;
-  const zInner = side * 0.28;
+  const zOuter = side * WHEEL_Z;
+  const zInner = side * (WHEEL_Z - TYRE_W);
   const base = pos.length / 3;
 
   // Two rings for the tread.
@@ -556,6 +695,8 @@ function pushWheel(
       const a = (i / N) * Math.PI * 2;
       pos.push(cx + Math.cos(a) * TYRE_R, WHEEL_Y + Math.sin(a) * TYRE_R, z);
       nor.push(Math.cos(a), Math.sin(a), 0);
+      gls.push(0);
+      mat.push(1);
     }
   }
   for (let i = 0; i < N; i += 1) {
@@ -571,11 +712,15 @@ function pushWheel(
   const faceCentre = pos.length / 3;
   pos.push(cx, WHEEL_Y, zOuter);
   nor.push(0, 0, side);
+  gls.push(0);
+  mat.push(2);
   const faceStart = pos.length / 3;
   for (let i = 0; i < N; i += 1) {
     const a = (i / N) * Math.PI * 2;
     pos.push(cx + Math.cos(a) * TYRE_R * 0.9, WHEEL_Y + Math.sin(a) * TYRE_R * 0.9, zOuter);
     nor.push(0, 0, side);
+    gls.push(0);
+    mat.push(2);
   }
   for (let i = 0; i < N; i += 1) {
     idx.push(faceCentre, faceStart + i, faceStart + ((i + 1) % N));
@@ -585,13 +730,15 @@ function pushWheel(
 export function carMesh(): Mesh {
   const pos: number[] = [];
   const nor: number[] = [];
+  const gls: number[] = [];
+  const mat: number[] = [];
   const idx: number[] = [];
 
   // The hull, ring by ring. The ends stop just short of 0 and 1 because the
   // profile's derivative is undefined exactly there and a ring built on it
   // comes out with normals pointing nowhere.
   for (let i = 0; i < LOFT_T; i += 1) {
-    pushRing(pos, nor, 0.002 + (i / (LOFT_T - 1)) * 0.996);
+    pushRing(pos, nor, gls, mat, 0.002 + (i / (LOFT_T - 1)) * 0.996);
   }
   for (let i = 0; i < LOFT_T - 1; i += 1) {
     for (let j = 0; j < LOFT_V; j += 1) {
@@ -615,6 +762,8 @@ export function carMesh(): Mesh {
     const bottom = sill(t);
     pos.push(2 * t - 1, (top + bottom) / 2, 0);
     nor.push(dir, 0, 0);
+    gls.push(0);
+    mat.push(0);
     for (let j = 0; j < LOFT_V; j += 1) {
       const a = ring * LOFT_V + j;
       const b = ring * LOFT_V + ((j + 1) % LOFT_V);
@@ -624,13 +773,15 @@ export function carMesh(): Mesh {
 
   for (const t of [FRONT_AXLE_T, REAR_AXLE_T]) {
     for (const side of [1, -1]) {
-      pushWheel(pos, nor, idx, 2 * t - 1, side);
+      pushWheel(pos, nor, gls, mat, idx, 2 * t - 1, side);
     }
   }
 
   return {
     positions: new Float32Array(pos),
     normals: new Float32Array(nor),
+    glass: new Float32Array(gls),
+    material: new Float32Array(mat),
     indices: new Uint16Array(idx),
   };
 }

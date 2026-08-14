@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { carCells, carMesh } from "@/lib/car";
+import { carCells, carMesh, FRONT_AXLE_T, REAR_AXLE_T } from "@/lib/car";
 
 /**
  * The cohort, drawn as the car it is a cohort of.
@@ -78,7 +78,7 @@ void main() {
   vec3 world = aPos + aNormal * (0.016 + sin(uTime * 0.9 + seed * 6.283) * 0.007);
 
   vec4 clip = uVP * vec4(world, 1.0);
-  vDepth = clamp((clip.w - 4.6) / 1.9, 0.0, 1.0);
+  vDepth = clamp((clip.w - 4.2) / 1.7, 0.0, 1.0);
 
   /*
    * Rim light from the cell's own surface normal.
@@ -91,7 +91,7 @@ void main() {
   vRim = pow(1.0 - abs(n.z), 2.0);
 
   // Circle of confusion: cells off the focal plane grow and soften.
-  vCoc = clamp(abs(clip.w - 5.5) * 0.45, 0.0, 1.0);
+  vCoc = clamp(abs(clip.w - 5.0) * 0.45, 0.0, 1.0);
 
   float grow = (1.0 + vFlash * 1.8) * (1.0 + vCoc * 0.9) * uHalo;
   vec2 off = aCorner * uSize * grow * vec2(1.0 / uAspect, 1.0);
@@ -168,17 +168,26 @@ void main() {
 const BODY_VERT = `#version 300 es
 in vec3 aPos;
 in vec3 aNormal;
+in float aGlass;
+in float aMaterial;
 
 uniform mat4 uVP;
 uniform mat4 uModel;
 
 out vec3 vN;
 out float vDepth;
+out float vGlass;
+out float vHeight;
+out float vMaterial;
 
 void main() {
   vN = normalize(mat3(uModel) * aNormal);
+  vGlass = aGlass;
+  vMaterial = aMaterial;
+  // Height above the road, for the ground bounce and the ambient gradient.
+  vHeight = aPos.y;
   vec4 clip = uVP * vec4(aPos, 1.0);
-  vDepth = clamp((clip.w - 4.6) / 1.9, 0.0, 1.0);
+  vDepth = clamp((clip.w - 4.2) / 1.7, 0.0, 1.0);
   gl_Position = clip;
 }`;
 
@@ -187,9 +196,15 @@ precision mediump float;
 
 in vec3 vN;
 in float vDepth;
+in float vGlass;
+in float vHeight;
+in float vMaterial;
 
 uniform vec3 uBody;
+uniform vec3 uGlass;
 uniform vec3 uEdge;
+uniform vec3 uTyre;
+uniform vec3 uAlloy;
 
 out vec4 outColour;
 
@@ -205,13 +220,101 @@ void main() {
   // The edge that separates the car from the ground it has no ground on.
   float rim = pow(1.0 - abs(n.z), 3.0);
 
-  vec3 c = uBody * (0.3 + key * 0.62 + fill) + uEdge * rim * 0.55;
+  /*
+   * Glass is not paint with a different colour on it.
+   *
+   * A window is darker than the metal around it and answers a light source in
+   * one tight highlight rather than a broad one, and the line where the two
+   * meet is most of what tells an eye it is looking at a car rather than at a
+   * loaf. So the greenhouse gets its own base, its own much sharper specular,
+   * and a hard edge: the shoulder factor is remapped so the transition happens
+   * over a few per cent of the section instead of fading across it.
+   */
+  float glass = smoothstep(0.35, 0.65, vGlass);
+
+  // Sharp for glass, broad for paint. The half-vector against the same key.
+  vec3 h = normalize(normalize(vec3(-0.3, 0.9, 0.45)) + vec3(0.0, 0.0, 1.0));
+  float spec = pow(max(0.0, dot(n, h)), mix(28.0, 140.0, glass));
+
+  /*
+   * Rubber, then the alloy.
+   *
+   * A tyre is the darkest and least reflective thing on a car and an alloy is
+   * among the brightest. Rendering both in body paint gave two pale discs that
+   * read as the largest feature of the object — which is how a car ends up
+   * looking like a trolley.
+   */
+  float tyre = clamp(1.0 - abs(vMaterial - 1.0), 0.0, 1.0);
+  float alloy = clamp(1.0 - abs(vMaterial - 2.0), 0.0, 1.0);
+
+  vec3 base = mix(uBody, uGlass, glass);
+  base = mix(base, uTyre, tyre);
+  base = mix(base, uAlloy, alloy);
+
+  float gloss = mix(mix(0.62, 0.3, glass), 0.14, tyre);
+  vec3 c = base * (0.3 + key * gloss + fill * (1.0 - tyre * 0.7));
+  c += vec3(1.0) * spec * mix(mix(0.1, 0.42, glass), 0.02, tyre);
+  c += uEdge * rim * mix(mix(0.55, 0.8, glass), 0.3, tyre);
+
+  // A little ambient gradient so the sills sit in shade and the roof does not.
+  c *= 0.86 + 0.22 * clamp(vHeight / 0.62, 0.0, 1.0);
+
   outColour = vec4(c * mix(1.0, 0.68, vDepth), 1.0);
 }`;
 
 /** How far the eye sits from the car, in car lengths. Shared by the camera and
  *  by the depth cues that have to agree with it. */
-const EYE = 5.5;
+const EYE = 5.0;
+
+/*
+ * The ground the car has no ground on.
+ *
+ * A contact shadow, and nothing else — no floor, no horizon. Without it the
+ * object floats, and the four wheels read as four wheels in a row rather than
+ * as two pairs at different distances: the far pair hangs below the sill with
+ * nothing to say why. With it the car stands on something, and the something
+ * never has to be drawn.
+ *
+ * Two lobes rather than one ellipse. The dark is tightest under each axle,
+ * because that is where a car actually touches the road.
+ */
+const GROUND_VERT = `#version 300 es
+in vec2 aXZ;
+
+uniform mat4 uVP;
+
+out vec2 vXZ;
+
+void main() {
+  vXZ = aXZ;
+  gl_Position = uVP * vec4(aXZ.x, 0.0, aXZ.y, 1.0);
+}`;
+
+const GROUND_FRAG = `#version 300 es
+precision mediump float;
+
+in vec2 vXZ;
+
+uniform vec3 uShade;
+uniform vec2 uAxles;
+
+out vec4 outColour;
+
+/** Soft elliptical falloff centred on \`c\`, with radii \`r\`. */
+float lobe(vec2 p, vec2 c, vec2 r) {
+  vec2 d = (p - c) / r;
+  return 1.0 - smoothstep(0.0, 1.0, length(d));
+}
+
+void main() {
+  // The body's own shadow, long and shallow.
+  float body = lobe(vXZ, vec2(0.0, 0.0), vec2(1.04, 0.5));
+  // And the contact patches, tight and dark.
+  float front = lobe(vXZ, vec2(uAxles.x, 0.0), vec2(0.32, 0.44));
+  float rear = lobe(vXZ, vec2(uAxles.y, 0.0), vec2(0.32, 0.44));
+
+  outColour = vec4(uShade, clamp(body * 0.66 + max(front, rear) * 0.5, 0.0, 0.96));
+}`;
 
 /* ── matrices ─────────────────────────────────────────────────────────── */
 
@@ -336,7 +439,8 @@ export function SeatField({
 
     const program = link(VERT, FRAG);
     const bodyProgram = link(BODY_VERT, BODY_FRAG);
-    if (!program || !bodyProgram) return;
+    const groundProgram = link(GROUND_VERT, GROUND_FRAG);
+    if (!program || !bodyProgram || !groundProgram) return;
     gl.useProgram(program);
 
     const cells = carCells();
@@ -412,6 +516,8 @@ export function SeatField({
     };
     meshAttrib(mesh.positions, "aPos", 3);
     meshAttrib(mesh.normals, "aNormal", 3);
+    meshAttrib(mesh.glass, "aGlass", 1);
+    meshAttrib(mesh.material, "aMaterial", 1);
 
     const elements = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elements);
@@ -420,8 +526,39 @@ export function SeatField({
     gl.useProgram(bodyProgram);
     const bVP = gl.getUniformLocation(bodyProgram, "uVP");
     const bModel = gl.getUniformLocation(bodyProgram, "uModel");
-    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uBody"), 0.2, 0.23, 0.27);
+    // Achromatic, as you asked: a graphite body, glass a shade cooler and much
+    // darker, and a cool near-white on the edge. Nothing here competes with the
+    // gold of a seat that has been taken.
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uBody"), 0.225, 0.25, 0.285);
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uGlass"), 0.085, 0.1, 0.125);
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uEdge"), 0.62, 0.7, 0.78);
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uTyre"), 0.055, 0.06, 0.07);
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uAlloy"), 0.42, 0.46, 0.52);
+
+    /* ── the shadow ─────────────────────────────────────────────────────── */
+
+    const groundVao = gl.createVertexArray();
+    gl.bindVertexArray(groundVao);
+    const groundBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, groundBuffer);
+    // One quad on the road, wide enough to hold the whole falloff.
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([-1.5, -0.8, 1.5, -0.8, -1.5, 0.8, -1.5, 0.8, 1.5, -0.8, 1.5, 0.8]),
+      gl.STATIC_DRAW,
+    );
+    const groundLoc = gl.getAttribLocation(groundProgram, "aXZ");
+    gl.enableVertexAttribArray(groundLoc);
+    gl.vertexAttribPointer(groundLoc, 2, gl.FLOAT, false, 0, 0);
+
+    gl.useProgram(groundProgram);
+    const gVP = gl.getUniformLocation(groundProgram, "uVP");
+    gl.uniform3f(gl.getUniformLocation(groundProgram, "uShade"), 0.01, 0.015, 0.02);
+    gl.uniform2f(
+      gl.getUniformLocation(groundProgram, "uAxles"),
+      2 * FRONT_AXLE_T - 1,
+      2 * REAR_AXLE_T - 1,
+    );
 
     gl.bindVertexArray(null);
     gl.useProgram(program);
@@ -494,7 +631,16 @@ export function SeatField({
        * steep enough to show the bonnet throws all of that away.
        */
       if (!still) clock += dt;
-      const spin = 0.62 + Math.sin(clock * 0.32) * 0.45;
+      /*
+       * Negative, so the nose comes toward the reader.
+       *
+       * It was positive, which turns the car away and puts the camera over the
+       * boot lid — the least flattering angle there is, and the one where the
+       * largest flat surface on the car fills the frame. Every photograph ever
+       * taken of a car for the purpose of showing what it is has been taken
+       * from the front three-quarter. This is that.
+       */
+      const spin = -0.5 + Math.sin(clock * 0.32) * 0.34;
 
       leanX += (aimX * 0.34 - leanX) * 0.06;
       leanY += (aimY * 0.16 - leanY) * 0.06;
@@ -504,7 +650,7 @@ export function SeatField({
       // into view space without inverting the whole view-projection.
       // Nearer eye level than before. Looking down at a car foreshortens the
       // roofline into a plan view, and the roofline is the whole point.
-      const model = multiply(rotateX(-0.2 + leanY), rotateY(spin + leanX));
+      const model = multiply(rotateX(-0.16 + leanY), rotateY(spin + leanX));
       /*
        * Closer, and looking at the car rather than down at it.
        *
@@ -532,10 +678,22 @@ export function SeatField({
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-      // The car first, opaque, writing depth. Everything after it is a seat
-      // and every seat behind the body is now correctly hidden by it.
       const vpArray = new Float32Array(vp);
       const modelArray = new Float32Array(model);
+
+      // The shadow first, on the road, under everything. Blended rather than
+      // opaque, and it writes no depth: it is a darkening of the page, not a
+      // surface anything can be behind.
+      gl.useProgram(groundProgram);
+      gl.bindVertexArray(groundVao);
+      gl.depthMask(false);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      gl.uniformMatrix4fv(gVP, false, vpArray);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+      // Then the car, opaque, writing depth. Everything after it is a seat and
+      // every seat behind the body is now correctly hidden by it.
       gl.useProgram(bodyProgram);
       gl.bindVertexArray(bodyVao);
       gl.depthMask(true);
