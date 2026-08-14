@@ -1956,8 +1956,22 @@ button.feed__more:disabled { color: var(--tx3); cursor: progress; }
     transparent 94%
   );
 }
+/*
+   Asked for less transparency, given none.
+
+   This branch used to lower the image's opacity, which is backwards on its
+   face — the request is for *less* see-through, and a fainter layer is more.
+   Raising it to 1 is backwards too, in a way that matters more: somebody sets
+   this because layered translucent things are hard to read, and the layer here
+   sits behind two lines of body copy. A photograph at full strength under text
+   is the exact thing they turned the setting on to avoid.
+
+   So the card becomes what the setting asks for: opaque, with nothing behind
+   the words. The photograph is decoration and carries no information the
+   sentence does not.
+*/
 @media (prefers-reduced-transparency: reduce) {
-  .sig2__card--odo::before { opacity: 0.3; }
+  .sig2__card--odo::before { display: none; }
 }
 
 .sig2__ct { font-size: .92rem; font-weight: 700; color: var(--tx); }
