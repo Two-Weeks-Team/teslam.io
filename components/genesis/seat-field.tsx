@@ -696,15 +696,31 @@ export function SeatField({
        */
       if (!still) clock += dt;
       /*
-       * Negative, so the nose comes toward the reader.
+       * All the way round, one way.
        *
-       * It was positive, which turns the car away and puts the camera over the
-       * boot lid — the least flattering angle there is, and the one where the
-       * largest flat surface on the car fills the frame. Every photograph ever
-       * taken of a car for the purpose of showing what it is has been taken
-       * from the front three-quarter. This is that.
+       * This used to rock through forty degrees either side of the front
+       * three-quarter and take twenty seconds to do it, on the reasoning that
+       * the front three-quarter is how every car has ever been photographed.
+       * True, and beside the point: a photograph is one angle and this is not a
+       * photograph. What the rocking actually produced was a car that never
+       * showed its nose, never showed its tail, and moved slowly enough that
+       * two glances a few seconds apart looked identical. It read as stuck.
+       *
+       * Negative still, so the first thing to come round is the nose rather
+       * than the boot lid. Twenty-one seconds a turn: slow enough to sit
+       * behind the text rather than pull at it, quick enough that looking up
+       * from a paragraph finds the car somewhere new.
        */
-      const spin = -0.5 + Math.sin(clock * 0.32) * 0.34;
+      /*
+       * The −0.5 is where it stops, not where it starts from.
+       *
+       * `clock` does not advance under `prefers-reduced-motion`, so whatever
+       * this expression evaluates to at zero is the pose a reader who has
+       * asked for stillness looks at for as long as they are on the page.
+       * That one had better be the good angle, and the good angle is the front
+       * three-quarter this used to rock around.
+       */
+      const spin = -0.5 - clock * 0.3;
 
       leanX += (aimX * 0.34 - leanX) * 0.06;
       leanY += (aimY * 0.16 - leanY) * 0.06;

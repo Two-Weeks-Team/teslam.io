@@ -104,6 +104,24 @@ export function darkStyle(): StyleSpecification {
         paint: {
           "line-color": ROAD_TRUNK,
           "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 18, 12],
+          /*
+           * Faint at the country view, full strength once you are looking at a
+           * road rather than at a nation.
+           *
+           * This is the only road layer with no `minzoom`, which is correct —
+           * the motorway network is the one thing worth seeing from far away.
+           * What it is not worth is seeing *everybody's*: the panel is wide,
+           * Korea is tall, and fitting the fleet's extent into that shape
+           * leaves two thirds of the frame for whatever else is at this
+           * latitude. Drawn at full weight, Kyushu and Honshu carried more
+           * line than the country the fleet is driving in, and the eye went
+           * to the wrong half of the picture.
+           *
+           * The fleet's own roads are a separate source drawn on top and are
+           * not dimmed, so the effect is that the lit network is the one this
+           * community uses and everything else recedes into context.
+           */
+          "line-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.16, 7, 0.4, 9, 1],
         },
       },
       {
@@ -129,6 +147,9 @@ export function darkStyle(): StyleSpecification {
           "text-color": LABEL,
           "text-halo-color": LABEL_HALO,
           "text-halo-width": 1.4,
+          // Same reasoning as the trunk roads: at the country view the place
+          // names in frame are mostly not in this country.
+          "text-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.45, 8, 1],
         },
       },
     ],

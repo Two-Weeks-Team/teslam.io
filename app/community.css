@@ -865,17 +865,26 @@
   padding: .42rem .9rem; font-size: .85rem; color: var(--tx2); text-decoration: none;
   position: relative; isolation: isolate;
 }
-/* Activity, behind the row. Set from `--v` where the list has counts; a list
-   without them just gets no bar. */
+/*
+   Activity, under the row rather than behind it.
+
+   It was a full-height wash the width of the value, which is a perfectly good
+   bar chart and a terrible thing to put behind a label: at 28% it reads as a
+   row that is half-selected, or half-painted, and the smallest room's 7% was
+   too faint to read as anything at all. Two pixels along the bottom edge can
+   only be one thing. Set from `--v` where the list has counts; a list without
+   them gets nothing, which is what a zero-width rule is.
+*/
 .navlist a::before {
   content: "";
   position: absolute;
-  inset-block: .18rem;
-  inset-inline-start: 0;
+  inset-block-end: .1rem;
+  inset-inline-start: .9rem;
+  block-size: 2px;
+  border-radius: 2px;
   z-index: -1;
-  inline-size: calc(var(--v, 0) * 100%);
-  background: color-mix(in srgb, var(--mint) 9%, transparent);
-  border-inline-start: 2px solid color-mix(in srgb, var(--mint) 38%, transparent);
+  inline-size: calc(var(--v, 0) * (100% - 1.8rem));
+  background: color-mix(in srgb, var(--mint) 55%, transparent);
 }
 .navlist a:hover { background: var(--ink2); color: var(--tx); }
 .navlist .c { font-family: var(--font-mono); font-size: .72rem; color: var(--tx3); }
@@ -1909,7 +1918,7 @@ button.feed__more:disabled { color: var(--tx3); cursor: progress; }
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  min-block-size: 8.5rem;
+  min-block-size: 9.5rem;
 }
 .sig2__card--odo::before {
   content: "";
@@ -1921,18 +1930,34 @@ button.feed__more:disabled { color: var(--tx3); cursor: progress; }
     url("/img/odo.webp") type("image/webp")
   );
   background-size: cover;
-  background-position: 50% 62%;
-  opacity: 0.42;
+  /* The cluster is the middle of the frame; pushing it right puts it in the
+     half of the card the copy does not use. */
+  background-position: 74% 60%;
+  opacity: 0.72;
 }
 .sig2__card--odo::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(180deg, var(--ink0) 6%, color-mix(in srgb, var(--ink0) 62%, transparent) 58%, transparent);
+  /*
+     Across, not down.
+     
+     A vertical wash had to cover the whole top of the card to protect two
+     lines of text, which left the photograph as a smudge along the bottom
+     edge — legible as neither picture nor texture, and easy to read as an
+     image that failed to load. The copy is set to the left, so the cover
+     belongs on the left, and the lit cluster gets the right half to itself.
+  */
+  background: linear-gradient(
+    100deg,
+    var(--ink0) 26%,
+    color-mix(in srgb, var(--ink0) 58%, transparent) 62%,
+    transparent 94%
+  );
 }
 @media (prefers-reduced-transparency: reduce) {
-  .sig2__card--odo::before { opacity: 0.18; }
+  .sig2__card--odo::before { opacity: 0.3; }
 }
 
 .sig2__ct { font-size: .92rem; font-weight: 700; color: var(--tx); }
