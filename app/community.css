@@ -1824,6 +1824,10 @@ button.feed__more:disabled { color: var(--tx3); cursor: progress; }
   font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em;
   color: var(--tx3); text-transform: uppercase;
 }
-/* Nothing in the example is clickable — there is no post behind it. */
-.feed--eg .post__t,
-.feed--eg .feed__more { pointer-events: none; }
+/* Nothing in the example is clickable, and that is settled in the markup —
+   `asExample` renders spans, not anchors. It was `pointer-events: none` here
+   for one commit, which stops a mouse and does nothing whatever to a keyboard:
+   every control stayed focusable and Enter jumped to the real board. A control
+   that is inert to one kind of reader and live to another is the worse bug,
+   because only one of them ever finds out. */
+.feed--eg .post__t { cursor: default; }

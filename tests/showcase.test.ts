@@ -106,6 +106,32 @@ describe("a real section may also show what it looks like full", () => {
     const feed = readFileSync("components/community/feed.tsx", "utf8");
     expect(feed).toContain('id={asExample ? undefined : "feed"}');
   });
+
+  /**
+   * The example's controls are inert in the markup, not in the stylesheet.
+   *
+   * They were `pointer-events: none` for one commit. That stops a mouse and
+   * does nothing at all to a keyboard: every tab, title and "more" stayed
+   * focusable and Enter jumped to the real board without doing the thing it
+   * advertised — and the three tab anchors were not even covered by the rule.
+   * A control that is dead to one kind of reader and live to another is the
+   * worse defect, because only one of them ever finds out.
+   */
+  it("strips link semantics from the example rather than painting over them", () => {
+    const feed = readFileSync("components/community/feed.tsx", "utf8");
+    const css = readFileSync("app/community.css", "utf8");
+
+    // Exactly one anchor remains, inside the branch that runs when the sample
+    // feed is standing in for the board and its links are real.
+    const anchors = feed.match(/<a\s/g) ?? [];
+    expect(anchors, "an anchor escaped the asExample branch").toHaveLength(1);
+    expect(feed, "the inert branch must render a span, not a styled anchor").toMatch(/if \(inert\) return <span/);
+
+    expect(
+      /\.feed--eg[^{]*\{[^}]*pointer-events\s*:\s*none/.test(css),
+      "pointer-events cannot make a control inert — drop the link instead",
+    ).toBe(false);
+  });
 });
 
 /**
