@@ -256,6 +256,7 @@ export const home: HomeContent = {
     empty: "No first post yet. The board is open.",
     vote: "Upvote",
     voteSignedOut: "Confirm a seat to vote",
+    exampleTitle: "What it looks like once it fills up",
   },
 
   compose: {

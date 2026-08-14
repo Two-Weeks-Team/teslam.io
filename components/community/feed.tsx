@@ -22,14 +22,30 @@ export function Feed({
   mode,
   initial,
   now,
+  example,
 }: {
   locale: Locale;
   mode: Mode;
   initial: Page;
   now: number;
+  /** Show what the board looks like populated, under the real one. */
+  example?: boolean;
 }) {
   if (mode === "hidden") return null;
-  if (mode === "real") return <LiveFeed locale={locale} initial={initial} now={now} />;
+
+  if (mode === "real") {
+    return (
+      <>
+        <LiveFeed locale={locale} initial={initial} now={now} />
+        {/* A real board with four posts on it — or none — tells a visitor
+            nothing about what they are joining. This sits below the real one
+            under its own heading, so the two are never mistaken for each
+            other, and it leaves with the switch. */}
+        {example ? <SampleFeed locale={locale} asExample /> : null}
+      </>
+    );
+  }
+
   return <SampleFeed locale={locale} />;
 }
 
@@ -43,17 +59,33 @@ const TOP_VOTES = Math.max(...cm.posts.map((p) => p.votes));
  * It carries the sample mark and it is behind the switch — turn the switch off
  * and this never renders.
  */
-function SampleFeed({ locale }: { locale: Locale }) {
+function SampleFeed({ locale, asExample = false }: { locale: Locale; asExample?: boolean }) {
   const t = getContent(locale).feed;
 
   return (
-    <section className="feed" id="feed" aria-labelledby="feed-h">
-      <p className="fd__mark">
-        <Mark locale={locale} kind="sample" />
-      </p>
-      <h2 className="skip" id="feed-h">
-        {t.title}
-      </h2>
+    <section
+      className={asExample ? "feed feed--eg" : "feed"}
+      // Only one element may own #feed, and when a real board is on the page
+      // that is the real one. The skip link and every "back to the board"
+      // anchor must land on the thing somebody can actually post to.
+      id={asExample ? undefined : "feed"}
+      aria-labelledby={asExample ? "feed-eg-h" : "feed-h"}
+    >
+      {asExample ? (
+        <p className="feed__egh" id="feed-eg-h">
+          <Mark locale={locale} kind="sample" />
+          {t.exampleTitle}
+        </p>
+      ) : (
+        <>
+          <p className="fd__mark">
+            <Mark locale={locale} kind="sample" />
+          </p>
+          <h2 className="skip" id="feed-h">
+            {t.title}
+          </h2>
+        </>
+      )}
 
       <div className="feed__top">
         <div className="tabs">

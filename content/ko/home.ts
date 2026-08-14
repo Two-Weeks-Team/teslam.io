@@ -267,6 +267,7 @@ export const home = {
     empty: "아직 첫 글이 없습니다. 게시판은 열려 있습니다.",
     vote: "추천",
     voteSignedOut: "좌석을 확정하면 추천할 수 있습니다",
+    exampleTitle: "채워지면 이런 모습입니다",
   },
 
   compose: {

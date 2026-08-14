@@ -60,6 +60,28 @@ export function modeFor(cap: Capability, caps: Capabilities): Mode {
 }
 
 /**
+ * Whether a section that is real may *also* show what it looks like populated.
+ *
+ * The first version of this scheme had a hole in it, and the hole opened the
+ * moment the board went live: a real source with nothing in it rendered as
+ * "real", which is truthful and reads as a dead room. A visitor who arrives at
+ * an empty board learns nothing about what they are being invited to join, and
+ * the honest empty state is doing them no favours.
+ *
+ * So the rule is that a section should be full wherever it can be and emptiable
+ * everywhere. `real` decides whether the numbers are measurements; this decides
+ * whether an example sits beside them. The example is always labelled and
+ * always behind the same switch, so one setting still strips the whole site
+ * back to what it can prove.
+ */
+export function showExample(caps: Capabilities, cap: Capability): boolean {
+  if (!SHOWCASE) return false;
+  // Not live means the section is already drawing sample content; a second
+  // example under it would be the same thing twice.
+  return caps.live[cap];
+}
+
+/**
  * Nothing is live until the API says so.
  *
  * Defaulting to true anywhere here would mean an unreachable API renders as a

@@ -1802,3 +1802,28 @@ button.feed__more:disabled { color: var(--tx3); cursor: progress; }
 }
 .th__form { display: flex; flex-direction: column; gap: .5rem; margin-block-start: .5rem; }
 .th__foot { display: flex; align-items: center; gap: .5rem; }
+
+/*
+ * The board, shown populated, under the real one.
+ *
+ * Dimmed and inset so it never reads as part of the live list — a visitor
+ * scrolling past has to be able to tell at a glance which posts they could
+ * reply to. The heading and the sample mark say it in words; this says it
+ * before anybody reads.
+ */
+.feed--eg {
+  margin-block-start: 1.25rem;
+  opacity: .72;
+  border-style: dashed;
+  background: transparent;
+}
+.feed--eg:hover { opacity: .88; }
+.feed__egh {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .7rem .9rem; border-block-end: 1px solid var(--hair);
+  font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em;
+  color: var(--tx3); text-transform: uppercase;
+}
+/* Nothing in the example is clickable — there is no post behind it. */
+.feed--eg .post__t,
+.feed--eg .feed__more { pointer-events: none; }

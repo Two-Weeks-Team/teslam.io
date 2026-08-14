@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { modeFor, SHOWCASE, type Capabilities, type Capability } from "@/lib/showcase";
+import { modeFor, showExample, SHOWCASE, type Capabilities, type Capability } from "@/lib/showcase";
 import { BOARDS, BOARD_IDS, LIMITS, countChars, handleProblem, isBoard, isSort } from "@/lib/board";
 
 /**
@@ -63,6 +63,48 @@ describe("what a section draws", () => {
         `${cap} claimed a real source while the API was unreachable`,
       ).not.toBe("real");
     }
+  });
+});
+
+/**
+ * Full wherever it can be, emptiable everywhere.
+ *
+ * The scheme's first version treated a live source as the end of the question,
+ * and a live source with nothing in it rendered as a truthful dead room. A
+ * visitor who lands on an empty board learns nothing about what they are being
+ * asked to join, and the honest empty state does them no favours.
+ *
+ * So a real section may also show what it looks like populated — labelled,
+ * beside the real thing rather than mixed into it, and gone the moment the
+ * switch goes off. That last part is the whole contract: one setting still
+ * strips the site back to what it can prove.
+ */
+describe("a real section may also show what it looks like full", () => {
+  it("offers the example only where the source is live", () => {
+    // Where the source is absent the section is already drawing sample
+    // content, and a second example under it is the same thing twice.
+    expect(showExample(caps({}), "board")).toBe(false);
+    expect(showExample(caps({ board: true }), "board")).toBe(SHOWCASE);
+  });
+
+  it("is removed entirely by the switch, like everything else invented", () => {
+    if (SHOWCASE) {
+      expect(showExample(caps({ board: true }), "board")).toBe(true);
+    } else {
+      for (const cap of ["board", "league", "wallet"] as Capability[]) {
+        expect(
+          showExample(caps({ [cap]: true }), cap),
+          `${cap} kept an example alive with the switch off`,
+        ).toBe(false);
+      }
+    }
+  });
+
+  it("never lets the example claim the anchor the real board owns", () => {
+    // Two elements with id="feed" is not a styling problem: the skip link and
+    // every "back to the board" href would land on posts nobody can reply to.
+    const feed = readFileSync("components/community/feed.tsx", "utf8");
+    expect(feed).toContain('id={asExample ? undefined : "feed"}');
   });
 });
 
