@@ -7,6 +7,7 @@ import type { Map as MapLibreMap, GeoJSONSource } from "maplibre-gl";
 // the map loading and the CSS arriving.
 import "maplibre-gl/dist/maplibre-gl.css";
 import { ROUTES } from "@/lib/map/routes";
+import { cumulative, sliceTo } from "@/lib/map/slice";
 import { darkStyle } from "@/lib/map/style";
 import { drvPerKm, krwPerDrv } from "@/lib/economics";
 import { getContent, type Locale } from "@/lib/i18n";
@@ -56,49 +57,10 @@ export function RouteMap({ locale }: { locale: Locale }) {
    * down the straight motorway sections, because the simplifier leaves points
    * where the road bends and removes them where it does not.
    */
-  const legs = useMemo(() => {
-    const cum = [0];
-    let total = 0;
-    for (let i = 1; i < route.points.length; i += 1) {
-      const [ax, ay] = route.points[i - 1];
-      const [bx, by] = route.points[i];
-      // Good enough for pacing: degrees scaled to metres at Korea's latitude.
-      const dx = (bx - ax) * 88_800;
-      const dy = (by - ay) * 111_000;
-      total += Math.hypot(dx, dy);
-      cum.push(total);
-    }
-    return { cum, total };
-  }, [route]);
+  const legs = useMemo(() => cumulative(route.points), [route]);
 
-  /** The path up to `metres`, with the final point interpolated. */
-  const sliceTo = useCallback(
-    (metres: number): Array<[number, number]> => {
-      const { cum } = legs;
-      /*
-       * Clamped to the route.
-       *
-       * Below zero the loop reached for the point before the first one and
-       * threw; guarding that index instead only moved the fault, because a
-       * negative distance then interpolated *backwards* and put the car off
-       * the end of the road. Clamping is the answer to both, and makes the
-       * function total — a caller should not have to know it has a domain.
-       */
-      const along = Math.min(legs.total, Math.max(0, metres));
-      const out: Array<[number, number]> = [];
-      for (let i = 0; i < route.points.length; i += 1) {
-        if (cum[i] <= along) out.push(route.points[i]);
-        else {
-          const span = cum[i] - cum[i - 1];
-          const k = span > 0 ? (along - cum[i - 1]) / span : 0;
-          const [ax, ay] = route.points[i - 1];
-          const [bx, by] = route.points[i];
-          out.push([ax + (bx - ax) * k, ay + (by - ay) * k]);
-          break;
-        }
-      }
-      return out.length ? out : [route.points[0]];
-    },
+  const path = useCallback(
+    (metres: number) => sliceTo(route.points, legs.cum, legs.total, metres),
     [route, legs],
   );
 
@@ -264,18 +226,18 @@ export function RouteMap({ locale }: { locale: Locale }) {
     const map = mapRef.current;
     if (!map || !ready) return;
 
-    const path = sliceTo(travelled);
+    const line = path(travelled);
     (map.getSource("done") as GeoJSONSource | undefined)?.setData({
       type: "Feature",
       properties: {},
-      geometry: { type: "LineString", coordinates: path },
+      geometry: { type: "LineString", coordinates: line },
     });
     (map.getSource("car") as GeoJSONSource | undefined)?.setData({
       type: "Feature",
       properties: {},
-      geometry: { type: "Point", coordinates: path[path.length - 1] },
+      geometry: { type: "Point", coordinates: line[line.length - 1] },
     });
-  }, [travelled, sliceTo, ready]);
+  }, [travelled, path, ready]);
 
   /* ── playback ────────────────────────────────────────────────────────── */
 
@@ -343,9 +305,9 @@ export function RouteMap({ locale }: { locale: Locale }) {
   const closeUp = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
-    const path = sliceTo(travelled);
-    map.easeTo({ center: path[path.length - 1], zoom: 16.5, duration: 900 });
-  }, [sliceTo, travelled]);
+    const line = path(travelled);
+    map.easeTo({ center: line[line.length - 1], zoom: 16.5, duration: 900 });
+  }, [path, travelled]);
 
   const share = legs.total ? travelled / legs.total : 0;
   const drivenKm = route.km * share;

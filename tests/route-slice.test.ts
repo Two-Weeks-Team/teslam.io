@@ -1,54 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { ROUTES } from "@/lib/map/routes";
+import { cumulative, sliceTo } from "@/lib/map/slice";
 
 /**
  * Slicing a route at a distance.
  *
  * This is the arithmetic the map animation runs sixty times a second, and it
- * shipped with a hole in its domain: below zero it reached for the point
- * before the first one and threw `undefined is not iterable`. Nothing local
- * ever produced a negative distance, and the first click in production did —
+ * shipped with a hole in its domain: below zero it reached for the point before
+ * the first one and threw `undefined is not iterable`. Nothing local ever
+ * produced a negative distance, and the first click in production did —
  * `requestAnimationFrame` hands back the time the frame began, which can
  * predate the `performance.now()` captured moments earlier.
  *
- * The component now clamps, but the function is tested as total regardless. A
- * caller should not have to know it has a domain.
+ * These call the shipped functions. The first version of this file kept its own
+ * copy of the algorithm, which would have stayed green if the production clamp
+ * were deleted — a test agreeing with itself, which is the exact fault the
+ * crash was supposed to be pinned by. Review caught it; it deserved to.
  */
-
-/** The same walk the component does, kept here so the maths can be tested. */
-function cumulative(points: Array<[number, number]>) {
-  const cum = [0];
-  let total = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    const [ax, ay] = points[i - 1];
-    const [bx, by] = points[i];
-    total += Math.hypot((bx - ax) * 88_800, (by - ay) * 111_000);
-    cum.push(total);
-  }
-  return { cum, total };
-}
-
-function sliceTo(
-  points: Array<[number, number]>,
-  cum: number[],
-  total: number,
-  metres: number,
-) {
-  const along = Math.min(total, Math.max(0, metres));
-  const out: Array<[number, number]> = [];
-  for (let i = 0; i < points.length; i += 1) {
-    if (cum[i] <= along) out.push(points[i]);
-    else {
-      const span = cum[i] - cum[i - 1];
-      const k = span > 0 ? (along - cum[i - 1]) / span : 0;
-      const [ax, ay] = points[i - 1];
-      const [bx, by] = points[i];
-      out.push([ax + (bx - ax) * k, ay + (by - ay) * k]);
-      break;
-    }
-  }
-  return out.length ? out : [points[0]];
-}
 
 describe("slicing a route", () => {
   for (const route of ROUTES) {
