@@ -133,7 +133,34 @@ export function Streak({ locale }: { locale: Locale }) {
 export function Ladder({ locale }: { locale: Locale }) {
   const t = getContent(locale).ladder;
   const earned = cm.tierProgress;
-  const top = cm.tiers[cm.tiers.length - 1].need;
+  /*
+   * One segment per tier, not one axis in DRV.
+   *
+   * Placed by threshold, Bronze and Silver landed 125px apart under labels
+   * 104px wide and collided, while two thirds of the rail was the empty run up
+   * to Teslam. The thresholds are not evenly spaced and there is no reason the
+   * drawing should pretend they are — each tier's own number is printed under
+   * it, so the rail can be what a reader actually wants from it: how far
+   * through the ladder somebody is, and how far through the tier they are in.
+   */
+  const stopAt = (i: number) => (i / (cm.tiers.length - 1)) * 100;
+
+  const fill = (() => {
+    // `findLastIndex` needs es2023 and this project targets lower; a reverse
+    // scan is the same thing and does not move the whole tsconfig for one line.
+    let i = -1;
+    for (let k = cm.tiers.length - 1; k >= 0; k -= 1) {
+      if (earned >= cm.tiers[k].need) {
+        i = k;
+        break;
+      }
+    }
+    if (i < 0) return 0;
+    if (i >= cm.tiers.length - 1) return 100;
+    const span = cm.tiers[i + 1].need - cm.tiers[i].need;
+    const within = span > 0 ? (earned - cm.tiers[i].need) / span : 0;
+    return stopAt(i) + within * (stopAt(i + 1) - stopAt(i));
+  })();
 
   return (
     <section className="ld" aria-labelledby="ld-h">
@@ -149,17 +176,17 @@ export function Ladder({ locale }: { locale: Locale }) {
       <div className="ld__rail">
         <span
           className="ld__fill"
-          style={{ inlineSize: `${Math.min(100, (earned / top) * 100)}%` }}
+          style={{ inlineSize: `${Math.min(100, Math.max(0, fill))}%` }}
           aria-hidden="true"
         />
-        {cm.tiers.map((tier) => {
+        {cm.tiers.map((tier, i) => {
           const reached = earned >= tier.need;
           const label = t.tiers[tier.id as keyof typeof t.tiers];
           return (
             <div
               className={`ld__stop ld__stop--${tier.id}${reached ? " is-on" : ""}`}
               key={tier.id}
-              style={{ insetInlineStart: `${(tier.need / top) * 100}%` }}
+              style={{ insetInlineStart: `${stopAt(i)}%` }}
             >
               <span className="ld__dot" aria-hidden="true" />
               <p className="ld__n">{label.name}</p>

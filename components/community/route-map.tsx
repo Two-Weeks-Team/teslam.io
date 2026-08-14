@@ -15,6 +15,32 @@ import { getContent, type Locale } from "@/lib/i18n";
 import { krw, n } from "@/lib/format";
 
 /**
+ * The extent of every road the fleet uses.
+ *
+ * Computed once from the geometry rather than typed as a centre and a zoom,
+ * because a centre and a zoom are only right for the canvas they were tuned
+ * against — and this panel has been three different shapes.
+ */
+const FLEET_BOUNDS: [[number, number], [number, number]] = (() => {
+  let west = 180;
+  let south = 90;
+  let east = -180;
+  let north = -90;
+  for (const route of ROUTES) {
+    for (const [lon, lat] of route.points) {
+      if (lon < west) west = lon;
+      if (lon > east) east = lon;
+      if (lat < south) south = lat;
+      if (lat > north) north = lat;
+    }
+  }
+  return [
+    [west, south],
+    [east, north],
+  ];
+})();
+
+/**
  * The fleet, on the roads it uses.
  *
  * This began as one car tracing one line, which reads as a diagram. Dozens
@@ -218,6 +244,17 @@ export function RouteMap({ locale }: { locale: Locale }) {
                 "circle-stroke-width": ["case", ["get", "lead"], 1.6, 0.8],
               },
             });
+
+            /*
+             * Frame the country, rather than trusting a centre and a zoom.
+             *
+             * A fixed 5.95 was chosen against one canvas shape and the panel
+             * has been every shape since: at the width it has now, a third of
+             * the frame was the Sea of Japan. Fitting the actual extent of the
+             * road network gets it right at any aspect, and keeps getting it
+             * right when the panel changes again.
+             */
+            map.fitBounds(FLEET_BOUNDS, { padding: 28, duration: 0 });
 
             setReady(true);
           });

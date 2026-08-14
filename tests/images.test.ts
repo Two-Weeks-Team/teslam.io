@@ -20,11 +20,17 @@ const DIR = "public/img";
 
 /** Per-file ceilings, in kilobytes. Raise one only with a reason. */
 const BUDGET: Record<string, number> = {
-  "hero.avif": 90,
-  "hero.webp": 90,
   "seat.avif": 120,
   "seat.webp": 120,
   "og.webp": 80,
+  // The night road behind the hero, and the odometer beside the signal
+  // diagram. Both are generated, both are unbranded on purpose: a photograph
+  // of a real manufacturer's dashboard on a site that says it is unaffiliated
+  // would contradict the footer of every page.
+  "road.avif": 70,
+  "road.webp": 90,
+  "odo.avif": 30,
+  "odo.webp": 30,
 };
 
 const files = readdirSync(DIR);

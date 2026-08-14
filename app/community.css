@@ -152,6 +152,51 @@
  */
 .mh {
   padding-block: clamp(1.25rem, 3vw, 2.25rem) clamp(1rem, 2.5vw, 1.75rem);
+  /*
+   * The road, behind everything.
+   *
+   * The hero had a map and a headline on flat black, which is legible and says
+   * nothing about what the page is for. A photograph of an empty expressway at
+   * night says it in one glance and costs 65 KB, and it is generated and
+   * unbranded on purpose — a real manufacturer's car in this frame would
+   * contradict the footer on every page of this site.
+   *
+   * Held right down. It has to lose every argument with the type and with the
+   * map; what it is doing is stopping the top of the page being a void.
+   */
+  position: relative;
+  isolation: isolate;
+}
+.mh::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  /* Out to the gutters, because a photograph that stops at the text column is
+     a card rather than a backdrop. */
+  inset-inline: calc(50% - 50vw);
+  z-index: -2;
+  background-image: image-set(
+    url("/img/road.avif") type("image/avif"),
+    url("/img/road.webp") type("image/webp")
+  );
+  background-size: cover;
+  background-position: 50% 68%;
+  opacity: 0.3;
+}
+/* The scrim is what guarantees contrast, not the opacity: opaque under the
+   headline and clearing toward the map on the right. */
+.mh::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: calc(50% - 50vw);
+  z-index: -1;
+  background:
+    linear-gradient(90deg, var(--ink0) 12%, color-mix(in srgb, var(--ink0) 55%, transparent) 62%, transparent),
+    linear-gradient(180deg, var(--ink0), transparent 22%, transparent 74%, var(--ink0));
+}
+@media (prefers-reduced-transparency: reduce) {
+  .mh::before { opacity: 0.14; }
 }
 .mh__grid {
   display: grid;
@@ -345,36 +390,6 @@
 
 /* ── hero ────────────────────────────────────────────────────────────── */
 
-.chero {
-  display: grid; gap: 1.25rem;
-  margin-block-start: 1rem;
-}
-/* `start`, not `stretch`: the seat panel is much the taller of the two, and
-   stretching the headline card to match it opened a half-screen of dead space
-   under the buttons. */
-@media (min-width: 62rem) { .chero { grid-template-columns: 1.15fr .85fr; align-items: start; } }
-
-.chero__main {
-  border: 1px solid var(--hair); border-radius: 6px; background: var(--ink1);
-  padding: clamp(1.25rem, 3vw, 2rem);
-}
-.chero__badge {
-  display: inline-flex; align-items: center; gap: .45rem;
-  font-family: var(--font-mono); font-size: .7rem; letter-spacing: .1em;
-  color: var(--mint); border: 1px solid color-mix(in srgb, var(--mint) 40%, transparent);
-  border-radius: 999px; padding: .25rem .65rem;
-}
-.chero__h1 {
-  margin-block: 1rem 0;
-  font-size: clamp(1.65rem, 4.4vw, 2.9rem);
-  line-height: 1.15; letter-spacing: -.03em;
-}
-.chero__h1 em { font-style: normal; color: var(--gold); }
-.chero__sub {
-  margin-block-start: 1rem; max-inline-size: 44rem;
-  color: var(--tx2); font-size: clamp(.9rem, 1.3vw, 1rem); line-height: 1.75;
-}
-.chero__btns { display: flex; flex-wrap: wrap; gap: .6rem; margin-block-start: 1.4rem; }
 .btn {
   display: inline-block; padding: .7rem 1.3rem; border-radius: 5px;
   font-weight: 700; font-size: .9375rem; text-decoration: none; white-space: nowrap;
@@ -614,10 +629,11 @@
 .sfield--live .sfield__gl {
   display: block;
   inline-size: 100%;
-  /* Two to one. The object is four times longer than it is tall, so a box any
-     squarer sits it in a well of empty space — at 15/10 the car used a third
-     of the height and the panel read as mostly nothing. */
-  aspect-ratio: 2 / 1;
+  /* Wider than two to one. The object is three and a quarter times longer than
+     it is tall, so any box squarer than that sits it in a well of empty space:
+     at 2/1 the car still left a third of the panel as sky. This is close to the
+     subject's own proportion, and the shadow uses what is left. */
+  aspect-ratio: 26 / 10;
   touch-action: pan-y;
 }
 .sfield--live .sfield__flat { display: none; }
@@ -1224,52 +1240,6 @@
   margin-block-end: 0.5rem;
 }
 
-/* ---------------------------------------------------------------------------
-   Photography
-
-   One image, behind the headline, pushed most of the way to black. The board is
-   read for text; the photograph is there to say the subject is a real garage at
-   night rather than an abstraction, and it has to lose every argument with the
-   type. AVIF first, WebP for the rest.
---------------------------------------------------------------------------- */
-
-.chero__main {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-}
-.chero__main::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  background-image: image-set(
-    url("/img/hero.avif") type("image/avif"),
-    url("/img/hero.webp") type("image/webp")
-  );
-  background-size: cover;
-  background-position: 62% 55%;
-  /* Raised from 0.34. The photograph still has to lose every argument with the
-     type, but at a third it lost to the panel as well and the hero read as a
-     flat card — the garage was there and no one could see it. The scrim below
-     is what protects the text, so this can afford the difference. */
-  opacity: 0.46;
-}
-/* The scrim, not the opacity, is what guarantees contrast: it is opaque where
-   the text sits and clears toward the empty right of the frame. */
-.chero__main::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(
-    100deg,
-    var(--ink1) 0%,
-    color-mix(in srgb, var(--ink1) 88%, transparent) 42%,
-    color-mix(in srgb, var(--ink1) 45%, transparent) 100%
-  );
-}
-
 /* ── quests · badges · redemption ────────────────────────────────────────
    The three answers to "what is the driving for". Shared shape: an eyebrow, a
    heading carrying its own sample mark, and a grid of cards that encode their
@@ -1556,7 +1526,15 @@
 .plate__drv { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem; margin-block-start: .9rem; }
 .plate__drv .odo { font-size: 1.6rem; }
 .plate__unit { font-family: var(--font-mono); font-size: .76rem; color: var(--tx3); }
-.plate__krw { margin-inline-start: auto; font-size: .78rem; color: var(--tx3); }
+/* Beside the figure it converts, not shoved to the far side of a 1200px row —
+   `margin-inline-start: auto` put a full screen width between a number and its
+   own translation into won. */
+.plate__krw {
+  font-size: .78rem;
+  color: var(--tx3);
+  padding-inline-start: .6rem;
+  border-inline-start: 1px solid var(--hair2);
+}
 .plate__foot { margin-block-start: .8rem; font-size: .72rem; color: var(--tx3); }
 
 /* ── streak ── */
@@ -1831,3 +1809,137 @@ button.feed__more:disabled { color: var(--tx3); cursor: progress; }
    that is inert to one kind of reader and live to another is the worse bug,
    because only one of them ever finds out. */
 .feed--eg .post__t { cursor: default; }
+
+/* ── what the car sends ──────────────────────────────────────────────── */
+
+/*
+ * The claim of the page, drawn rather than asserted.
+ *
+ * Four lanes between the car and this site, one of them lit because one of them
+ * is what pays. The other three are named and dimmed, which is the honest shape
+ * of it: they are collected, they are cross-checks, and saying so beats both
+ * hiding them and pretending they do not exist.
+ */
+.sig2 {
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-card, 10px);
+  background: var(--ink1);
+  padding: 1.4rem 1.1rem 1.2rem;
+  margin-block-start: 1.25rem;
+}
+@media (min-width: 48rem) { .sig2 { padding: 1.9rem 1.6rem 1.5rem; } }
+
+.sig2__eyebrow {
+  font-family: var(--font-mono); font-size: .68rem; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--mint);
+}
+.sig2__h {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 3.4vw, 2rem);
+  letter-spacing: -.02em; margin-block-start: .35rem; text-wrap: balance;
+}
+.sig2__sub {
+  margin-block-start: .5rem; font-size: .9rem; line-height: 1.65;
+  color: var(--tx2); max-inline-size: 60ch;
+}
+
+.sig2__wire {
+  display: grid; gap: .8rem; margin-block-start: 1.4rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 56rem) {
+  .sig2__wire { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1.2rem; }
+}
+
+.sig2__end {
+  border: 1px solid var(--hair2); border-radius: 8px;
+  padding: .7rem .9rem; text-align: center; background: var(--ink0);
+}
+.sig2__endl { font-size: .82rem; font-weight: 600; color: var(--tx); }
+.sig2__ends {
+  font-family: var(--font-mono); font-size: .68rem; color: var(--tx3);
+  margin-block-start: .15rem;
+}
+.sig2__end--car .sig2__ends { color: var(--mint); }
+
+.sig2__lanes { display: grid; gap: .4rem; }
+.sig2__lane {
+  display: grid; align-items: center; gap: .6rem;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  padding: .5rem .7rem;
+  border: 1px solid var(--hair); border-radius: 6px;
+  background: var(--ink0);
+  position: relative; isolation: isolate;
+}
+/* The lane a signal travels down. Dim for a cross-check, lit for the one that
+   decides what is earned — the whole argument in one colour. */
+.sig2__lane::before {
+  content: ""; position: absolute; inset-block: 0; inset-inline: 0;
+  z-index: -1; border-radius: 6px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tx3) 8%, transparent));
+}
+.sig2__lane.is-pay {
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.sig2__lane.is-pay::before {
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 16%, transparent));
+}
+.sig2__code {
+  font-family: var(--font-mono); font-size: .7rem; letter-spacing: .08em;
+  color: var(--tx3);
+}
+.sig2__lane.is-pay .sig2__code { color: var(--gold); }
+.sig2__name { font-size: .85rem; color: var(--tx2); }
+.sig2__lane.is-pay .sig2__name { color: var(--tx); font-weight: 600; }
+.sig2__role {
+  font-family: var(--font-mono); font-size: .66rem; color: var(--tx3);
+  text-align: end;
+}
+.sig2__lane.is-pay .sig2__role { color: var(--gold); }
+
+.sig2__pair { display: grid; gap: .8rem; margin-block-start: 1.3rem; }
+@media (min-width: 48rem) { .sig2__pair { grid-template-columns: 1fr 1fr; } }
+.sig2__card {
+  border: 1px solid var(--hair); border-radius: 8px;
+  padding: .9rem 1rem; background: var(--ink0);
+}
+/* The odometer itself, behind the sentence about it. Kept low: the card is a
+   paragraph with a photograph under it, not a photograph with a caption. */
+.sig2__card--odo {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-block-size: 8.5rem;
+}
+.sig2__card--odo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: image-set(
+    url("/img/odo.avif") type("image/avif"),
+    url("/img/odo.webp") type("image/webp")
+  );
+  background-size: cover;
+  background-position: 50% 62%;
+  opacity: 0.42;
+}
+.sig2__card--odo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, var(--ink0) 6%, color-mix(in srgb, var(--ink0) 62%, transparent) 58%, transparent);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .sig2__card--odo::before { opacity: 0.18; }
+}
+
+.sig2__ct { font-size: .92rem; font-weight: 700; color: var(--tx); }
+.sig2__cb {
+  margin-block-start: .4rem; font-size: .84rem; line-height: 1.65; color: var(--tx2);
+}
+.sig2__foot {
+  margin-block-start: 1.1rem; font-size: .78rem; color: var(--tx3);
+}
+.sig2__foot a { color: var(--mint); }

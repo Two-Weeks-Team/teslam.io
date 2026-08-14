@@ -47,7 +47,29 @@ const ENDPOINT = "https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW";
  */
 const SANE_BAND = { min: 500, max: 5000 };
 
-export async function getFx(): Promise<FxQuote> {
+/*
+ * One answer per process.
+ *
+ * `/model` and `/llms.txt` are separate routes and each called this, so each
+ * got its own fetch — and the two are required to quote the same number,
+ * because tests/ssr.test.ts checks the machine-readable mirror against the page
+ * a person reads. Whenever one call succeeded and the other timed out, the
+ * build produced a page saying ₩67 and a mirror saying ₩66, and the suite
+ * failed with no bug in either file. It failed in CI and passed here, which is
+ * exactly the shape of a defect nobody finds by rerunning.
+ *
+ * Next's fetch cache is per request and does not span two route builds, so the
+ * memo is here. It holds the promise rather than the value, so two routes
+ * rendering concurrently join the same request instead of racing.
+ */
+let inFlight: Promise<FxQuote> | null = null;
+
+export function getFx(): Promise<FxQuote> {
+  inFlight ??= quote();
+  return inFlight;
+}
+
+async function quote(): Promise<FxQuote> {
   try {
     const res = await fetch(ENDPOINT, {
       next: { revalidate: 3600 },

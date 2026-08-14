@@ -4,6 +4,7 @@ import { Cohort } from "@/components/community/cohort";
 import { RouteMap } from "@/components/community/route-map";
 import { Badges, Quests, Shop } from "@/components/community/perks";
 import { Onboard, Proof } from "@/components/community/proof";
+import { Signals } from "@/components/community/signals";
 import { Ladder, Nameplate, Stake, Streak } from "@/components/community/identity";
 import { League } from "@/components/community/league";
 import { Feed } from "@/components/community/feed";
@@ -83,10 +84,26 @@ function HomeBoard({
             is, so the sentence would be describing an absence. */}
         {SHOWCASE ? <PreviewBanner locale={locale} /> : null}
 
+        {/*
+          * The order is the argument, and it changed.
+          *
+          * It used to open on "this is where the owners are", which is what the
+          * site called itself rather than anything a visitor could check, and
+          * then went straight to a map. Now it opens on the one claim that is
+          * checkable — the numbers here were made by a car — and spends the
+          * next three sections earning it: what actually travels, why a GPS
+          * score could be walked and this one cannot, and how to start.
+          *
+          * Only then the country, the game, the standings, and last the board,
+          * which is the thing a member comes back for rather than the thing
+          * that convinces them to arrive.
+          */}
         <MapHero locale={locale} />
-        <RouteMap locale={locale} />
+        <Signals locale={locale} />
         <Proof locale={locale} />
         <Onboard locale={locale} />
+
+        <RouteMap locale={locale} />
 
         {quests === "hidden" ? null : <Quests locale={locale} />}
         {league === "hidden" ? null : <League locale={locale} />}
