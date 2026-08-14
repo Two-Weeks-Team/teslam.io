@@ -34,6 +34,9 @@ export type NewRegistration = {
 export type Placement = {
   kind: "seat" | "waitlist";
   number: number;
+  /** The row this placement belongs to. The board turns it into an account;
+   *  nothing else may use it, and it is never sent to a client. */
+  registrationId: string;
   /** Carried out of the same statement so the live board can be told what
    *  happened without a second read. */
   region: string;
@@ -203,7 +206,7 @@ const PLACE = `
          END
    WHERE verify_token_hash = ? AND verified_at IS NULL
      AND verify_sent_at >= ?
-  RETURNING seat_no, waitlist_no, region, model
+  RETURNING id, seat_no, waitlist_no, region, model
 `;
 
 export async function confirm(
@@ -214,6 +217,7 @@ export async function confirm(
     .prepare(PLACE)
     .bind(now(), SEATS, SEATS, SEATS, tokenHash, now() - TOKEN_TTL_SECONDS)
     .all<{
+      id: string;
       seat_no: number | null;
       waitlist_no: number | null;
       region: string;
@@ -223,7 +227,7 @@ export async function confirm(
   const row = res.results?.[0];
   if (!row) return null;
 
-  const common = { region: row.region, model: row.model };
+  const common = { registrationId: row.id, region: row.region, model: row.model };
   if (row.seat_no != null) return { kind: "seat", number: row.seat_no, ...common };
   if (row.waitlist_no != null)
     return { kind: "waitlist", number: row.waitlist_no, ...common };

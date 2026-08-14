@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getContent, genesisPathFor, type Locale } from "@/lib/i18n";
 import { Mark } from "@/components/community/mark";
 import { n } from "@/lib/format";
+import { regionLabel } from "@/lib/genesis";
 import cm from "@/data/community.json";
 
 /**
@@ -162,7 +163,7 @@ export function League({ locale }: { locale: Locale }) {
                 {p.genesis ? <span className="gen">GEN</span> : null}
               </p>
               <p className="pod__m">
-                {p.trim} · {p.region}
+                {p.trim} · {regionLabel(locale, p.region)}
               </p>
               <p className="pod__e">
                 {p.eff.toFixed(2)}
@@ -233,7 +234,7 @@ export function League({ locale }: { locale: Locale }) {
                   {r.genesis ? <span className="gen">GEN</span> : null}
                   <span className="lgrow__trim">{r.trim}</span>
                 </td>
-                <td>{r.region}</td>
+                <td>{regionLabel(locale, r.region)}</td>
                 <td
                   className="num eff"
                   style={{ "--v": share(r.eff) } as React.CSSProperties}

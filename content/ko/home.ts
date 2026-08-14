@@ -259,6 +259,46 @@ export const home = {
     more: "글 더 보기",
     views: "조회",
     comments: "댓글",
+    // 실제 게시판 쪽
+    pageTitle: "게시판",
+    pageDescription: "테슬라 오너들이 직접 쓴 글. 오도미터로 검증된 주행 기록 위에서 돌아갑니다.",
+    shown: "개",
+    loading: "불러오는 중…",
+    empty: "아직 첫 글이 없습니다. 게시판은 열려 있습니다.",
+    vote: "추천",
+    voteSignedOut: "좌석을 확정하면 추천할 수 있습니다",
+  },
+
+  compose: {
+    placeholder: "무슨 이야기를 나눌까요?",
+    signedOut: "글쓰기는 Genesis 좌석이 확정된 분만 가능합니다.",
+    signedOutCta: "좌석 알아보기",
+    boardLabel: "게시판 선택",
+    titleLabel: "제목",
+    titlePlaceholder: "제목",
+    bodyLabel: "내용",
+    bodyPlaceholder: "내용을 적어주세요.",
+    submit: "올리기",
+    sending: "올리는 중…",
+    cancel: "취소",
+    tooMany: "잠시 후에 다시 시도해주세요. 1시간에 쓸 수 있는 글 수를 넘었습니다.",
+    failed: "올리지 못했습니다. 잠시 후 다시 시도해주세요.",
+  },
+
+  post: {
+    backToBoard: "게시판",
+    vote: "추천",
+    voteSignedOut: "좌석을 확정하면 추천할 수 있습니다",
+    replies: "댓글",
+    noReplies: "첫 댓글을 남겨보세요.",
+    reply: "댓글 쓰기",
+    replyLabel: "댓글 내용",
+    replyPlaceholder: "댓글을 적어주세요.",
+    replySignedOut: "댓글은 Genesis 좌석이 확정된 분만 쓸 수 있습니다.",
+    replySignedOutCta: "좌석 알아보기",
+    sending: "올리는 중…",
+    tooMany: "잠시 후에 다시 시도해주세요.",
+    failed: "올리지 못했습니다. 잠시 후 다시 시도해주세요.",
   },
 
   side: {
@@ -284,7 +324,20 @@ export const home = {
     connect: "테슬라 계정 연결하기",
   },
 
-  live: { title: "실시간", auto: "자동 갱신" },
+  live: {
+    title: "실시간",
+    auto: "자동 갱신",
+    // 티커 문장은 한 언어로 쓰인 산문입니다. data/community.json에 두면
+    // 양쪽 로케일이 같은 파일을 읽으므로 /en에 한국어가 그대로 나갑니다.
+    items: [
+      { t: "부산 V4 슈퍼차저 체크인 · 배터리아껴쓰기님", v: "+500 DRV" },
+      { t: "울산 완충맨님 오늘 상한 500 DRV 만렙", v: "MAX" },
+      { t: "송파에서 판교뉴비님 14km 검증", v: "+140 DRV" },
+      { t: "흰색롱레인지님 글 채택 · Model X LR 리뷰", v: "+120 TSLM" },
+      { t: "강남언니Y님 8.2km/kWh 달성 · 효율 퀘스트 클리어", v: "퀘스트" },
+      { t: "제주에서 판교뉴비님 25km 검증", v: "+250 DRV" },
+    ],
+  },
 
   footer: {
     line: "달린 만큼 쌓이는 테슬라 오너 커뮤니티.",

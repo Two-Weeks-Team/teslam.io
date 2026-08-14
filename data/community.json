@@ -21,7 +21,7 @@
       "rank": 1,
       "name": "광교전비장인",
       "trim": "Model 3 Long Range",
-      "region": "수도권",
+      "region": "capital",
       "eff": 8.42,
       "km": 487,
       "drv": 5250,
@@ -33,7 +33,7 @@
       "rank": 2,
       "name": "제주바람가르기",
       "trim": "Model Y RWD",
-      "region": "제주",
+      "region": "jeju",
       "eff": 8.11,
       "km": 512,
       "drv": 5120,
@@ -45,7 +45,7 @@
       "rank": 3,
       "name": "노란번호판형",
       "trim": "Model 3 하이랜드",
-      "region": "영남",
+      "region": "busan",
       "eff": 7.96,
       "km": 446,
       "drv": 4460,
@@ -57,7 +57,7 @@
       "rank": 4,
       "name": "하남스타필드러",
       "trim": "Model Y Long Range",
-      "region": "수도권",
+      "region": "capital",
       "eff": 7.74,
       "km": 402,
       "drv": 3420,
@@ -69,7 +69,7 @@
       "rank": 5,
       "name": "판교M3P",
       "trim": "Model 3 퍼포먼스",
-      "region": "수도권",
+      "region": "capital",
       "eff": 7.68,
       "km": 531,
       "drv": 5350,
@@ -81,7 +81,7 @@
       "rank": 6,
       "name": "초록불차선",
       "trim": "Model Y Long Range",
-      "region": "충청",
+      "region": "chungcheong",
       "eff": 7.55,
       "km": 388,
       "drv": 3110,
@@ -93,7 +93,7 @@
       "rank": 7,
       "name": "은하수3",
       "trim": "Model 3 하이랜드",
-      "region": "대전·충청",
+      "region": "chungcheong",
       "eff": 7.41,
       "km": 364,
       "drv": 2980,
@@ -147,29 +147,25 @@
   "regions": [
     {
       "id": "capital",
-      "name": "수도권",
       "count": 2610
     },
     {
       "id": "busan",
-      "name": "부·울·경",
       "count": 741
     },
     {
-      "id": "daejeon",
-      "name": "대전·충청",
+      "id": "chungcheong",
       "count": 452
     },
     {
       "id": "jeju",
-      "name": "제주",
       "count": 198
     }
   ],
   "posts": [
     {
       "id": "p1",
-      "board": "공지·통합",
+      "board": "free",
       "pinned": true,
       "title": "【2026.20.7 통합 스레드】한국 순차 배포 시작 — 변경점·버그·롤백 여부 여기 모읍니다",
       "author": "운영/테슬람반장",
@@ -181,7 +177,7 @@
     },
     {
       "id": "p2",
-      "board": "FSD",
+      "board": "fsd",
       "title": "FSD v14 한국 도심 400km 타본 솔직 후기 — 회전교차로는 아직, 근데 끼어들기는 나보다 잘함",
       "author": "양재IC사냥꾼",
       "genesis": "#007",
@@ -193,7 +189,7 @@
     },
     {
       "id": "p3",
-      "board": "인증샷",
+      "board": "shots",
       "title": "서울→강릉 무충전 7.6km/kWh 찍고 왔습니다 (에어컨 켜고)",
       "author": "초록불차선",
       "trim": "Model Y Long Range",
@@ -204,7 +200,7 @@
     },
     {
       "id": "p4",
-      "board": "소프트웨어",
+      "board": "software",
       "title": "숨은 기능 3탄: 히든 세팅 6개 — 서스펜션 프로파일 자동저장 되는 거 아셨나요",
       "author": "코드파는아저씨",
       "votes": 508,
@@ -214,7 +210,7 @@
     },
     {
       "id": "p5",
-      "board": "충전·전기",
+      "board": "charge",
       "title": "기흥 V4 8베이, 오늘 250kW 안 나올 때 체크할 것 3가지",
       "author": "완충맨",
       "genesis": "#041",
@@ -225,7 +221,7 @@
     },
     {
       "id": "p6",
-      "board": "타이어·휠",
+      "board": "tire",
       "title": "하이랜드 순정 19인치 3만km 마모 실측 — 앞뒤 편마모 사진 있음",
       "author": "판교M3P",
       "trim": "Model 3 퍼포먼스",
@@ -236,7 +232,7 @@
     },
     {
       "id": "p7",
-      "board": "보험·사고",
+      "board": "insurance",
       "title": "전기차 전용 특약, 3사 견적 붙여봤습니다 (표 있음)",
       "author": "은하수3",
       "votes": 302,
@@ -325,32 +321,6 @@
       "name": "틴팅 제휴 할인권",
       "price": 15000,
       "tag": null
-    }
-  ],
-  "live": [
-    {
-      "t": "부산 V4 슈퍼차저 체크인 · 배터리아껴쓰기님",
-      "v": "+500 DRV"
-    },
-    {
-      "t": "울산 완충맨님 오늘 상한 500 DRV 만렙",
-      "v": "MAX"
-    },
-    {
-      "t": "송파에서 판교뉴비님 14km 검증",
-      "v": "+140 DRV"
-    },
-    {
-      "t": "흰색롱레인지님 글 채택 · Model X LR 리뷰",
-      "v": "+120 TSLM"
-    },
-    {
-      "t": "강남언니Y님 8.2km/kWh 달성 · 효율 퀘스트 클리어",
-      "v": "퀘스트"
-    },
-    {
-      "t": "제주에서 판교뉴비님 25km 검증",
-      "v": "+250 DRV"
     }
   ],
   "quests": [

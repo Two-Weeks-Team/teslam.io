@@ -90,6 +90,21 @@ export function genesisConfirmPathFor(locale: Locale): string {
   return `${genesisPathFor(locale)}/confirm`;
 }
 
+export function boardPathFor(locale: Locale): string {
+  return locale === "ko" ? "/board" : "/en/board";
+}
+
+export function postAlternatesFor(locale: Locale, id: string) {
+  return {
+    canonical: `${SITE}${boardPathFor(locale)}/${id}`,
+    languages: {
+      ko: `${SITE}/board/${id}`,
+      en: `${SITE}/en/board/${id}`,
+      "x-default": `${SITE}/board/${id}`,
+    },
+  };
+}
+
 export type LegalSlug = "privacy" | "terms";
 
 export function legalPathFor(locale: Locale, slug: LegalSlug): string {

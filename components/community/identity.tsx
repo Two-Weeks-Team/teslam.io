@@ -4,13 +4,9 @@ import { getContent, type Locale } from "@/lib/i18n";
 import { Mark } from "@/components/community/mark";
 import { Odometer } from "@/components/community/odometer";
 import { krwPerDrv } from "@/lib/economics";
-import { REGIONS } from "@/lib/genesis";
+import { regionLabel } from "@/lib/genesis";
 import { krw, n } from "@/lib/format";
 import cm from "@/data/community.json";
-
-/** The one place a region id becomes words. `REGIONS` already carries both. */
-const regionLabel = (locale: Locale, id: string) =>
-  REGIONS.find((r) => r.id === id)?.[locale] ?? id;
 
 /**
  * Who you are here, what you have kept up, and how far the ladder goes.

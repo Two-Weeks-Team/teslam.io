@@ -12,61 +12,99 @@ import { CFooter } from "@/components/community/footer";
 import { JsonLd } from "@/components/jsonld";
 import { type Locale } from "@/lib/i18n";
 import { getGenesisStats } from "@/lib/stats";
+import { getBoardCounts, getPosts, type Page } from "@/lib/posts";
+import { getCapabilities, modeFor, SHOWCASE, type Capabilities } from "@/lib/showcase";
 import { LiveProvider } from "@/components/community/live-provider";
+import { SessionProvider } from "@/components/community/session";
 import { PreviewBanner } from "@/components/community/preview-banner";
-import cm from "@/data/community.json";
 
 /**
  * The community front page.
  *
- * Order is the argument, and the argument changed: the country comes first,
- * then the cohort as the object it is a cohort of, then the competition that
- * brings people back, then the board that is the actual product. What used to
- * lead — a headline beside a panel of five hundred grey squares — said less in
- * more space than the map does in a glance.
+ * Order is the argument: the country first, then the cohort it is a cohort of,
+ * then the competition that brings people back, then the board that is the
+ * actual product.
  *
- * Everything above the league is a live figure or a drawing of one. Everything
- * below it is still sample content, and still labelled as such.
+ * What each section draws is not decided here. `/v1/capabilities` says which
+ * data sources the API actually has, and `modeFor` turns that into one of three
+ * answers per section — real, sample, or nothing at all. The consequence worth
+ * stating plainly: shipping a backend is what promotes a section from sample to
+ * real. No constant in this file has to be remembered and edited afterwards,
+ * and no section can go on calling itself sample content once it stops being
+ * any such thing.
  */
 export async function HomePage({ locale }: { locale: Locale }) {
-  const stats = await getGenesisStats();
+  // One round trip each, in parallel. The board fetch is wasted when the board
+  // is not live, which is one request against a page that would otherwise wait
+  // for capabilities before it could even start asking.
+  const [stats, caps, posts, boardCounts] = await Promise.all([
+    getGenesisStats(),
+    getCapabilities(),
+    getPosts({ sort: "hot" }),
+    getBoardCounts(),
+  ]);
 
   return (
-    <LiveProvider initial={stats}>
-      <HomeBoard locale={locale} />
-    </LiveProvider>
+    <SessionProvider>
+      <LiveProvider initial={stats}>
+        <HomeBoard locale={locale} caps={caps} posts={posts} boardCounts={boardCounts} />
+      </LiveProvider>
+    </SessionProvider>
   );
 }
 
-function HomeBoard({ locale }: { locale: Locale }) {
+function HomeBoard({
+  locale,
+  caps,
+  posts,
+  boardCounts,
+}: {
+  locale: Locale;
+  caps: Capabilities;
+  posts: Page;
+  boardCounts: Record<string, number>;
+}) {
+  const mode = (cap: Parameters<typeof modeFor>[0]) => modeFor(cap, caps);
+
+  const league = mode("league");
+  const quests = mode("quests");
+  const badges = mode("badges");
+  const garage = mode("garage");
+  const wallet = mode("wallet");
+  const shop = mode("shop");
+
   return (
     <div className="cm">
       <JsonLd locale={locale} />
       <Bar locale={locale} />
 
       <div className="cm__wrap">
-        {cm.isPreview ? <PreviewBanner locale={locale} /> : null}
+        {/* The banner explains what is invented. With the switch off nothing
+            is, so the sentence would be describing an absence. */}
+        {SHOWCASE ? <PreviewBanner locale={locale} /> : null}
 
         <MapHero locale={locale} />
         <RouteMap locale={locale} />
         <Proof locale={locale} />
         <Onboard locale={locale} />
-        <Quests locale={locale} />
-        <League locale={locale} />
-        <Streak locale={locale} />
-        <Badges locale={locale} />
-        <Ladder locale={locale} />
-        <Nameplate locale={locale} />
-        <Shop locale={locale} />
-        <Stake locale={locale} />
+
+        {quests === "hidden" ? null : <Quests locale={locale} />}
+        {league === "hidden" ? null : <League locale={locale} />}
+        {garage === "hidden" ? null : <Streak locale={locale} />}
+        {badges === "hidden" ? null : <Badges locale={locale} />}
+        {garage === "hidden" ? null : <Ladder locale={locale} />}
+        {garage === "hidden" ? null : <Nameplate locale={locale} />}
+        {shop === "hidden" ? null : <Shop locale={locale} />}
+        {wallet === "hidden" ? null : <Stake locale={locale} />}
+
         <Cohort locale={locale} />
 
         <div className="cols">
-          <LeftRail locale={locale} />
+          <LeftRail locale={locale} counts={boardCounts} live={caps.live.board} />
           <main>
-            <Feed locale={locale} />
+            <Feed locale={locale} mode={mode("board")} initial={posts} now={posts.now} />
           </main>
-          <RightRail locale={locale} />
+          <RightRail locale={locale} caps={caps} />
         </div>
 
         <CFooter locale={locale} />

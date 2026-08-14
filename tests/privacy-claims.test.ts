@@ -8,11 +8,18 @@ import pkg from "../package.json";
 /**
  * The privacy policy makes two kinds of promise, and both are checkable here.
  *
- * The first is a claim about this codebase — "no cookies, no local storage, no
- * analytics". A policy that says that while a tracking script sits in the
- * bundle is not a mistake in wording, it is a false statement to every reader.
- * So the claim is pinned: add an analytics package or touch document.cookie and
- * this fails until the policy is rewritten to match.
+ * The first is a claim about this codebase — no local storage, no analytics,
+ * and no cookie set by anything the site itself ships. A policy that says that
+ * while a tracking script sits in the bundle is not a mistake in wording, it is
+ * a false statement to every reader. So the claim is pinned: add an analytics
+ * package or touch document.cookie and this fails until the policy is rewritten
+ * to match.
+ *
+ * The policy used to say "no cookies" flatly, and the board's sign-in made that
+ * false. The session cookie is set by the Worker and is HttpOnly, so no storage
+ * API appears in the site's source and the scan below still passes — which is
+ * exactly why the scan alone was not enough, and why §9 is now checked for the
+ * disclosure it has to carry.
  *
  * The second is statutory. Article 30(1) of the Personal Information Protection
  * Act lists what a policy must contain. The list below is that statute, and the
@@ -80,6 +87,33 @@ describe("the site does what the privacy policy says it does", () => {
     expect(bad, "an analytics dependency contradicts privacy policy §9").toEqual(
       [],
     );
+  });
+
+  /**
+   * The session cookie is real, so the policy has to name it.
+   *
+   * This is the check that would have caught the version of this change that
+   * shipped a sign-in and left §9 saying "no cookies". The code scan above
+   * could not: the cookie is set by the Worker, over HTTP, and touches nothing
+   * the scan reads.
+   */
+  it("discloses the session cookie, since the board sets one", () => {
+    const usesSession = readFileSync("cloudflare/worker.ts", "utf8").includes("tsl_session");
+    expect(usesSession, "if the session cookie is gone, this guard and §9 can both be relaxed").toBe(
+      true,
+    );
+
+    for (const [name, doc] of [
+      ["ko", ko.privacy],
+      ["en", en.privacy],
+    ] as const) {
+      const body = JSON.stringify(doc);
+      expect(body, `${name}: §9 does not name the session cookie`).toContain("tsl_session");
+      expect(
+        /쿠키를? (일절 )?(사용하지|쓰지) 않|[Nn]o cookies/.test(body),
+        `${name}: §9 still claims no cookies while the board sets one`,
+      ).toBe(false);
+    }
   });
 
   it("names a data protection contact, as article 30(1)9 requires", () => {

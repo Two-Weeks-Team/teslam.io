@@ -247,6 +247,47 @@ export const home: HomeContent = {
     more: "More posts",
     views: "views",
     comments: "comments",
+    // The real board.
+    pageTitle: "The board",
+    pageDescription:
+      "Written by Tesla owners, on top of driving records verified by the odometer.",
+    shown: " shown",
+    loading: "Loading…",
+    empty: "No first post yet. The board is open.",
+    vote: "Upvote",
+    voteSignedOut: "Confirm a seat to vote",
+  },
+
+  compose: {
+    placeholder: "What is worth saying?",
+    signedOut: "Writing is for confirmed Genesis seats.",
+    signedOutCta: "About the seats",
+    boardLabel: "Choose a board",
+    titleLabel: "Title",
+    titlePlaceholder: "Title",
+    bodyPlaceholder: "Write your post.",
+    bodyLabel: "Body",
+    submit: "Post",
+    sending: "Posting…",
+    cancel: "Cancel",
+    tooMany: "Try again shortly — that is more posts than an hour allows.",
+    failed: "That did not post. Try again shortly.",
+  },
+
+  post: {
+    backToBoard: "The board",
+    vote: "Upvote",
+    voteSignedOut: "Confirm a seat to vote",
+    replies: "Replies",
+    noReplies: "Be the first to reply.",
+    reply: "Reply",
+    replyLabel: "Your reply",
+    replyPlaceholder: "Write a reply.",
+    replySignedOut: "Replying is for confirmed Genesis seats.",
+    replySignedOutCta: "About the seats",
+    sending: "Posting…",
+    tooMany: "Try again shortly.",
+    failed: "That did not post. Try again shortly.",
   },
 
   side: {
@@ -273,7 +314,20 @@ export const home: HomeContent = {
     connect: "Link a Tesla account",
   },
 
-  live: { title: "Live", auto: "auto-refresh" },
+  live: {
+    title: "Live",
+    auto: "auto-refresh",
+    // Prose, so it lives per locale. Held in shared JSON it rendered in Korean
+    // on /en, where nobody developing in Korean would ever have seen it.
+    items: [
+      { t: "V4 Supercharger check-in in Busan · 배터리아껴쓰기", v: "+500 DRV" },
+      { t: "완충맨 hit today's 500 DRV ceiling in Ulsan", v: "MAX" },
+      { t: "판교뉴비 verified 14km, Songpa to Pangyo", v: "+140 DRV" },
+      { t: "흰색롱레인지's Model X LR review was picked", v: "+120 TSLM" },
+      { t: "강남언니Y cleared the efficiency quest at 8.2km/kWh", v: "Quest" },
+      { t: "판교뉴비 verified 25km on Jeju", v: "+250 DRV" },
+    ],
+  },
 
   footer: {
     line: "A Tesla owner community where distance driven accrues as you go.",

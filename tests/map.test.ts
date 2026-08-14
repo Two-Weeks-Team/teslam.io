@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { MAP_VIEWBOX, REGION_CENTRES, REGION_PATHS } from "@/lib/map/regions";
 import { REGIONS } from "@/lib/genesis";
@@ -90,5 +91,42 @@ describe("the caption", () => {
     // registrants give a region and never a coordinate.
     expect(ko.density.note).toContain("좌표");
     expect(en.density.note.toLowerCase()).toContain("coordinates");
+  });
+});
+
+/**
+ * The fallback has to be reachable.
+ *
+ * `.rmap__fail` and its copy existed from the start and never once rendered.
+ * MapLibre raises GPUInitializationError from inside the Map constructor and
+ * fires it as an `error` event; `map.on("error", …)` is necessarily attached
+ * after that constructor returns, so nothing was listening and nothing threw.
+ * Every reader without WebGL2 — hardware acceleration off, an older phone, a
+ * locked-down work laptop — got an unexplained black rectangle.
+ *
+ * Verified in a headless browser launched with --disable-gpu: before the
+ * probe, `.rmap__fail` was absent and a dead canvas was present; after it, the
+ * message renders and no canvas is built.
+ *
+ * Asserted against the source because the failure is an ordering mistake, and
+ * a component test with a working WebGL2 context passes either way.
+ */
+describe("the route map when the browser cannot draw it", () => {
+  const source = readFileSync("components/community/route-map.tsx", "utf8");
+
+  it("asks about WebGL2 before constructing the map", () => {
+    const probe = source.indexOf('getContext("webgl2")');
+    const construct = source.indexOf("new maplibre.Map(");
+    expect(probe, "no WebGL2 probe — the fallback is unreachable again").toBeGreaterThan(-1);
+    expect(
+      probe,
+      "the probe must run before the constructor, or MapLibre fires its error with nobody listening",
+    ).toBeLessThan(construct);
+  });
+
+  it("still shows the fallback copy it was given", () => {
+    expect(source).toContain("rmap__fail");
+    expect(ko.routes.failed.length).toBeGreaterThan(0);
+    expect(en.routes.failed.length).toBeGreaterThan(0);
   });
 });

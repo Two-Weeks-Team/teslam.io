@@ -140,3 +140,58 @@ retro cluster, magazine, wallet, cult. Each is one self-contained file in
 
 They are drafts: `robots.ts` disallows `/alt*` so half-finished pages do not get
 indexed under this brand. Delete them once the direction is settled.
+
+## Sample content and the demo, in one switch
+
+`NEXT_PUBLIC_SHOWCASE=off` removes every invented figure from the site — sample
+posts, the leaderboard, quests, badges, the wallet, the nameplate, the ticker,
+and the rehearsed Genesis playback — in one setting. Unset or anything else
+leaves them in place, labelled.
+
+What the switch does **not** decide is which sections are real. The API answers
+that at `/v1/capabilities`, and the site renders from it:
+
+| API has the source | `SHOWCASE` | The section draws |
+|---|---|---|
+| yes | either | real data |
+| no  | on  | sample content, marked |
+| no  | off | nothing |
+
+So shipping a backend is what promotes a section. Flip its line in
+`capabilities()` in `cloudflare/worker.ts` and the site follows without being
+rebuilt — and a section cannot go on calling itself sample content once it has
+stopped being any such thing.
+
+Set it per environment in Vercel, or locally:
+
+```bash
+NEXT_PUBLIC_SHOWCASE=off pnpm dev
+```
+
+## The board
+
+Real posts, comments and votes, in D1 (`cloudflare/migrations/0002_board.sql`).
+
+Identity is a Genesis seat: confirming the registration mail creates the account
+and issues the session, and nothing else does. There is no login form. Reading
+needs no account; writing, replying and voting need a confirmed seat.
+
+Signing in sets one HttpOnly cookie (`tsl_session`, 30 days, deleted on sign-out
+and swept by the daily cron). Browsing sets nothing — `/privacy` §9 says so and
+`tests/privacy-claims.test.ts` holds it to that.
+
+Walk the whole flow locally without sending any mail:
+
+```bash
+pnpm cf:dev                                    # worker + local D1
+NEXT_PUBLIC_API_ORIGIN=http://localhost:8787 pnpm dev
+
+# mint a confirmation link instead of mailing it
+curl -X POST localhost:8787/v1/genesis/invite \
+  -H "authorization: Bearer $EXPORT_TOKEN" -H 'content-type: application/json' \
+  -d '{"email":"you@example.com","model":"Model 3","trim":"Long Range",
+       "region":"capital","kmBand":"1000_2000","consentTerms":true,"consentPrivacy":true}'
+```
+
+Then open the API leg of that link (`/v1/genesis/confirm?token=…`) to take the
+seat and receive the session.

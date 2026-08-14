@@ -79,6 +79,27 @@ export function RouteMap({ locale }: { locale: Locale }) {
         observer.disconnect();
 
         try {
+          /*
+           * Ask about WebGL2 before building anything that needs it.
+           *
+           * MapLibre raises its own GPUInitializationError from inside the Map
+           * constructor and fires it as an `error` event — but the handler
+           * below is attached after that constructor returns, so the event has
+           * nobody listening and nothing throws either. The observed result was
+           * a black rectangle with no explanation on any browser without
+           * WebGL2: hardware acceleration switched off, an older device, a
+           * locked-down corporate build. The fallback for exactly that case was
+           * already written and could never run.
+           */
+          const probe = document.createElement("canvas").getContext("webgl2");
+          if (!probe) {
+            if (!cancelled) setFailed(true);
+            return;
+          }
+          // Release it immediately. Contexts are a scarce per-page resource and
+          // this one existed only to answer a question.
+          probe.getExtension("WEBGL_lose_context")?.loseContext();
+
           const maplibre = await import("maplibre-gl");
           if (cancelled) return;
 

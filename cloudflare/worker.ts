@@ -26,6 +26,32 @@ import {
   type EmailBinding,
   type Mailer,
 } from "./lib/mail";
+import {
+  accountForSession,
+  boardCounts,
+  createComment,
+  createPost,
+  createSession,
+  defaultHandle,
+  endSession,
+  ensureAccount,
+  getPost,
+  listPosts,
+  postCount,
+  purgeSessions,
+  SESSION_TTL_SECONDS,
+  setHandle,
+  toggleVote,
+  type Account,
+} from "./lib/board";
+import {
+  countChars,
+  handleProblem,
+  isBoard,
+  isSort,
+  LIMITS,
+  type BoardId,
+} from "../lib/board";
 
 export { LiveBoard } from "./live";
 
@@ -80,6 +106,22 @@ const json = (body: unknown, status = 200, extra: HeadersInit = {}) =>
   });
 
 /**
+ * Add the CORS headers to a handler's response without rebuilding it.
+ *
+ * This used to be `{ ...Object.fromEntries(res.headers), ...cors }`, which
+ * looks equivalent and is not: `Set-Cookie` does not survive a round trip
+ * through a plain object, so the confirmation route issued a session that
+ * never reached the browser. Copying the response and setting keys on its own
+ * Headers keeps every header the handler set, including the ones that are
+ * allowed to appear more than once.
+ */
+function withCors(res: Response, headers: Record<string, string>): Response {
+  const out = new Response(res.body, res);
+  for (const [k, v] of Object.entries(headers)) out.headers.set(k, v);
+  return out;
+}
+
+/**
  * An explicit allowlist, never `*`.
  *
  * These endpoints write to a table of personal data. Reflecting an arbitrary
@@ -92,10 +134,74 @@ function cors(req: Request, env: Env): Record<string, string> {
   if (!origin || !allowed.includes(origin)) return {};
   return {
     "access-control-allow-origin": origin,
-    "access-control-allow-methods": "GET,POST,OPTIONS",
+    "access-control-allow-methods": "GET,POST,PUT,OPTIONS",
     "access-control-allow-headers": "content-type",
+    // The board sends its session cookie cross-origin (teslam.io talking to
+    // api.teslam.io), and a browser drops the cookie unless the response says
+    // credentials are allowed. Safe only because the origin above is a member
+    // of an allowlist and never `*` — the two are checked together by the
+    // browser, and `*` with credentials is refused outright.
+    "access-control-allow-credentials": "true",
     vary: "origin",
   };
+}
+
+/* ── sessions ─────────────────────────────────────────────────────────── */
+
+/**
+ * The one cookie this service sets.
+ *
+ * It exists only for signed-in members: a reader who never confirms a
+ * registration is never issued one, which is why the privacy policy can still
+ * say that browsing sets nothing. HttpOnly because a session token that
+ * JavaScript can read is a session token an injected script can post to
+ * somewhere else — and it means no storage API appears in the site's source at
+ * all.
+ *
+ * `SameSite=None` is required, not preferred: the site is teslam.io and this
+ * Worker is api.teslam.io, so every board request is cross-site by the
+ * cookie's definition of the word and Lax would withhold it. That is only
+ * acceptable alongside the origin allowlist above; without it, `None` would
+ * mean any page on the internet could drive the board as a signed-in member.
+ */
+const SESSION_COOKIE = "tsl_session";
+
+function sessionCookie(token: string, secure: boolean, maxAge: number): string {
+  const parts = [
+    `${SESSION_COOKIE}=${token}`,
+    "Path=/",
+    "HttpOnly",
+    `Max-Age=${maxAge}`,
+    secure ? "SameSite=None" : "SameSite=Lax",
+  ];
+  // `Secure` is mandatory for SameSite=None and impossible over plain http, so
+  // local development gets Lax and a same-site cookie rather than a cookie the
+  // browser silently discards.
+  if (secure) parts.push("Secure");
+  return parts.join("; ");
+}
+
+function readCookie(req: Request, name: string): string | null {
+  const raw = req.headers.get("cookie");
+  if (!raw) return null;
+  for (const part of raw.split(";")) {
+    const eq = part.indexOf("=");
+    if (eq < 0) continue;
+    if (part.slice(0, eq).trim() === name) return part.slice(eq + 1).trim();
+  }
+  return null;
+}
+
+/** The signed-in account, or null. Never throws: an unreadable cookie is a
+ *  signed-out reader, not an error page. */
+async function caller(req: Request, env: Env): Promise<Account | null> {
+  const token = readCookie(req, SESSION_COOKIE);
+  if (!token) return null;
+  try {
+    return await accountForSession(env.DB, await sha256(token));
+  } catch {
+    return null;
+  }
 }
 
 async function sha256(input: string): Promise<string> {
@@ -321,6 +427,39 @@ async function confirmHandler(url: URL, env: Env): Promise<Response> {
   const placement = await confirm(env.DB, await sha256(token));
   if (!placement) return json({ error: "invalid_or_used" }, 404);
 
+  /*
+   * Confirmation is also account creation.
+   *
+   * Nothing else creates one, which is the whole security model of the board:
+   * the set of people who can post is the set of people who proved a mailbox
+   * and told us what they drive. A separate sign-up form would be a second,
+   * weaker door into the same room.
+   *
+   * A failure here must not fail the confirmation — the seat is already
+   * theirs. They arrive signed out and the next confirmation link, or an
+   * operator, can issue the session.
+   */
+  let cookie: string | null = null;
+  try {
+    const account = await ensureAccount(
+      env.DB,
+      placement.registrationId,
+      defaultHandle(placement.kind, placement.number),
+    );
+    const sessionToken = crypto.randomUUID().replaceAll("-", "") + crypto.randomUUID().replaceAll("-", "");
+    await createSession(env.DB, account.id, await sha256(sessionToken));
+    cookie = sessionCookie(
+      sessionToken,
+      new URL(env.SITE_ORIGIN).protocol === "https:",
+      SESSION_TTL_SECONDS,
+    );
+  } catch (err) {
+    // Not fatal for the caller — the seat is already theirs. Logged, because a
+    // confirmation that silently fails to create an account is invisible from
+    // outside: the registrant is placed and simply cannot ever post.
+    console.error("account/session creation failed after confirmation", err);
+  }
+
   // Tell everyone watching. A failure here must not fail the confirmation —
   // the seat is already the registrant's, and a board that missed one event
   // corrects itself on the next page load.
@@ -341,7 +480,21 @@ async function confirmHandler(url: URL, env: Env): Promise<Response> {
     }
   }
 
-  return json({ status: "confirmed", placement });
+  // `registrationId` is an internal key. It identifies a row of personal data,
+  // so the response is rebuilt from the fields that are public rather than
+  // spread from the placement — a future column added to `Placement` should
+  // have to be named here before it can reach a browser.
+  const published = {
+    kind: placement.kind,
+    number: placement.number,
+    region: placement.region,
+    model: placement.model,
+  };
+  return json(
+    { status: "confirmed", placement: published, signedIn: cookie !== null },
+    200,
+    cookie ? { "set-cookie": cookie } : {},
+  );
 }
 
 /**
@@ -398,6 +551,225 @@ async function invite(req: Request, env: Env): Promise<Response> {
   return json({ status: "pending", confirmUrl: staged.link });
 }
 
+/* ── the board ────────────────────────────────────────────────────────── */
+
+/**
+ * Read a body as an object, or say so.
+ *
+ * Shared by the three write routes because each of them otherwise grows its
+ * own slightly different idea of what a malformed request looks like.
+ */
+async function readJson(req: Request): Promise<Record<string, unknown> | null> {
+  try {
+    const v = await req.json();
+    return v && typeof v === "object" && !Array.isArray(v)
+      ? (v as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Validate a text field against the shared limits.
+ *
+ * Counts code points, matching `lib/board.ts`, so the endpoint and the form
+ * agree about what "120 characters" means for a Korean writer. Trimming
+ * happens before measuring: a body of four hundred spaces is an empty post.
+ */
+function text(
+  v: unknown,
+  bounds: { min: number; max: number },
+): { ok: true; value: string } | { ok: false } {
+  if (typeof v !== "string") return { ok: false };
+  const value = v.trim();
+  const len = countChars(value);
+  if (len < bounds.min || len > bounds.max) return { ok: false };
+  return { ok: true, value };
+}
+
+async function boardRoutes(
+  req: Request,
+  url: URL,
+  env: Env,
+  headers: Record<string, string>,
+): Promise<Response | null> {
+  const path = url.pathname;
+  if (!path.startsWith("/v1/board")) return null;
+
+  const me = await caller(req, env);
+  const needSession = () => json({ error: "sign_in_required" }, 401, headers);
+
+  /* Who am I. Answered for signed-out readers too — "nobody" is the answer the
+     page needs to draw a sign-in prompt, and 401 would make that an error. */
+  if (path === "/v1/board/me" && req.method === "GET") {
+    return json(me ? { handle: me.handle } : { handle: null }, 200, {
+      ...headers,
+      // Never shared. This response is per-reader by construction.
+      "cache-control": "private, no-store",
+    });
+  }
+
+  if (path === "/v1/board/signout" && req.method === "POST") {
+    const token = readCookie(req, SESSION_COOKIE);
+    if (token) await endSession(env.DB, await sha256(token));
+    return json({ status: "signed_out" }, 200, {
+      ...headers,
+      // Max-Age=0 rather than simply forgetting it: the browser holds the
+      // cookie until told otherwise, and a sign-out that leaves a working
+      // token in the jar has not signed anybody out.
+      "set-cookie": sessionCookie(
+        "",
+        new URL(env.SITE_ORIGIN).protocol === "https:",
+        0,
+      ),
+    });
+  }
+
+  if (path === "/v1/board/handle" && req.method === "PUT") {
+    if (!me) return needSession();
+    const body = await readJson(req);
+    if (!body) return json({ error: "bad_json" }, 400, headers);
+
+    const problem = handleProblem(body.handle);
+    if (problem) return json({ error: "invalid_handle", reason: problem }, 400, headers);
+
+    const result = await setHandle(env.DB, me.id, String(body.handle).trim());
+    if (result === "taken") return json({ error: "handle_taken" }, 409, headers);
+    if (result === "already_set") return json({ error: "handle_already_set" }, 409, headers);
+    return json({ handle: String(body.handle).trim() }, 200, headers);
+  }
+
+  if (path === "/v1/board/posts" && req.method === "GET") {
+    const boardParam = url.searchParams.get("board");
+    if (boardParam && !isBoard(boardParam)) {
+      return json({ error: "unknown_board" }, 400, headers);
+    }
+    const sortParam = url.searchParams.get("sort") ?? "hot";
+    if (!isSort(sortParam)) return json({ error: "unknown_sort" }, 400, headers);
+
+    const page = Number.parseInt(url.searchParams.get("page") ?? "0", 10);
+
+    const result = await listPosts(env.DB, {
+      board: boardParam ? (boardParam as BoardId) : undefined,
+      sort: sortParam,
+      page: Number.isFinite(page) ? page : 0,
+      accountId: me?.id,
+    });
+
+    return json(result, 200, {
+      ...headers,
+      // A signed-in reader's list carries their own vote state, so it may not
+      // be cached anywhere shared. The signed-out list is identical for
+      // everybody and is worth ten seconds at the edge.
+      "cache-control": me ? "private, no-store" : "public, max-age=10",
+    });
+  }
+
+  if (path === "/v1/board/posts" && req.method === "POST") {
+    if (!me) return needSession();
+    const body = await readJson(req);
+    if (!body) return json({ error: "bad_json" }, 400, headers);
+
+    const title = text(body.title, LIMITS.title);
+    const postBody = text(body.body, LIMITS.body);
+    const fields: string[] = [];
+    if (!isBoard(body.board)) fields.push("board");
+    if (!title.ok) fields.push("title");
+    if (!postBody.ok) fields.push("body");
+    if (fields.length) return json({ error: "invalid", fields }, 400, headers);
+
+    const created = await createPost(env.DB, me.id, {
+      board: body.board as BoardId,
+      title: (title as { ok: true; value: string }).value,
+      body: (postBody as { ok: true; value: string }).value,
+    });
+    if (created === "rate_limited") return json({ error: "rate_limited" }, 429, headers);
+
+    return json({ id: created.id }, 201, headers);
+  }
+
+  const postMatch = /^\/v1\/board\/posts\/([A-Za-z0-9-]{1,64})(\/comments|\/vote)?$/.exec(path);
+  if (postMatch) {
+    const [, id, action] = postMatch;
+
+    if (!action && req.method === "GET") {
+      const post = await getPost(env.DB, id, me?.id);
+      if (!post) return json({ error: "not_found" }, 404, headers);
+      return json(post, 200, {
+        ...headers,
+        "cache-control": me ? "private, no-store" : "public, max-age=10",
+      });
+    }
+
+    if (action === "/comments" && req.method === "POST") {
+      if (!me) return needSession();
+      const body = await readJson(req);
+      if (!body) return json({ error: "bad_json" }, 400, headers);
+
+      const comment = text(body.body, LIMITS.comment);
+      if (!comment.ok) return json({ error: "invalid", fields: ["body"] }, 400, headers);
+
+      const created = await createComment(env.DB, me.id, id, comment.value);
+      if (created === "no_post") return json({ error: "not_found" }, 404, headers);
+      if (created === "rate_limited") return json({ error: "rate_limited" }, 429, headers);
+      return json({ id: created.id }, 201, headers);
+    }
+
+    if (action === "/vote" && req.method === "POST") {
+      if (!me) return needSession();
+      const result = await toggleVote(env.DB, me.id, id);
+      if (result === "no_post") return json({ error: "not_found" }, 404, headers);
+      return json(result, 200, headers);
+    }
+  }
+
+  return json({ error: "not_found" }, 404, headers);
+}
+
+/**
+ * What is real right now.
+ *
+ * The site draws a dozen sections and only some of them have anything behind
+ * them: seats and the board do, a leaderboard built from odometer readings
+ * cannot until a vehicle is linked to an account. Rather than hard-coding that
+ * list into the site — where changing it means a redeploy — the API says which
+ * of its own data sources exist, and the site renders real data, sample
+ * content or nothing at all from that one answer.
+ *
+ * The effect is that shipping a backend is what turns a section real. Nobody
+ * has to remember to flip a flag in a second repository afterwards.
+ */
+async function capabilities(env: Env, headers: Record<string, string>): Promise<Response> {
+  let posts = 0;
+  try {
+    posts = await postCount(env.DB);
+  } catch {
+    // A missing table is a capability that is not live yet, which is exactly
+    // what the caller is asking about.
+  }
+
+  return json(
+    {
+      // Live: both are reading their own tables.
+      seats: true,
+      board: true,
+      // Not live: every one of these is computed from odometer readings, and
+      // no vehicle is linked to an account yet. Flip a line here when the
+      // source exists; the site follows without being rebuilt.
+      league: false,
+      quests: false,
+      badges: false,
+      wallet: false,
+      garage: false,
+      shop: false,
+      counts: { posts },
+    },
+    200,
+    { ...headers, "cache-control": "public, max-age=30" },
+  );
+}
+
 /* ── entry ────────────────────────────────────────────────────────────── */
 
 export function createWorker(deps: Deps = {}) {
@@ -412,12 +784,12 @@ export function createWorker(deps: Deps = {}) {
 
       if (url.pathname === "/v1/genesis/register" && req.method === "POST") {
         const res = await register(req, env, deps, overLimit);
-        return new Response(res.body, { status: res.status, headers: { ...Object.fromEntries(res.headers), ...headers } });
+        return withCors(res, headers);
       }
 
       if (url.pathname === "/v1/genesis/confirm" && req.method === "GET") {
         const res = await confirmHandler(url, env);
-        return new Response(res.body, { status: res.status, headers: { ...Object.fromEntries(res.headers), ...headers } });
+        return withCors(res, headers);
       }
 
       if (url.pathname === "/v1/live") {
@@ -437,7 +809,7 @@ export function createWorker(deps: Deps = {}) {
 
       if (url.pathname === "/v1/genesis/invite" && req.method === "POST") {
         const res = await invite(req, env);
-        return new Response(res.body, { status: res.status, headers: { ...Object.fromEntries(res.headers), ...headers } });
+        return withCors(res, headers);
       }
 
       if (url.pathname === "/v1/genesis/stats" && req.method === "GET") {
@@ -449,6 +821,20 @@ export function createWorker(deps: Deps = {}) {
           "cache-control": "public, max-age=10",
         });
       }
+
+      if (url.pathname === "/v1/capabilities" && req.method === "GET") {
+        return capabilities(env, headers);
+      }
+
+      if (url.pathname === "/v1/board/counts" && req.method === "GET") {
+        return json({ counts: await boardCounts(env.DB) }, 200, {
+          ...headers,
+          "cache-control": "public, max-age=30",
+        });
+      }
+
+      const boardResponse = await boardRoutes(req, url, env, headers);
+      if (boardResponse) return boardResponse;
 
       if (url.pathname === "/v1/genesis/export" && req.method === "GET") {
         if (!authorised(req, env)) {
@@ -472,6 +858,10 @@ export function createWorker(deps: Deps = {}) {
      */
     async scheduled(_event: unknown, env: Env): Promise<void> {
       await purgeExpired(env.DB);
+      // Expired sessions are dead weight that is also a liability: a row that
+      // can no longer authenticate anybody is a row nobody has a reason to
+      // keep, and the privacy policy says so.
+      await purgeSessions(env.DB);
     },
   };
 }
