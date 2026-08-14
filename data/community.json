@@ -369,7 +369,7 @@
       "title": "7.0km/kWh 돌파",
       "sub": "단일 주행 전비",
       "have": 6.8,
-      "need": 7.0,
+      "need": 7,
       "reward": 150,
       "unit": "DRV",
       "kind": "eff"
@@ -448,7 +448,7 @@
   "nameplate": {
     "handle": "광교전비장인",
     "trim": "Model 3 Long Range",
-    "region": "수도권",
+    "region": "capital",
     "since": "2026-03",
     "odo": 38228,
     "totalDrv": 152840,
@@ -493,27 +493,19 @@
   "tiers": [
     {
       "id": "bronze",
-      "name": "브론즈",
-      "need": 0,
-      "perk": "기본 적립"
+      "need": 0
     },
     {
       "id": "silver",
-      "name": "실버",
-      "need": 2000,
-      "perk": "주간 퀘스트 2배"
+      "need": 2000
     },
     {
       "id": "gold",
-      "name": "골드",
-      "need": 8000,
-      "perk": "교환소 우선권"
+      "need": 8000
     },
     {
       "id": "teslam",
-      "name": "테슬람",
-      "need": 20000,
-      "perk": "명예의 전당 · 운영 투표"
+      "need": 20000
     }
   ],
   "tierProgress": 5250

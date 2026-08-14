@@ -4,8 +4,13 @@ import { getContent, type Locale } from "@/lib/i18n";
 import { Mark } from "@/components/community/mark";
 import { Odometer } from "@/components/community/odometer";
 import { krwPerDrv } from "@/lib/economics";
+import { REGIONS } from "@/lib/genesis";
 import { krw, n } from "@/lib/format";
 import cm from "@/data/community.json";
+
+/** The one place a region id becomes words. `REGIONS` already carries both. */
+const regionLabel = (locale: Locale, id: string) =>
+  REGIONS.find((r) => r.id === id)?.[locale] ?? id;
 
 /**
  * Who you are here, what you have kept up, and how far the ladder goes.
@@ -42,7 +47,7 @@ export function Nameplate({ locale }: { locale: Locale }) {
         </div>
 
         <p className="plate__car">
-          {p.trim} · {p.region}
+          {p.trim} · {regionLabel(locale, p.region)}
         </p>
 
         <dl className="plate__grid">
@@ -153,6 +158,7 @@ export function Ladder({ locale }: { locale: Locale }) {
         />
         {cm.tiers.map((tier) => {
           const reached = earned >= tier.need;
+          const label = t.tiers[tier.id as keyof typeof t.tiers];
           return (
             <div
               className={`ld__stop ld__stop--${tier.id}${reached ? " is-on" : ""}`}
@@ -160,11 +166,11 @@ export function Ladder({ locale }: { locale: Locale }) {
               style={{ insetInlineStart: `${(tier.need / top) * 100}%` }}
             >
               <span className="ld__dot" aria-hidden="true" />
-              <p className="ld__n">{tier.name}</p>
+              <p className="ld__n">{label.name}</p>
               <p className="ld__need">
                 {tier.need === 0 ? t.start : `${n(locale, tier.need)} DRV`}
               </p>
-              <p className="ld__perk">{tier.perk}</p>
+              <p className="ld__perk">{label.perk}</p>
             </div>
           );
         })}

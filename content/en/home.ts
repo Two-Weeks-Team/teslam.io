@@ -112,26 +112,30 @@ export const home: HomeContent = {
     title: "GPS can be faked. An odometer cannot.",
     sub: "A league only works if the record cannot be manufactured. That is why this site does not use GPS.",
     gps: {
-      tag: "GPS-based",
-      claim: "An app reads your location",
+      tag: "Scored on a GPS trace",
+      claim: "The coordinates the app sent are the score",
       items: [
         "Mock-location apps can invent the coordinates",
         "Laps of a car park accumulate distance",
         "Hard to tell from a bicycle or a walk",
-        "The whole route ends up on a server",
+        "You have to trust the trace the app sent",
       ],
     },
     odo: {
-      tag: "Odometer-based",
+      tag: "Scored on the odometer",
       claim: "The car reports its own dashboard number",
       items: [
         "It is the vehicle's own record; no app sits in between",
         "Only the difference between two readings counts, so it cannot be rewound",
         "It moves only if that car actually moved",
-        "One number travels, never a coordinate",
+        "The odometer difference alone sets what is earned",
       ],
     },
-    foot: "Four odometer signals, once a minute. The costs are worked through in",
+    // Do not write that coordinates are never collected. The operating model
+    // reads latitude and longitude once a minute and /model says so. What this
+    // section can claim is only that coordinates are not what the score is
+    // computed from.
+    foot: "Four signals once a minute. Latitude, longitude and speed are cross-checks; the odometer alone sets what is earned. The costs are worked through in",
     footLink: "the operating model",
   },
 
@@ -175,6 +179,15 @@ export const home: HomeContent = {
     start: "start",
     at: "At",
     foot: "keep driving and the next one arrives.",
+    // Tier names and perks are display strings, so they live per locale.
+    // data/community.json keeps only the identifier and the threshold — Korean
+    // left in there renders verbatim on /en.
+    tiers: {
+      bronze: { name: "Bronze", perk: "Base accrual" },
+      silver: { name: "Silver", perk: "Double weekly quests" },
+      gold: { name: "Gold", perk: "First call at the exchange" },
+      teslam: { name: "Teslam", perk: "Hall of fame · governance vote" },
+    },
   },
 
   stake: {
