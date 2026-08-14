@@ -75,12 +75,22 @@ export function RouteMap({ locale }: { locale: Locale }) {
   const sliceTo = useCallback(
     (metres: number): Array<[number, number]> => {
       const { cum } = legs;
+      /*
+       * Clamped to the route.
+       *
+       * Below zero the loop reached for the point before the first one and
+       * threw; guarding that index instead only moved the fault, because a
+       * negative distance then interpolated *backwards* and put the car off
+       * the end of the road. Clamping is the answer to both, and makes the
+       * function total — a caller should not have to know it has a domain.
+       */
+      const along = Math.min(legs.total, Math.max(0, metres));
       const out: Array<[number, number]> = [];
       for (let i = 0; i < route.points.length; i += 1) {
-        if (cum[i] <= metres) out.push(route.points[i]);
+        if (cum[i] <= along) out.push(route.points[i]);
         else {
           const span = cum[i] - cum[i - 1];
-          const k = span > 0 ? (metres - cum[i - 1]) / span : 0;
+          const k = span > 0 ? (along - cum[i - 1]) / span : 0;
           const [ax, ay] = route.points[i - 1];
           const [bx, by] = route.points[i];
           out.push([ax + (bx - ax) * k, ay + (by - ay) * k]);
@@ -298,7 +308,20 @@ export function RouteMap({ locale }: { locale: Locale }) {
     const metresPerMs = (PLAYBACK_KMH * 1000) / 3_600_000;
 
     const step = (now: number) => {
-      const at = from + (now - startedRef.current) * metresPerMs;
+      /*
+       * Clamped at zero.
+       *
+       * `requestAnimationFrame` hands the callback the time the *frame* began,
+       * which can be a fraction of a millisecond earlier than the
+       * `performance.now()` captured just before the frame was requested. The
+       * elapsed time then comes out negative, the travelled distance with it,
+       * and the path slice reaches for the point before the first one.
+       *
+       * It never reproduced locally and threw on the first click in
+       * production, which is the shape of every timing bug: the machine that
+       * finds it is the one you are not testing on.
+       */
+      const at = Math.max(0, from + (now - startedRef.current) * metresPerMs);
       if (at >= legs.total) {
         setTravelled(legs.total);
         setPlaying(false);
