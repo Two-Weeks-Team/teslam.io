@@ -257,7 +257,7 @@ void main() {
   c += uEdge * rim * mix(mix(0.55, 0.8, glass), 0.3, tyre);
 
   // A little ambient gradient so the sills sit in shade and the roof does not.
-  c *= 0.86 + 0.22 * clamp(vHeight / 0.62, 0.0, 1.0);
+  c *= 0.78 + 0.34 * clamp(vHeight / 0.62, 0.0, 1.0);
 
   outColour = vec4(c * mix(1.0, 0.68, vDepth), 1.0);
 }`;
@@ -529,9 +529,9 @@ export function SeatField({
     // Achromatic, as you asked: a graphite body, glass a shade cooler and much
     // darker, and a cool near-white on the edge. Nothing here competes with the
     // gold of a seat that has been taken.
-    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uBody"), 0.225, 0.25, 0.285);
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uBody"), 0.3, 0.33, 0.375);
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uGlass"), 0.085, 0.1, 0.125);
-    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uEdge"), 0.62, 0.7, 0.78);
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uEdge"), 0.72, 0.8, 0.88);
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uTyre"), 0.055, 0.06, 0.07);
     gl.uniform3f(gl.getUniformLocation(bodyProgram, "uAlloy"), 0.42, 0.46, 0.52);
 
@@ -673,7 +673,7 @@ export function SeatField({
        * frame and hands back the proportions.
        */
       const view = multiply(translate(0, -0.3, -EYE), model);
-      const vp = multiply(perspective(0.26, aspect, 0.1, 40), view);
+      const vp = multiply(perspective(0.21, aspect, 0.1, 40), view);
 
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

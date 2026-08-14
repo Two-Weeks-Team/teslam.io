@@ -614,10 +614,11 @@
 .sfield--live .sfield__gl {
   display: block;
   inline-size: 100%;
-  /* Two to one. The object is four times longer than it is tall, so a box any
-     squarer sits it in a well of empty space — at 15/10 the car used a third
-     of the height and the panel read as mostly nothing. */
-  aspect-ratio: 2 / 1;
+  /* Wider than two to one. The object is three and a quarter times longer than
+     it is tall, so any box squarer than that sits it in a well of empty space:
+     at 2/1 the car still left a third of the panel as sky. This is close to the
+     subject's own proportion, and the shadow uses what is left. */
+  aspect-ratio: 26 / 10;
   touch-action: pan-y;
 }
 .sfield--live .sfield__flat { display: none; }
@@ -1556,7 +1557,15 @@
 .plate__drv { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem; margin-block-start: .9rem; }
 .plate__drv .odo { font-size: 1.6rem; }
 .plate__unit { font-family: var(--font-mono); font-size: .76rem; color: var(--tx3); }
-.plate__krw { margin-inline-start: auto; font-size: .78rem; color: var(--tx3); }
+/* Beside the figure it converts, not shoved to the far side of a 1200px row —
+   `margin-inline-start: auto` put a full screen width between a number and its
+   own translation into won. */
+.plate__krw {
+  font-size: .78rem;
+  color: var(--tx3);
+  padding-inline-start: .6rem;
+  border-inline-start: 1px solid var(--hair2);
+}
 .plate__foot { margin-block-start: .8rem; font-size: .72rem; color: var(--tx3); }
 
 /* ── streak ── */

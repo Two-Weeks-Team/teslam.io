@@ -203,3 +203,48 @@ describe("board identifiers and limits", () => {
     expect(handleProblem(42)).toBe("type");
   });
 });
+
+/**
+ * Layout facts that a screenshot showed and a unit test can hold.
+ *
+ * Each of these was visible on the rendered page and invisible in the source
+ * until somebody looked. Pinning them here is cheaper than looking again.
+ */
+describe("things that only a rendered page revealed", () => {
+  it("spaces the tier ladder by tier, not by DRV", () => {
+    const src = readFileSync("components/community/identity.tsx", "utf8");
+    // Placed by threshold, Bronze and Silver landed 125px apart under labels
+    // 104px wide and overlapped, while two thirds of the rail was the empty
+    // run up to Teslam.
+    expect(src).toContain("const stopAt = (i: number)");
+    expect(src, "a threshold-proportional rail collides at the bottom").not.toMatch(
+      /insetInlineStart: `\$\{\(tier\.need \/ top\)/,
+    );
+  });
+
+  it("keeps the won conversion beside the figure it converts", () => {
+    const css = readFileSync("app/community.css", "utf8");
+    const rule = /\.plate__krw\s*\{[^}]*\}/.exec(css)?.[0] ?? "";
+    // `margin-inline-start: auto` put a full screen width between a number and
+    // its own translation into won.
+    expect(rule).not.toContain("margin-inline-start: auto");
+  });
+
+  it("frames the fleet map from the geometry rather than a tuned zoom", () => {
+    const src = readFileSync("components/community/route-map.tsx", "utf8");
+    // A centre and a zoom are only right for the canvas they were tuned
+    // against, and this panel has been three different shapes.
+    expect(src).toContain("FLEET_BOUNDS");
+    expect(src).toContain("map.fitBounds(FLEET_BOUNDS");
+  });
+
+  it("gives the car a panel close to its own proportion", () => {
+    const css = readFileSync("app/community.css", "utf8");
+    const rule = /\.sfield--live \.sfield__gl\s*\{[^}]*\}/.exec(css)?.[0] ?? "";
+    const ratio = /aspect-ratio:\s*(\d+)\s*\/\s*(\d+)/.exec(rule);
+    expect(ratio, "no aspect on the canvas — the car sits in a well of sky").toBeTruthy();
+    // The car is 4694 by 1443, so anything squarer than about 2.4 leaves a
+    // third of the panel empty above it.
+    expect(Number(ratio![1]) / Number(ratio![2])).toBeGreaterThan(2.4);
+  });
+});
