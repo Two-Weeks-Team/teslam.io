@@ -140,20 +140,76 @@ export const REAR_AXLE_T = 978 * MM * 0.5;
  *                   away. Without it the tail reads as a hatchback, which is
  *                   the single most common way to draw this car wrong.
  */
+const ROOFLINE: Array<[number, number]> = [
+  [0.0, 0.425], // the trailing edge, falling off the back
+  [0.03, 0.449], // the ducktail lip — the whole difference from a hatchback
+  [0.2, 0.432], // the deck
+  [0.46, 0.614], // rear glass, long and shallow, arriving at the crown
+  [0.58, 0.615], // the crown, over the front seats
+  [0.78, 0.43], // the cowl: windscreen raked about 25° from horizontal
+  [0.93, 0.4], // the bonnet, short and nearly level
+  [1.0, 0.3], // and over the nose
+];
+
+/**
+ * Height of the roofline at t, interpolated rather than ramped.
+ *
+ * This was a chain of smoothstep segments, and smoothstep arrives at every one
+ * of its endpoints with zero slope. Eight segments therefore meant eight flat
+ * spots, and where two of them met at different gradients the surface creased.
+ * Rendered as points nobody could see it; rendered as a solid, the car had a
+ * step in its shoulder and a shelf where the rear glass meets the boot.
+ *
+ * A monotone cubic through the same control points holds the shape between
+ * them instead of flattening at each one, and cannot overshoot into a bulge
+ * the profile never asked for.
+ */
 function roof(t: number): number {
-  // Trailing edge, then the lip. The rise is small and it is the whole
-  // difference between a saloon and a hatch.
-  if (t < 0.03) return ramp(t, 0, 0.03, 0.425, 0.449);
-  if (t < 0.2) return ramp(t, 0.03, 0.2, 0.449, 0.432);
-  // Rear glass, long and shallow.
-  if (t < 0.46) return ramp(t, 0.2, 0.46, 0.432, 0.615);
-  // The crown, over the front seats.
-  if (t < 0.58) return 0.615;
-  // Windscreen, raked about 25° from horizontal.
-  if (t < 0.78) return ramp(t, 0.58, 0.78, 0.615, 0.43);
-  // Bonnet: short, and nearly level until it falls over the nose.
-  if (t < 0.93) return ramp(t, 0.78, 0.93, 0.43, 0.4);
-  return ramp(t, 0.93, 1, 0.4, 0.3);
+  return monotone(ROOFLINE, t);
+}
+
+/**
+ * Fritsch–Carlson monotone cubic interpolation.
+ *
+ * Catmull–Rom would be shorter and would overshoot: the ducktail is a 0.024
+ * rise followed immediately by a fall, and an unconstrained spline answers
+ * that with a hump on the boot lid. Limiting the tangents is what keeps a
+ * control point a maximum rather than a suggestion.
+ */
+function monotone(points: Array<[number, number]>, x: number): number {
+  const n = points.length;
+  if (x <= points[0][0]) return points[0][1];
+  if (x >= points[n - 1][0]) return points[n - 1][1];
+
+  let i = 0;
+  while (i < n - 2 && x > points[i + 1][0]) i += 1;
+
+  const [x0, y0] = points[i];
+  const [x1, y1] = points[i + 1];
+  const h = x1 - x0;
+  const slope = (y1 - y0) / h;
+
+  const before = i > 0 ? (y0 - points[i - 1][1]) / (x0 - points[i - 1][0]) : slope;
+  const after = i < n - 2 ? (points[i + 2][1] - y1) / (points[i + 2][0] - x1) : slope;
+
+  // A tangent is zero wherever the curve turns, and otherwise the average of
+  // the two neighbouring slopes clamped to three times the smaller — the
+  // standard limit, and what stops the lip from becoming a bump.
+  const limit = (a: number, b: number) =>
+    a * b <= 0 ? 0 : Math.sign(a) * Math.min(Math.abs((a + b) / 2), 3 * Math.min(Math.abs(a), Math.abs(b)));
+
+  const m0 = limit(before, slope);
+  const m1 = limit(slope, after);
+
+  const s = (x - x0) / h;
+  const s2 = s * s;
+  const s3 = s2 * s;
+  return (
+    (2 * s3 - 3 * s2 + 1) * y0 +
+    (s3 - 2 * s2 + s) * h * m0 +
+    (-2 * s3 + 3 * s2) * y1 +
+    (s3 - s2) * h * m1
+  );
 }
 
 /**
@@ -193,8 +249,14 @@ function sill(t: number): number {
  * nose of this car is still about four-fifths of its widest section.
  */
 function halfWidth(t: number): number {
+  // Asymmetric, because a car is. The nose draws in to about four-fifths of
+  // the widest section; the tail barely draws in at all, because the rear
+  // track is wider than the front and the shoulders run almost to the back
+  // panel. Tapering both ends equally — which is what the first version did —
+  // gives a tail that points, and a car whose tail points is a boat.
   const s = 2 * t - 1;
-  return 0.394 * (1 - 0.19 * Math.abs(s) ** 3.2);
+  const draw = s >= 0 ? 0.19 : 0.07;
+  return 0.394 * (1 - draw * Math.abs(s) ** 2.6);
 }
 
 /**
@@ -206,24 +268,46 @@ function halfWidth(t: number): number {
  */
 type Point = { p: [number, number, number]; n: [number, number, number] };
 
-function shell(t: number, v: number, cabin: boolean): Point {
+function shell(t: number, v: number): Point {
   const top = roof(t);
   const bottom = sill(t);
   const cy = (top + bottom) / 2;
   const ry = (top - bottom) / 2;
-  // The greenhouse is inset from the shoulder line, which is most of what makes
-  // a car look like a car from three-quarters on. This one is a single pane of
-  // glass from the windscreen header to the rear screen, so it is wide for a
-  // greenhouse — narrow it further and the roof stops reading as glass.
-  const rz = halfWidth(t) * (cabin ? 0.74 : 1);
 
   const a = v * Math.PI * 2;
   const c = Math.cos(a);
   const s = Math.sin(a);
-  const p = 0.62;
 
-  const y = cy + ry * Math.sign(s) * Math.abs(s) ** p;
-  const z = rz * Math.sign(c) * Math.abs(c) ** p;
+  /*
+   * Three exponents, not one.
+   *
+   * A single superellipse exponent gives a section that is equally round
+   * everywhere, and lofting it produced a body that read as a tube with wheels
+   * bolted on. A car's section is none of those things in the same way: the
+   * floor is flat, the flanks stand up, and only the roof is properly round.
+   * Lower exponents are squarer.
+   */
+  const roofRound = 0.55;
+  const floorFlat = 0.24;
+  const flankFlat = 0.34;
+
+  const y = cy + ry * Math.sign(s) * Math.abs(s) ** (s >= 0 ? roofRound : floorFlat);
+
+  /*
+   * Above the beltline the section draws in, and that taper is the greenhouse.
+   *
+   * It used to be a flag on the panel: cells in the cabin band got a narrower
+   * section than cells in the door band directly below them. That is fine when
+   * cells are all there is and wrong the moment a surface exists, because the
+   * cells and the surface then disagree about where the car is and the points
+   * float off the body. Making it a function of height instead means anything
+   * that asks this function for a point gets the same car.
+   */
+  const h = ry > 0 ? (y - bottom) / (2 * ry) : 0;
+  const k = Math.min(1, Math.max(0, (h - 0.55) / 0.45));
+  const rz = halfWidth(t) * (1 - 0.26 * k * k * (3 - 2 * k));
+
+  const z = rz * Math.sign(c) * Math.abs(c) ** flankFlat;
 
   // Outward from the section's own axis. The x term comes from how fast the
   // body tapers, so the nose and tail cells face forward rather than sideways.
@@ -304,7 +388,7 @@ const WHEEL_Y = TYRE_R;
  */
 const BANDS: Partial<Record<
   Part,
-  { t: [number, number]; v: [number, number]; cabin?: boolean; rows?: number }
+  { t: [number, number]; v: [number, number]; rows?: number }
 >> = {
   // `rows` is forced on the two end caps. The default splits a panel into
   // roughly equal rows and columns, which for a band that wraps the whole
@@ -326,7 +410,7 @@ const BANDS: Partial<Record<
    * cloud reads as a shape when its edges are lines, not when its surface is
    * evenly sampled.
    */
-  cabin: { t: [0.22, 0.78], v: [0.17, 0.33], cabin: true, rows: 5 },
+  cabin: { t: [0.22, 0.78], v: [0.17, 0.33], rows: 5 },
   // Tight bands down each flank. Widening them filled the sides evenly and
   // lost the shoulder line, which is most of what makes the shape read as a
   // body rather than as a cloud.
@@ -376,7 +460,7 @@ export function carCells(): Cell[] {
 
         const t = band.t[0] + (band.t[1] - band.t[0]) * Math.min(1, Math.max(0, ft));
         const v = band.v[0] + (band.v[1] - band.v[0]) * Math.min(1, Math.max(0, fv));
-        point = shell(t, v, band.cabin === true);
+        point = shell(t, v);
       }
 
       cells.push({
@@ -403,4 +487,150 @@ if (PLANNED_TOTAL !== SEATS) {
   throw new Error(
     `the car is built from ${PLANNED_TOTAL} cells but the cohort has ${SEATS} seats`,
   );
+}
+
+/* ── the body, as a surface ───────────────────────────────────────────── */
+
+/**
+ * The same car, as a solid.
+ *
+ * Five hundred points cannot describe a particular car. That was not a matter
+ * of getting the proportions right — they are right now, measured — but of
+ * resolution: a point cloud resolves into a shape only where the points are
+ * dense enough to form a line, and five hundred of them spread over a whole
+ * body form one line along the roof and a haze everywhere else. Photographs of
+ * four attempts say so.
+ *
+ * So the body is drawn as a surface and the five hundred stay what they are:
+ * the seats, sitting on it, lighting as they are taken. The surface is lofted
+ * from the same profile functions the cells use — not a second model of the
+ * car, the same car — so a cell and the panel under it cannot disagree.
+ *
+ * Two things follow that the points alone could never do. The silhouette
+ * becomes a filled region instead of an implied one, and the depth buffer
+ * hides the seats on the far side, which is what finally makes the object read
+ * as having a volume rather than as a cloud shaped like one.
+ *
+ * Still generated, still no manufacturer's mesh in the repository: this is the
+ * same few hundred bytes of arithmetic, evaluated on a finer grid.
+ */
+export type Mesh = {
+  positions: Float32Array;
+  normals: Float32Array;
+  indices: Uint16Array;
+};
+
+/** Along the length, and around each section. Enough that the crown reads as a
+ *  curve and the arches as arches; far below the point where more would show. */
+const LOFT_T = 96;
+const LOFT_V = 40;
+
+function pushRing(
+  pos: number[],
+  nor: number[],
+  t: number,
+): void {
+  for (let j = 0; j < LOFT_V; j += 1) {
+    const { p, n } = shell(t, j / LOFT_V);
+    pos.push(p[0], p[1], p[2]);
+    nor.push(n[0], n[1], n[2]);
+  }
+}
+
+/** A closed wheel: a tread band and a face at each end. */
+function pushWheel(
+  pos: number[],
+  nor: number[],
+  idx: number[],
+  cx: number,
+  side: number,
+): void {
+  const N = 28;
+  const zOuter = side * 0.362;
+  const zInner = side * 0.28;
+  const base = pos.length / 3;
+
+  // Two rings for the tread.
+  for (const z of [zOuter, zInner]) {
+    for (let i = 0; i < N; i += 1) {
+      const a = (i / N) * Math.PI * 2;
+      pos.push(cx + Math.cos(a) * TYRE_R, WHEEL_Y + Math.sin(a) * TYRE_R, z);
+      nor.push(Math.cos(a), Math.sin(a), 0);
+    }
+  }
+  for (let i = 0; i < N; i += 1) {
+    const a = base + i;
+    const b = base + ((i + 1) % N);
+    const c = a + N;
+    const d = b + N;
+    idx.push(a, b, c, b, d, c);
+  }
+
+  // The outer face, as a fan. This is the disc that reads as a wheel rather
+  // than as a hoop, and it is the only part of a wheel anybody looks at.
+  const faceCentre = pos.length / 3;
+  pos.push(cx, WHEEL_Y, zOuter);
+  nor.push(0, 0, side);
+  const faceStart = pos.length / 3;
+  for (let i = 0; i < N; i += 1) {
+    const a = (i / N) * Math.PI * 2;
+    pos.push(cx + Math.cos(a) * TYRE_R * 0.9, WHEEL_Y + Math.sin(a) * TYRE_R * 0.9, zOuter);
+    nor.push(0, 0, side);
+  }
+  for (let i = 0; i < N; i += 1) {
+    idx.push(faceCentre, faceStart + i, faceStart + ((i + 1) % N));
+  }
+}
+
+export function carMesh(): Mesh {
+  const pos: number[] = [];
+  const nor: number[] = [];
+  const idx: number[] = [];
+
+  // The hull, ring by ring. The ends stop just short of 0 and 1 because the
+  // profile's derivative is undefined exactly there and a ring built on it
+  // comes out with normals pointing nowhere.
+  for (let i = 0; i < LOFT_T; i += 1) {
+    pushRing(pos, nor, 0.002 + (i / (LOFT_T - 1)) * 0.996);
+  }
+  for (let i = 0; i < LOFT_T - 1; i += 1) {
+    for (let j = 0; j < LOFT_V; j += 1) {
+      const a = i * LOFT_V + j;
+      const b = i * LOFT_V + ((j + 1) % LOFT_V);
+      const c = a + LOFT_V;
+      const d = b + LOFT_V;
+      idx.push(a, b, c, b, d, c);
+    }
+  }
+
+  // Caps, so the nose and the tail are faces rather than holes. The body no
+  // longer tapers to a point at either end, which is correct for a car and
+  // means both ends need closing.
+  for (const [ring, t, dir] of [
+    [0, 0.002, -1],
+    [LOFT_T - 1, 0.998, 1],
+  ] as const) {
+    const centre = pos.length / 3;
+    const top = roof(t);
+    const bottom = sill(t);
+    pos.push(2 * t - 1, (top + bottom) / 2, 0);
+    nor.push(dir, 0, 0);
+    for (let j = 0; j < LOFT_V; j += 1) {
+      const a = ring * LOFT_V + j;
+      const b = ring * LOFT_V + ((j + 1) % LOFT_V);
+      idx.push(centre, dir > 0 ? a : b, dir > 0 ? b : a);
+    }
+  }
+
+  for (const t of [FRONT_AXLE_T, REAR_AXLE_T]) {
+    for (const side of [1, -1]) {
+      pushWheel(pos, nor, idx, 2 * t - 1, side);
+    }
+  }
+
+  return {
+    positions: new Float32Array(pos),
+    normals: new Float32Array(nor),
+    indices: new Uint16Array(idx),
+  };
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { carCells } from "@/lib/car";
+import { carCells, carMesh } from "@/lib/car";
 
 /**
  * The cohort, drawn as the car it is a cohort of.
@@ -73,10 +73,12 @@ void main() {
    * is a fraction of the cell spacing, so the silhouette never smears.
    */
   float seed = hash(aPos * 7.3);
-  vec3 world = aPos + aNormal * (sin(uTime * 0.9 + seed * 6.283) * 0.007);
+  // Lifted clear of the body it sits on. Without the constant the seats and the
+  // surface occupy the same depth and z-fighting eats half of them.
+  vec3 world = aPos + aNormal * (0.016 + sin(uTime * 0.9 + seed * 6.283) * 0.007);
 
   vec4 clip = uVP * vec4(world, 1.0);
-  vDepth = clamp((clip.w - 1.5) / 1.9, 0.0, 1.0);
+  vDepth = clamp((clip.w - 4.6) / 1.9, 0.0, 1.0);
 
   /*
    * Rim light from the cell's own surface normal.
@@ -89,7 +91,7 @@ void main() {
   vRim = pow(1.0 - abs(n.z), 2.0);
 
   // Circle of confusion: cells off the focal plane grow and soften.
-  vCoc = clamp(abs(clip.w - 2.05) * 0.5, 0.0, 1.0);
+  vCoc = clamp(abs(clip.w - 5.5) * 0.45, 0.0, 1.0);
 
   float grow = (1.0 + vFlash * 1.8) * (1.0 + vCoc * 0.9) * uHalo;
   vec2 off = aCorner * uSize * grow * vec2(1.0 / uAspect, 1.0);
@@ -152,6 +154,64 @@ void main() {
   colour += (1.0 / 255.0) * dither(gl_FragCoord.xy) - (0.5 / 255.0);
   outColour = vec4(colour, alpha);
 }`;
+
+/*
+ * The body.
+ *
+ * Deliberately achromatic. Every colour on this figure is doing a job already —
+ * gold for a seat held, grey-blue for one free, mint on the rim — and a body
+ * that competes for any of them turns a readout into a picture of a car. Kept
+ * dark, lit from above, with a bright edge where it turns away: enough to say
+ * unmistakably which car, quiet enough that five hundred points still read as
+ * the subject.
+ */
+const BODY_VERT = `#version 300 es
+in vec3 aPos;
+in vec3 aNormal;
+
+uniform mat4 uVP;
+uniform mat4 uModel;
+
+out vec3 vN;
+out float vDepth;
+
+void main() {
+  vN = normalize(mat3(uModel) * aNormal);
+  vec4 clip = uVP * vec4(aPos, 1.0);
+  vDepth = clamp((clip.w - 4.6) / 1.9, 0.0, 1.0);
+  gl_Position = clip;
+}`;
+
+const BODY_FRAG = `#version 300 es
+precision mediump float;
+
+in vec3 vN;
+in float vDepth;
+
+uniform vec3 uBody;
+uniform vec3 uEdge;
+
+out vec4 outColour;
+
+void main() {
+  vec3 n = normalize(vN);
+
+  // A key from above and ahead, and a weak fill from below so the underside is
+  // a surface rather than a hole. Both in view space, so the light stays put
+  // while the car turns under it.
+  float key = max(0.0, dot(n, normalize(vec3(-0.3, 0.9, 0.45))));
+  float fill = max(0.0, dot(n, normalize(vec3(0.25, -0.7, 0.3)))) * 0.22;
+
+  // The edge that separates the car from the ground it has no ground on.
+  float rim = pow(1.0 - abs(n.z), 3.0);
+
+  vec3 c = uBody * (0.3 + key * 0.62 + fill) + uEdge * rim * 0.55;
+  outColour = vec4(c * mix(1.0, 0.68, vDepth), 1.0);
+}`;
+
+/** How far the eye sits from the car, in car lengths. Shared by the camera and
+ *  by the depth cues that have to agree with it. */
+const EYE = 5.5;
 
 /* ── matrices ─────────────────────────────────────────────────────────── */
 
@@ -259,18 +319,24 @@ export function SeatField({
       return shader;
     };
 
-    const vs = compile(gl.VERTEX_SHADER, VERT);
-    const fs = compile(gl.FRAGMENT_SHADER, FRAG);
-    if (!vs || !fs) return;
+    const link = (vertex: string, fragment: string) => {
+      const vs = compile(gl.VERTEX_SHADER, vertex);
+      const fs = compile(gl.FRAGMENT_SHADER, fragment);
+      if (!vs || !fs) return null;
+      const p = gl.createProgram()!;
+      gl.attachShader(p, vs);
+      gl.attachShader(p, fs);
+      gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+        console.warn("seat-field: program failed to link\n", gl.getProgramInfoLog(p));
+        return null;
+      }
+      return p;
+    };
 
-    const program = gl.createProgram()!;
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.warn("seat-field: program failed to link\n", gl.getProgramInfoLog(program));
-      return;
-    }
+    const program = link(VERT, FRAG);
+    const bodyProgram = link(BODY_VERT, BODY_FRAG);
+    if (!program || !bodyProgram) return;
     gl.useProgram(program);
 
     const cells = carCells();
@@ -330,11 +396,45 @@ export function SeatField({
     gl.uniform3f(uni("uDimColour"), 0.56, 0.64, 0.74);
     gl.uniform3f(uni("uRimColour"), 0.0, 0.76, 0.66);
 
-    gl.disable(gl.DEPTH_TEST);
+    /* ── the body ───────────────────────────────────────────────────────── */
+
+    const mesh = carMesh();
+    const bodyVao = gl.createVertexArray();
+    gl.bindVertexArray(bodyVao);
+
+    const meshAttrib = (data: Float32Array, name: string, size: number) => {
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      const loc = gl.getAttribLocation(bodyProgram, name);
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+    };
+    meshAttrib(mesh.positions, "aPos", 3);
+    meshAttrib(mesh.normals, "aNormal", 3);
+
+    const elements = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elements);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
+
+    gl.useProgram(bodyProgram);
+    const bVP = gl.getUniformLocation(bodyProgram, "uVP");
+    const bModel = gl.getUniformLocation(bodyProgram, "uModel");
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uBody"), 0.2, 0.23, 0.27);
+    gl.uniform3f(gl.getUniformLocation(bodyProgram, "uEdge"), 0.62, 0.7, 0.78);
+
+    gl.bindVertexArray(null);
+    gl.useProgram(program);
+
+    // Depth is what makes the seats on the far side disappear behind the car,
+    // and that occlusion is the only cue in the whole figure that proves the
+    // object has a volume rather than being a cloud shaped like one. The cost
+    // is that the point passes now have to say they are not writing depth.
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
     gl.enable(gl.BLEND);
-    // Additive: with depth off there is no draw order to get right, and the
-    // overlap where the body doubles back on itself becomes a highlight
-    // instead of a seam.
+    // Additive for the points: the overlap where the body doubles back on
+    // itself becomes a highlight instead of a seam.
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
 
     let width = 0;
@@ -415,11 +515,41 @@ export function SeatField({
        * height as well flattens the plan view and lets the roofline read as a
        * profile, which is the view this car is recognised from.
        */
-      const view = multiply(translate(0, -0.3, -2.05), model);
-      const vp = multiply(perspective(0.62, aspect, 0.1, 20), view);
+      /*
+       * Far away, through a long lens.
+       *
+       * The camera used to sit one car-length from a two-unit car behind a 35°
+       * lens, which is an extreme wide angle: the nose came out enormous, the
+       * tail vanished, and the proportions this shape was rebuilt to get right
+       * were destroyed on the way to the screen. Photographs of cars are taken
+       * from across a car park for exactly this reason. Backing off to five and
+       * a half units and narrowing to 15° keeps the object the same size in
+       * frame and hands back the proportions.
+       */
+      const view = multiply(translate(0, -0.3, -EYE), model);
+      const vp = multiply(perspective(0.26, aspect, 0.1, 40), view);
 
       gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      // The car first, opaque, writing depth. Everything after it is a seat
+      // and every seat behind the body is now correctly hidden by it.
+      const vpArray = new Float32Array(vp);
+      const modelArray = new Float32Array(model);
+      gl.useProgram(bodyProgram);
+      gl.bindVertexArray(bodyVao);
+      gl.depthMask(true);
+      gl.disable(gl.BLEND);
+      gl.uniformMatrix4fv(bVP, false, vpArray);
+      gl.uniformMatrix4fv(bModel, false, modelArray);
+      gl.drawElements(gl.TRIANGLES, mesh.indices.length, gl.UNSIGNED_SHORT, 0);
+
+      gl.useProgram(program);
+      gl.bindVertexArray(vao);
+      gl.enable(gl.BLEND);
+      // Tested against the body, but not written: five hundred additive quads
+      // writing depth would occlude each other and the glow would come apart.
+      gl.depthMask(false);
 
       gl.uniformMatrix4fv(uVP, false, new Float32Array(vp));
       gl.uniformMatrix4fv(uModel, false, new Float32Array(model));
@@ -434,11 +564,11 @@ export function SeatField({
       // who asked for reduced motion — the rotation stopped and the cells
       // carried on moving, which is half a setting honoured.
       gl.uniform1f(uTime, clock);
-      // An empty cohort has no gold to carry the shape, so the unlit cells have
-      // to carry it alone and are drawn brighter. Once seats start landing the
-      // ghost steps back, or the thing that has been earned stops standing out
-      // against the thing that has not.
-      gl.uniform1f(uDimAlpha, takenRef.current === 0 ? 0.92 : 0.62);
+      // The body carries the shape now, so the unlit seats no longer have to.
+      // They used to be drawn near-opaque on an empty cohort because there was
+      // nothing else to see; over a solid car the same value is noise laid on
+      // top of the thing it was standing in for.
+      gl.uniform1f(uDimAlpha, takenRef.current === 0 ? 0.5 : 0.34);
 
       const flash = flashRef.current;
       const age = flash ? (now - flash.at) / 2200 : 2;
