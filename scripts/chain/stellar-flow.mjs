@@ -126,9 +126,18 @@ await Promise.all([fund(issuer), fund(distributor)]);
  * day friendbot changes its mind and then silently reports a nonsense number
  * as a measurement. Ask.
  */
-const opening = Number((await server.loadAccount(distributor.publicKey())).balances
+const xlmOf = async (kp) => Number((await server.loadAccount(kp.publicKey())).balances
   .find((b) => b.asset_type === "native").balance);
-console.log(`  funded — distributor opened at ${opening} XLM\n`);
+/*
+ * Both operator accounts, because both of them pay.
+ *
+ * The first version measured only the distributor and reported that as "the
+ * operator cost" — but the issuer signs the mint and signs its own locking,
+ * and those two fees were simply missing from the total. A cost figure that
+ * quietly omits a third of the transactions is worse than no cost figure.
+ */
+const opening = { issuer: await xlmOf(issuer), distributor: await xlmOf(distributor) };
+console.log(`  funded — issuer ${opening.issuer} XLM · distributor ${opening.distributor} XLM\n`);
 
 const DRV = new Asset("DRV", issuer.publicKey());
 
@@ -259,8 +268,16 @@ console.log(`  reader        ${String(amount(r, "DRV")).padStart(16)} DRV`);
 console.log(`  reader        ${String(amount(r, "XLM")).padStart(16)} XLM   ← never held gas`);
 console.log(`  distributor   ${String(amount(d, "DRV")).padStart(16)} DRV`);
 console.log(`  distributor   ${String(amount(d, "XLM")).padStart(16)} XLM`);
-const spent = opening - Number(amount(d, "XLM"));
-console.log(`  fees, ${String(steps.length).padStart(2)} tx    ${spent.toFixed(7).padStart(16)} XLM`);
+/*
+ * Seven, not six. The fee-bumped claim goes to Horizon directly rather than
+ * through `submit`, so it never reached `steps` — which meant the printed
+ * count and the recorded count disagreed with each other by one.
+ */
+steps.push({ label: "reader claims (fee-bumped)", hash: claimed.hash, ledger: claimed.ledger });
+const spent =
+  (opening.issuer - Number(amount(i, "XLM"))) +
+  (opening.distributor - Number(amount(d, "XLM")));
+console.log(`  fees, ${String(steps.length).padStart(2)} tx    ${spent.toFixed(7).padStart(16)} XLM   (issuer + distributor)`);
 console.log(`  reserves held ${(d.num_sponsoring * baseReserve).toFixed(7).padStart(16)} XLM   (locked, recoverable · base reserve ${baseReserve})`);
 
 const locked = i.signers.every((s) => s.weight === 0);
@@ -274,7 +291,7 @@ console.log("\n── every transaction, in order ──");
 for (const st of steps) {
   console.log(`  ${st.label.padEnd(36)} https://stellar.expert/explorer/testnet/tx/${st.hash}`);
 }
-console.log(`  ${"reader claims (fee-bumped)".padEnd(36)} https://stellar.expert/explorer/testnet/tx/${claimed.hash}`);
+
 
 writeFileSync(resolve(HERE, "stellar-result.json"), JSON.stringify({
   network: "stellar-testnet",
@@ -284,9 +301,9 @@ writeFileSync(resolve(HERE, "stellar-result.json"), JSON.stringify({
   accounts: { issuer: issuer.publicKey(), distributor: distributor.publicKey(), reader: reader.publicKey() },
   asset: { code: "DRV", issuer: issuer.publicKey(), supply: SUPPLY, claimed: EARNED },
   holdings: { readerDrv: amount(r, "DRV"), readerXlm: amount(r, "XLM"), distributorDrv: amount(d, "DRV") },
-  cost: { feesXlm: spent.toFixed(7), transactions: steps.length + 1, reservesLockedXlm: (d.num_sponsoring * baseReserve).toFixed(7), baseReserve },
+  cost: { feesXlm: spent.toFixed(7), transactions: steps.length, reservesLockedXlm: (d.num_sponsoring * baseReserve).toFixed(7), baseReserve },
   supplySealed: locked,
-  transactions: [...steps, { label: "reader claims (fee-bumped)", hash: claimed.hash, ledger: claimed.ledger }],
+  transactions: steps,
 }, null, 2));
 
 /*

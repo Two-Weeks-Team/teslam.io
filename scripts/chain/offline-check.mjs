@@ -9,15 +9,20 @@
  */
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 import { encodeAbiParameters, encodePacked, keccak256 } from "viem";
 import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 
 const require = createRequire(import.meta.url);
 const solc = require("solc");
+// Resolved from this file, not from wherever it was invoked: the README tells
+// you to run it from the repository root.
+const HERE = dirname(fileURLToPath(import.meta.url));
 
 const out = JSON.parse(solc.compile(JSON.stringify({
   language: "Solidity",
-  sources: { "contracts.sol": { content: readFileSync("contracts.sol", "utf8") } },
+  sources: { "contracts.sol": { content: readFileSync(resolve(HERE, "contracts.sol"), "utf8") } },
   settings: { optimizer: { enabled: true, runs: 200 },
               outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } } },
 })));
@@ -137,7 +142,14 @@ try {
     crossChecked += sp === jp ? 1 : 0;
   }
 } catch (err) {
-  console.error(`\n✗ could not reach an RPC to cross-check Solidity against JS: ${String(err.message).slice(0, 120)}`);
+  // Two very different failures wear the same catch block: the RPC being
+  // unreachable, and the deployless call running and disagreeing. Saying
+  // "could not reach an RPC" for the second would send the next person to
+  // check their network when the contract is wrong.
+  const msg = String(err.shortMessage ?? err.message ?? err);
+  const network = /fetch|network|ECONN|ENOTFOUND|timeout|socket|522|503/i.test(msg);
+  console.error(`\n✗ Solidity cross-check did not complete — ${network ? "RPC unreachable" : "the call itself failed"}`);
+  console.error(`  ${msg.slice(0, 200)}`);
   console.error("  The JS half passed, which proves nothing about what the chain will compute.");
   process.exit(1);
 }

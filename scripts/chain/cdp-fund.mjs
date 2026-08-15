@@ -31,7 +31,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { CdpClient } from "@coinbase/cdp-sdk";
-import { createPublicClient, formatEther, http, parseEther } from "viem";
+import { createPublicClient, formatEther, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import dotenv from "dotenv";
@@ -115,10 +115,21 @@ try {
   await new Promise((r) => setTimeout(r, 10_000));
 
   const held = await pub.getBalance({ address: account.address });
-  // Leave a little behind for the forwarding fee itself.
-  const send = held - parseEther("0.0005");
+  /*
+   * Leave behind what the forwarding actually costs, measured.
+   *
+   * This was a typed-in 0.0005 ETH, which is several orders of magnitude above
+   * a Base Sepolia transfer and five times what the faucet pays — so the
+   * subtraction went negative every time and this branch could only ever
+   * report "not enough to forward". A fallback that cannot run is not a
+   * fallback. A plain transfer is 21,000 gas; tripled for headroom against a
+   * price move between the quote and the send.
+   */
+  const gasPrice = await pub.getGasPrice();
+  const reserve = 21_000n * gasPrice * 3n;
+  const send = held - reserve;
   if (send <= 0n) {
-    console.error(`  faucet paid ${formatEther(held)} ETH — not enough to forward`);
+    console.error(`  faucet paid ${formatEther(held)} ETH, forwarding needs ${formatEther(reserve)} — not enough`);
     process.exit(1);
   }
   const { transactionHash: sendHash } = await cdp.evm.sendTransaction({

@@ -24,7 +24,7 @@ they can collect the first.
 `stellar-flow.mjs` does the whole thing against Stellar testnet and prints what
 the network says afterwards rather than what it asked for.
 
-```
+```bash
 cd scripts/chain && npm install     # once — the SDK is not a root dependency
 node stellar-flow.mjs
 ```
@@ -36,18 +36,21 @@ It funds itself from Friendbot, so it needs no key, no account and no faucet
 visit. Amounts come from `data/model.json`, so this cannot quote figures the
 site disagrees with.
 
-What it printed:
+What the Stellar run printed:
 
-```
+```text
 reader              18000.0000000 DRV
 reader                  0.0000000 XLM   ← never held gas
 distributor       8982000.0000000 DRV
-fees, 6 tx              0.0001000 XLM
-reserves held                 1.5 XLM   (locked, recoverable)
+fees,  7 tx             0.0001200 XLM   (issuer + distributor)
+reserves held           1.5000000 XLM   (locked, recoverable)
 issuer        cannot ever sign again ✓
 ```
 
-Six transactions cost the operator a ten-thousandth of an XLM. The 1.5 XLM is
+Seven transactions cost the operator 0.00012 XLM. Both operator accounts are
+counted: the issuer signs the mint and signs its own locking, and an earlier
+version of this measured only the distributor and so reported a total that was
+two transactions short. The 1.5 XLM is
 not spent — it is the reader's account and trustline reserves, held on the
 operator's balance sheet and released if the reader ever closes the trustline.
 At 500 seats that is 750 XLM tied up, which is worth stating plainly and is
@@ -81,9 +84,9 @@ owner in Bundang already has installed.
 asset is still being issued, and that question needs a lawyer rather than a
 script.
 
-**Base has not been proved the same way.** Not because it would not work — the
-Merkle-plus-paymaster pattern is well trodden — but because every route to Base
-Sepolia ETH is gated:
+**Getting onto Base costs a credential.** Not a reason to choose a chain, but
+the reason this proof took a day longer than the Stellar one — every route to
+Base Sepolia ETH is gated:
 
 | Faucet | Result |
 | --- | --- |
@@ -101,14 +104,17 @@ minutes is not a trade worth making.
 `base-flow.mjs` has now run. Everything about it that can be checked without a
 chain is checked first by `offline-check.mjs`:
 
-```
+```bash
 node scripts/chain/offline-check.mjs
 
 compiled  Drv          1577 bytes
 compiled  Distributor  1429 bytes
 tree      500 leaves, path length 9
 proof     6/6 sampled indices verify
-forgery   wrong account · wrong amount · wrong index · empty proof — all rejected ✓
+forgery   wrong account  rejected ✓
+forgery   wrong amount   rejected ✓
+forgery   wrong index    rejected ✓
+forgery   empty proof    rejected ✓
 solidity  leaf agrees with JS ✓ · pair agrees with JS ✓✓
 ```
 
@@ -131,7 +137,7 @@ Coinbase publishes the intended programmatic route, which is what
 `cdp-fund.mjs` uses — an API key rather than a browser, so no bot check is
 involved and nothing has to be worked around.
 
-```
+```bash
 cp .env.local.example .env.local     # gitignored
 # fill in CDP_API_KEY_ID and CDP_API_KEY_SECRET
 node cdp-fund.mjs                    # faucet → the deploy account
@@ -140,7 +146,7 @@ node base-flow.mjs                   # deploy, settle, claim, verify
 
 Credentials go in the file, never into a chat window — a secret that reaches a
 conversation history has been disclosed, and rotating it is the only remedy.
-`BASE_SEPOLIA_KEY` is a throwaway that holds testnet ETH and nothing else.
+`BASE_SEPOLIA_KEY` is a throwaway holding testnet ETH and nothing else.
 
 `cdp-fund.mjs` tries to have the faucet pay the deploy account directly, and if
 CDP will only fund accounts it holds, it creates one, funds that, and forwards

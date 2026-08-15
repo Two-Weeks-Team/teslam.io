@@ -192,12 +192,30 @@ const confirm = async (hash, label) => {
  */
 const settle = async (read, ok, what) => {
   let last;
+  let fault;
   for (let i = 0; i < 40; i += 1) {
-    last = await read();
-    if (ok(last)) return last;
+    try {
+      last = await read();
+      if (ok(last)) return last;
+      fault = undefined;
+    } catch (err) {
+      /*
+       * The retry has to cover the throw, not just the wrong answer.
+       *
+       * This is the case the whole helper exists for and the first version of
+       * it missed: `readContract` against a contract the node has not seen yet
+       * does not return something falsy, it throws
+       * `ContractFunctionZeroDataError`. Awaiting outside a try meant the very
+       * first attempt propagated and the polling never happened — a guard that
+       * looked like protection and was not. Caught by review, not by the runs,
+       * because by the time these reads happen the nodes have usually caught
+       * up and the bug only shows on a bad day.
+       */
+      fault = err;
+    }
     await new Promise((r) => setTimeout(r, 1500));
   }
-  throw new Error(`${what} never settled — last saw ${last}`);
+  throw new Error(`${what} never settled — ${fault ? `last threw ${fault.shortMessage ?? fault.message}` : `last saw ${last}`}`);
 };
 
 const deploy = async (label, artifact, args) => {
