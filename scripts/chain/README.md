@@ -96,8 +96,54 @@ Sepolia ETH is gated:
 | Polygon Amoy, Aptos | no response / HTTP 500 |
 
 Those gates are the faucets working correctly, and defeating one to save five
-minutes is not a trade worth making. Base needs either a CDP API key or one
-faucet visit by a human, and then the same proof can be written for it.
+minutes is not a trade worth making.
+
+So `base-flow.mjs` is written and waiting on a funded key. Everything about it
+that can be checked without a chain has been:
+
+```
+node scripts/chain/offline-check.mjs
+
+compiled  Drv          1577 bytes
+compiled  Distributor  1429 bytes
+tree      500 leaves, root 0xc85a1a325dfc2344…
+proof     6/6 sampled indices verify, path length 9
+forgery   wrong account  rejected ✓
+forgery   wrong amount   rejected ✓
+forgery   wrong index    rejected ✓
+forgery   empty proof    rejected ✓
+```
+
+The proof check there is a second implementation of the loop inside
+`Distributor.claim`, written separately so that agreeing means something. The
+forgery rows matter more than the passing ones: a Merkle scheme that accepts a
+proof for the wrong address is not a weaker scheme, it is no scheme.
+
+To run it, put a funded key in `.dev.vars` (gitignored):
+
+```
+BASE_SEPOLIA_KEY="0x…"
+```
+
+## What the EVM side needs that Stellar did not
+
+Two contracts, written out in `contracts.sol` rather than imported from a
+library — "we used OpenZeppelin" would hide exactly the thing this spike is
+measuring.
+
+Both properties come from what is **absent** rather than what is enforced.
+`Drv` has no `mint`, no owner and no upgrade path, so the supply is fixed for
+the same reason the Stellar issuer is locked: there is nothing that could
+change its mind. `Distributor` has no function that returns tokens to the
+operator, so the operator is not trusted to leave them alone — it is unable.
+
+One thing the EVM side does better: `claim` credits `account` rather than
+`msg.sender`, so the operator submits the transaction and pays for it while
+being unable to redirect a single unit. The reader needs no ETH, no wallet
+interaction and no transaction at all — which is a stronger version of "pays
+nothing" than the Stellar flow, where the reader still had to sign. It also
+means no ERC-4337 paymaster and no bundler, which is two fewer pieces of
+infrastructure than the usual answer to this problem.
 
 ## Keys
 

@@ -3,6 +3,12 @@
   "private": true,
   "type": "module",
   "description": "Kept out of the root package.json on purpose: this is a spike, and the SDK is heavy. Nobody building the site should pay to install it.",
-  "scripts": { "flow": "node stellar-flow.mjs" },
-  "dependencies": { "@stellar/stellar-sdk": "^14" }
+  "scripts": {
+    "flow": "node stellar-flow.mjs"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^14",
+    "solc": "^0.8.36",
+    "viem": "^2.55.16"
+  }
 }
