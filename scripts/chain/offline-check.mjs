@@ -24,13 +24,32 @@ const out = JSON.parse(solc.compile(JSON.stringify({
   language: "Solidity",
   sources: { "contracts.sol": { content: readFileSync(resolve(HERE, "contracts.sol"), "utf8") } },
   settings: { optimizer: { enabled: true, runs: 200 },
-              outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } } },
+              outputSelection: { "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] } } },
 })));
 const errs = (out.errors ?? []).filter((e) => e.severity === "error");
 if (errs.length) { console.error(errs.map((e) => e.formattedMessage).join("\n")); process.exit(1); }
+/*
+ * EIP-170 caps the *runtime* code, not the creation code.
+ *
+ * `evm.bytecode` is what runs to deploy; `evm.deployedBytecode` is what is left
+ * on chain and what the limit applies to. Measuring the first is measuring the
+ * wrong artefact — generously, since creation code is the larger of the two, so
+ * the check was strict in the safe direction and still wrong. And it printed a
+ * warning without affecting the exit code, so a contract over the limit would
+ * have reported success.
+ */
+const EIP170 = 24_576;
+let oversize = 0;
 for (const n of ["Drv", "Distributor"]) {
-  const size = out.contracts["contracts.sol"][n].evm.bytecode.object.length / 2;
-  console.log(`compiled  ${n.padEnd(12)} ${size} bytes` + (size > 24576 ? "  ✗ over the EIP-170 limit" : ""));
+  const art = out.contracts["contracts.sol"][n].evm;
+  const runtime = (art.deployedBytecode?.object ?? "").length / 2;
+  const creation = art.bytecode.object.length / 2;
+  const over = runtime > EIP170;
+  if (over) oversize += 1;
+  console.log(
+    `compiled  ${n.padEnd(12)} runtime ${runtime} bytes (creation ${creation})` +
+      (over ? `  ✗ over the EIP-170 limit of ${EIP170}` : ""),
+  );
 }
 for (const w of (out.errors ?? []).filter((e) => e.severity === "warning").slice(0, 4)) {
   console.log("warning  ", w.message.split("\n")[0]);
@@ -154,5 +173,5 @@ try {
   process.exit(1);
 }
 
-if (forged.some(([, p]) => p) || good !== 6 || crossChecked !== 3) process.exit(1);
+if (forged.some(([, p]) => p) || good !== 6 || crossChecked !== 3 || oversize) process.exit(1);
 console.log("\n✓ contracts compile, the Merkle convention holds, and Solidity agrees with the JS");

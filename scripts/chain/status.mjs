@@ -46,7 +46,19 @@ if (stellar) {
 
   for (const [role, id] of Object.entries(stellar.accounts)) {
     const a = await hz.loadAccount(id);
-    const drv = a.balances.find((b) => b.asset_code === "DRV")?.balance ?? "—";
+    /*
+     * Match the issuer as well as the code.
+     *
+     * On Stellar an asset is the pair, not the name — anybody may issue
+     * something called DRV, and an account can hold trustlines to several of
+     * them at once. Matching on the code alone would report a stranger's
+     * balance under our label, which is a particularly bad failure here: the
+     * whole point of this script is to show that a *specific* issuer has been
+     * sealed, and reading the wrong asset would make that proof about nothing.
+     */
+    const drv = a.balances.find(
+      (b) => b.asset_code === "DRV" && b.asset_issuer === stellar.asset.issuer,
+    )?.balance ?? "—";
     const xlm = a.balances.find((b) => b.asset_type === "native").balance;
     pad(role, `DRV ${String(drv).padStart(16)}   XLM ${String(xlm).padStart(15)}`);
     if (role === "issuer") {

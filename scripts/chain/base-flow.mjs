@@ -158,8 +158,15 @@ if (opening === 0n) {
 }
 
 const { Drv, Distributor } = compile();
-const supply = parseUnits(String(SUPPLY), DECIMALS);
-const earned = parseUnits(String(EARNED), DECIMALS);
+/*
+ * Fixed to the asset's precision before it becomes an amount.
+ *
+ * EARNED and SUPPLY come out of a division, so they are floats — and a float
+ * with more than seven places is not a DRV amount. `parseUnits` rounds it away
+ * silently, which is the failure that does not announce itself.
+ */
+const supply = parseUnits(SUPPLY.toFixed(DECIMALS), DECIMALS);
+const earned = parseUnits(EARNED.toFixed(DECIMALS), DECIMALS);
 
 /*
  * A receipt is not a success.
@@ -329,7 +336,7 @@ console.log(`  reader        ${fmt(readerDrv).padStart(16)} DRV`);
 console.log(`  reader        ${formatEther(readerEth).padStart(16)} ETH   ← never held gas`);
 console.log(`  distributor   ${fmt(distDrv).padStart(16)} DRV`);
 console.log(`  total supply  ${fmt(total).padStart(16)} DRV   (no mint function exists)`);
-console.log(`  operator paid ${formatEther(opening - closing).padStart(16)} ETH  over 4 transactions`);
+console.log(`  operator paid ${formatEther(opening - closing).padStart(16)} ETH  over ${steps.length} transactions`);
 console.log(
   `  gas           deploy ${drv.gas + dist.gas} · fund ${fundRc.gasUsed} · claim ${claimRc.gasUsed}`,
 );
