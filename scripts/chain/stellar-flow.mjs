@@ -34,7 +34,7 @@
  * anti-abuse control to save five minutes is not a thing worth doing.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import {
@@ -84,6 +84,9 @@ async function fund(kp) {
  * rather than a page of HTTP internals. `op_malformed` on operation zero tells
  * you what is wrong; a stack trace through axios does not.
  */
+/** Every transaction this run submitted, so the result is auditable later. */
+const steps = [];
+
 async function submit(source, ops, signers, label) {
   const account = await server.loadAccount(source.publicKey());
   let builder = new TransactionBuilder(account, {
@@ -96,6 +99,7 @@ async function submit(source, ops, signers, label) {
 
   try {
     const res = await server.submitTransaction(tx);
+    steps.push({ label, hash: res.hash, ledger: res.ledger });
     console.log(`  ${label.padEnd(36)} ${res.hash.slice(0, 16)}…  ledger ${res.ledger}`);
     return res;
   } catch (err) {
@@ -115,7 +119,16 @@ console.log(`reader      ${reader.publicKey()}\n`);
 
 console.log("── friendbot funds the two operator accounts. The reader gets nothing. ──");
 await Promise.all([fund(issuer), fund(distributor)]);
-console.log("  funded\n");
+/*
+ * What friendbot actually paid, rather than what it paid last time.
+ *
+ * The fee total below used to be `10000 - closing`, which is right until the
+ * day friendbot changes its mind and then silently reports a nonsense number
+ * as a measurement. Ask.
+ */
+const opening = Number((await server.loadAccount(distributor.publicKey())).balances
+  .find((b) => b.asset_type === "native").balance);
+console.log(`  funded — distributor opened at ${opening} XLM\n`);
 
 const DRV = new Asset("DRV", issuer.publicKey());
 
@@ -230,6 +243,10 @@ const claimed = await server.submitTransaction(bumped);
 console.log(`  ${"reader claims, operator pays".padEnd(36)} ${claimed.hash.slice(0, 16)}…`);
 
 console.log("\n── what the network says afterwards ──");
+// The base reserve is a network parameter and has been changed before; read it
+// from the latest ledger rather than hardcoding half an XLM.
+const [latest] = (await server.ledgers().order("desc").limit(1).call()).records;
+const baseReserve = Number(latest.base_reserve_in_stroops) / 1e7;
 const [r, d, i] = await Promise.all([
   server.loadAccount(reader.publicKey()),
   server.loadAccount(distributor.publicKey()),
@@ -242,8 +259,9 @@ console.log(`  reader        ${String(amount(r, "DRV")).padStart(16)} DRV`);
 console.log(`  reader        ${String(amount(r, "XLM")).padStart(16)} XLM   ← never held gas`);
 console.log(`  distributor   ${String(amount(d, "DRV")).padStart(16)} DRV`);
 console.log(`  distributor   ${String(amount(d, "XLM")).padStart(16)} XLM`);
-console.log(`  fees, 6 tx    ${(10_000 - Number(amount(d, "XLM"))).toFixed(7).padStart(16)} XLM`);
-console.log(`  reserves held ${String((d.num_sponsoring * 0.5).toFixed(1)).padStart(16)} XLM   (locked, recoverable)`);
+const spent = opening - Number(amount(d, "XLM"));
+console.log(`  fees, ${String(steps.length).padStart(2)} tx    ${spent.toFixed(7).padStart(16)} XLM`);
+console.log(`  reserves held ${(d.num_sponsoring * baseReserve).toFixed(7).padStart(16)} XLM   (locked, recoverable · base reserve ${baseReserve})`);
 
 const locked = i.signers.every((s) => s.weight === 0);
 console.log(`  issuer        ${locked ? "cannot ever sign again ✓" : "STILL ABLE TO MINT ✗"}`);
@@ -252,6 +270,24 @@ console.log("\n── check it yourself ──");
 for (const [name, kp] of [["reader", reader], ["distributor", distributor], ["issuer", issuer]]) {
   console.log(`  ${name.padEnd(12)} https://stellar.expert/explorer/testnet/account/${kp.publicKey()}`);
 }
+console.log("\n── every transaction, in order ──");
+for (const st of steps) {
+  console.log(`  ${st.label.padEnd(36)} https://stellar.expert/explorer/testnet/tx/${st.hash}`);
+}
+console.log(`  ${"reader claims (fee-bumped)".padEnd(36)} https://stellar.expert/explorer/testnet/tx/${claimed.hash}`);
+
+writeFileSync(resolve(HERE, "stellar-result.json"), JSON.stringify({
+  network: "stellar-testnet",
+  horizon: HORIZON,
+  measuredAt: latest.closed_at,
+  ledger: latest.sequence,
+  accounts: { issuer: issuer.publicKey(), distributor: distributor.publicKey(), reader: reader.publicKey() },
+  asset: { code: "DRV", issuer: issuer.publicKey(), supply: SUPPLY, claimed: EARNED },
+  holdings: { readerDrv: amount(r, "DRV"), readerXlm: amount(r, "XLM"), distributorDrv: amount(d, "DRV") },
+  cost: { feesXlm: spent.toFixed(7), transactions: steps.length + 1, reservesLockedXlm: (d.num_sponsoring * baseReserve).toFixed(7), baseReserve },
+  supplySealed: locked,
+  transactions: [...steps, { label: "reader claims (fee-bumped)", hash: claimed.hash, ledger: claimed.ledger }],
+}, null, 2));
 
 /*
  * Non-zero exit if the two properties this exists to prove did not hold. A

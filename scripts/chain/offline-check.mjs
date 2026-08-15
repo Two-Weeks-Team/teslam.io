@@ -81,5 +81,66 @@ const forged = [
   ["empty proof",   verifies(0, accounts[0], AMT, [])],
 ];
 for (const [what, passed] of forged) console.log(`forgery   ${what.padEnd(14)} ${passed ? "✗ ACCEPTED" : "rejected ✓"}`);
-if (forged.some(([, p]) => p) || good !== 6) process.exit(1);
-console.log("\n✓ contracts compile and the Merkle convention holds — ready for a funded key");
+
+/*
+ * And now the check that actually matters.
+ *
+ * Everything above is JavaScript agreeing with JavaScript. The failure mode
+ * this cannot see is the one that costs an afternoon: the Solidity computing a
+ * different hash from the JS, which produces a proof that verifies perfectly
+ * here and reverts on chain with `proof`. Both sides have to be asked.
+ *
+ * `readContract` with `code` and no address is a deployless `eth_call` — the
+ * EVM runs the constructor and the function in one go and returns the result
+ * without anything being deployed. It costs no gas and needs no key, only a
+ * public RPC. If the network is not reachable the run says so rather than
+ * quietly passing on the strength of the half of the test that ran.
+ */
+const probe = `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+contract Probe {
+  function leaf(uint256 i, address a, uint256 amt) external pure returns (bytes32) {
+    return keccak256(bytes.concat(keccak256(abi.encode(i, a, amt))));
+  }
+  function pair(bytes32 a, bytes32 b) external pure returns (bytes32) {
+    return a < b ? keccak256(abi.encodePacked(a, b)) : keccak256(abi.encodePacked(b, a));
+  }
+}`;
+const pout = JSON.parse(solc.compile(JSON.stringify({
+  language: "Solidity", sources: { "p.sol": { content: probe } },
+  settings: { outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } } },
+})));
+const art = pout.contracts["p.sol"].Probe;
+const code = `0x${art.evm.bytecode.object}`;
+
+const { createPublicClient, http } = await import("viem");
+const { baseSepolia } = await import("viem/chains");
+const pub = createPublicClient({ chain: baseSepolia, transport: http("https://sepolia.base.org") });
+
+let crossChecked = 0;
+try {
+  const sLeaf = await pub.readContract({ code, abi: art.abi, functionName: "leaf", args: [0n, accounts[0], AMT] });
+  const jLeaf = leafHash(0, accounts[0], AMT);
+  console.log(`\nsolidity  leaf  ${sLeaf === jLeaf ? "agrees with JS ✓" : "DISAGREES ✗\n  sol " + sLeaf + "\n  js  " + jLeaf}`);
+  crossChecked += sLeaf === jLeaf ? 1 : 0;
+
+  // Both orderings, because the sorted-pair convention is where an
+  // implementation usually diverges: JS compares hex strings, Solidity
+  // compares bytes32 as unsigned integers, and those agree only because
+  // lowercase hex sorts the same way. Worth proving rather than reasoning.
+  const A = leaves[0];
+  const B = leaves[1];
+  for (const [x, y] of [[A, B], [B, A]]) {
+    const sp = await pub.readContract({ code, abi: art.abi, functionName: "pair", args: [x, y] });
+    const jp = pair(x, y);
+    console.log(`solidity  pair  ${sp === jp ? "agrees with JS ✓" : "DISAGREES ✗"}`);
+    crossChecked += sp === jp ? 1 : 0;
+  }
+} catch (err) {
+  console.error(`\n✗ could not reach an RPC to cross-check Solidity against JS: ${String(err.message).slice(0, 120)}`);
+  console.error("  The JS half passed, which proves nothing about what the chain will compute.");
+  process.exit(1);
+}
+
+if (forged.some(([, p]) => p) || good !== 6 || crossChecked !== 3) process.exit(1);
+console.log("\n✓ contracts compile, the Merkle convention holds, and Solidity agrees with the JS");

@@ -98,28 +98,34 @@ Sepolia ETH is gated:
 Those gates are the faucets working correctly, and defeating one to save five
 minutes is not a trade worth making.
 
-So `base-flow.mjs` is written and waiting on a funded key. Everything about it
-that can be checked without a chain has been:
+`base-flow.mjs` has now run. Everything about it that can be checked without a
+chain is checked first by `offline-check.mjs`:
 
 ```
 node scripts/chain/offline-check.mjs
 
 compiled  Drv          1577 bytes
 compiled  Distributor  1429 bytes
-tree      500 leaves, root 0xc85a1a325dfc2344…
-proof     6/6 sampled indices verify, path length 9
-forgery   wrong account  rejected ✓
-forgery   wrong amount   rejected ✓
-forgery   wrong index    rejected ✓
-forgery   empty proof    rejected ✓
+tree      500 leaves, path length 9
+proof     6/6 sampled indices verify
+forgery   wrong account · wrong amount · wrong index · empty proof — all rejected ✓
+solidity  leaf agrees with JS ✓ · pair agrees with JS ✓✓
 ```
 
-The proof check there is a second implementation of the loop inside
+The JS proof check is a second implementation of the loop inside
 `Distributor.claim`, written separately so that agreeing means something. The
 forgery rows matter more than the passing ones: a Merkle scheme that accepts a
 proof for the wrong address is not a weaker scheme, it is no scheme.
 
-### Funding it
+The `solidity` rows matter most of all, and were added after the fact. Every
+row above them is JavaScript agreeing with JavaScript, which cannot see the one
+failure that costs an afternoon — the contract computing a different hash from
+the builder, producing a proof that verifies perfectly offline and reverts on
+chain. `readContract` with `code` and no address is a deployless `eth_call`:
+the EVM runs the constructor and the function together and returns the answer
+without deploying anything, for no gas and no key. Both sides get asked.
+
+### Running it
 
 Coinbase publishes the intended programmatic route, which is what
 `cdp-fund.mjs` uses — an API key rather than a browser, so no bot check is

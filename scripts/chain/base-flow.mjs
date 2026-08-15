@@ -17,7 +17,7 @@
  * can.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { createRequire } from "node:module";
@@ -161,9 +161,53 @@ const { Drv, Distributor } = compile();
 const supply = parseUnits(String(SUPPLY), DECIMALS);
 const earned = parseUnits(String(EARNED), DECIMALS);
 
+/*
+ * A receipt is not a success.
+ *
+ * `waitForTransactionReceipt` resolves for a reverted transaction exactly as
+ * it does for a successful one — the status is in the receipt, and a script
+ * that does not read it will happily carry on building on top of something
+ * that did not happen. Checked here once so no call site can forget.
+ */
+/** Every transaction this run submitted, so the result is auditable later. */
+const steps = [];
+
+const confirm = async (hash, label) => {
+  const rc = await pub.waitForTransactionReceipt({ hash });
+  if (rc.status !== "success") throw new Error(`${label} reverted — ${hash}`);
+  steps.push({ label, hash, block: Number(rc.blockNumber), gas: Number(rc.gasUsed) });
+  return rc;
+};
+
+/*
+ * Read until the node agrees, rather than reading once.
+ *
+ * `sepolia.base.org` is load balanced and eventually consistent: the node that
+ * hands back a receipt is not the node that answers the next call. Reading
+ * immediately after a write therefore returns the state from before it, which
+ * cost an hour here — a freshly deployed contract answered "returned no data",
+ * which reads exactly like a wrong ABI, and a funded distributor read as empty,
+ * which reads exactly like a transfer that failed. Neither was true. Both were
+ * a question asked of a node that had not caught up.
+ */
+const settle = async (read, ok, what) => {
+  let last;
+  for (let i = 0; i < 40; i += 1) {
+    last = await read();
+    if (ok(last)) return last;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  throw new Error(`${what} never settled — last saw ${last}`);
+};
+
 const deploy = async (label, artifact, args) => {
   const hash = await wallet.deployContract({ ...artifact, args });
-  const rc = await pub.waitForTransactionReceipt({ hash });
+  const rc = await confirm(hash, label);
+  await settle(
+    () => pub.getBytecode({ address: rc.contractAddress }),
+    (code) => code && code !== "0x",
+    `code at ${rc.contractAddress}`,
+  );
   console.log(`  ${label.padEnd(30)} ${rc.contractAddress}  gas ${rc.gasUsed}`);
   return { address: rc.contractAddress, gas: rc.gasUsed };
 };
@@ -193,7 +237,12 @@ const fundHash = await wallet.writeContract({
   functionName: "transfer",
   args: [dist.address, supply],
 });
-const fundRc = await pub.waitForTransactionReceipt({ hash: fundHash });
+const fundRc = await confirm(fundHash, "funding transfer");
+await settle(
+  () => pub.readContract({ address: drv.address, abi: Drv.abi, functionName: "balanceOf", args: [dist.address] }),
+  (held) => held === supply,
+  "distributor balance",
+);
 console.log(`  ${"transfer supply to distributor".padEnd(30)} gas ${fundRc.gasUsed}`);
 console.log("  the distributor has no function that returns tokens to the operator");
 
@@ -205,19 +254,52 @@ console.log("\n── 4 · the reader is paid, and never signs anything ──")
  * the reader at least had to sign.
  */
 const proof = t.proof(0);
+
+/*
+ * Simulate before paying.
+ *
+ * A reverted transaction still costs gas and tells you almost nothing on the
+ * way out — viem prints the calldata and the ABI and buries the one line that
+ * matters. `simulateContract` runs it against the current state for free and
+ * comes back with the require string.
+ */
+const held = await pub.readContract({ address: drv.address, abi: Drv.abi, functionName: "balanceOf", args: [dist.address] });
+const onChainRoot = await pub.readContract({ address: dist.address, abi: Distributor.abi, functionName: "root" });
+console.log(`  distributor holds ${held} · root on chain ${onChainRoot === t.root ? "matches ✓" : "DIFFERS ✗ " + onChainRoot}`);
+try {
+  await pub.simulateContract({
+    account: operator, address: dist.address, abi: Distributor.abi,
+    functionName: "claim", args: [0n, reader.address, earned, proof],
+  });
+} catch (err) {
+  console.error(`\n✗ claim would revert: ${err.shortMessage ?? err.message}`);
+  if (err.metaMessages) console.error("  " + err.metaMessages.slice(0, 3).join("\n  "));
+  process.exit(1);
+}
+
 const claimHash = await wallet.writeContract({
   address: dist.address,
   abi: Distributor.abi,
   functionName: "claim",
   args: [0n, reader.address, earned, proof],
 });
-const claimRc = await pub.waitForTransactionReceipt({ hash: claimHash });
+const claimRc = await confirm(claimHash, "claim");
 console.log(`  ${"operator claims for the reader".padEnd(30)} gas ${claimRc.gasUsed}  proof ${proof.length} nodes`);
 
 console.log("\n── what the network says afterwards ──");
 const read = (fn, args) => pub.readContract({ address: drv.address, abi: Drv.abi, functionName: fn, args });
-const [readerDrv, distDrv, total, readerEth, closing] = await Promise.all([
-  read("balanceOf", [reader.address]),
+/*
+ * Settle here too. The claim is the last write and these are the reads that
+ * decide whether the whole thing passed, so a stale answer here reports a
+ * working system as broken — which is what happened, and is the more
+ * dangerous direction only because the other one is worse.
+ */
+const readerDrv = await settle(
+  () => read("balanceOf", [reader.address]),
+  (v) => v === earned,
+  "reader balance",
+);
+const [distDrv, total, readerEth, closing] = await Promise.all([
   read("balanceOf", [dist.address]),
   read("totalSupply", []),
   pub.getBalance({ address: reader.address }),
@@ -238,6 +320,36 @@ console.log("\n── check it yourself ──");
 console.log(`  DRV          https://sepolia.basescan.org/address/${drv.address}`);
 console.log(`  distributor  https://sepolia.basescan.org/address/${dist.address}`);
 console.log(`  reader       https://sepolia.basescan.org/address/${reader.address}`);
+console.log(`  operator     https://sepolia.basescan.org/address/${operator.address}`);
+
+console.log("\n── every transaction, in order ──");
+for (const st of steps) {
+  console.log(`  ${st.label.padEnd(30)} https://sepolia.basescan.org/tx/${st.hash}`);
+}
+
+const block = await pub.getBlockNumber();
+writeFileSync(resolve(HERE, "base-result.json"), JSON.stringify({
+  network: "base-sepolia",
+  chainId: baseSepolia.id,
+  rpc: "https://sepolia.base.org",
+  explorer: "https://sepolia.basescan.org",
+  measuredAtBlock: Number(block),
+  contracts: { drv: drv.address, distributor: dist.address },
+  accounts: { operator: operator.address, reader: reader.address },
+  settlementRoot: t.root,
+  leaves: given.genesisSeats,
+  proofLength: proof.length,
+  holdings: {
+    readerDrv: fmt(readerDrv), readerEth: formatEther(readerEth),
+    distributorDrv: fmt(distDrv), totalSupply: fmt(total),
+  },
+  cost: {
+    ethSpent: formatEther(opening - closing),
+    transactions: steps.length,
+    gas: Object.fromEntries(steps.map((st) => [st.label, st.gas])),
+  },
+  transactions: steps,
+}, null, 2));
 
 const ok = readerDrv === earned && readerEth === 0n && total === supply;
 if (!ok) {
