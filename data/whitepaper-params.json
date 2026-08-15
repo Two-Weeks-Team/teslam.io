@@ -7,7 +7,6 @@
     "why": "data/model.json feeds every figure the site renders. This file records what the whitepaper actually says, so the two cannot drift apart silently. tests/whitepaper-parity.test.ts fails the build when they do. Update this file only when the whitepaper is revised, and bump `version` when you do — that makes the revision an explicit act rather than a quiet edit.",
     "tags": "The whitepaper marks each figure 확정 (settled) / 검증 (externally checked) / 제안 (proposed here) / 가정 (assumed). The tag is carried through so a reader knows how much weight a number holds."
   },
-
   "_verification": {
     "checkedOn": "2026-08-13",
     "what_this_file_proves": "That the site agrees with the whitepaper. It does NOT prove the whitepaper is right. Those are different claims and only the first one is enforced by a test.",
@@ -31,7 +30,6 @@
       "note": "The whitepaper tags this 가정 and says to re-quote before any published cost claim. The site publishes it, so the re-quote is owed. Changing it moves every won figure on /model, so it is left to the operator rather than edited here."
     }
   },
-
   "params": {
     "signalsPerUsd": {
       "value": 150000,
@@ -49,7 +47,7 @@
       "value": 4,
       "section": "§3.2",
       "tag": "확정",
-      "note": "latitude, longitude, vehicle speed, odometer — the minimal set that proves a drive."
+      "note": "latitude, longitude, vehicle speed, odometer — the minimal set that proved a drive when the whitepaper was written, and the set the older Fleet API delivered whether or not you asked. The site now collects two; see `pendingRevision` and docs/reference/tesla-fleet-api/fleet-telemetry-available-data.md."
     },
     "drvPerKm": {
       "value": 10,
@@ -110,31 +108,62 @@
       "note": "κ, the partner commission recovered on redemption. No partner is contracted."
     },
     "redemptionMix": {
-      "value": { "cashBacked": 0.4, "burnedInApp": 0.35, "stakedToTslm": 0.25 },
+      "value": {
+        "cashBacked": 0.4,
+        "burnedInApp": 0.35,
+        "stakedToTslm": 0.25
+      },
       "section": "§7.3",
       "tag": "가정",
       "note": "(φc, φb, φs). The whitepaper calls this the single most important unvalidated number in the model. The site names the third share `stakedToTslm`; the whitepaper calls the same quantity 락업 / locked. Same 0.25, different word."
     }
   },
-
   "derived": {
     "apiKrwPerVehicleMonth": {
       "value": 67,
       "section": "§7.2 eq. (4)",
       "tolerance": 1,
-      "note": "4 signals × 60/hr × 1 hr/day × 30 days ÷ 150,000 × 1,390. The whitepaper rounds to 67."
+      "note": "The whitepaper's arithmetic: 4 signals × 60/hr × 1 hr/day × 30 days ÷ 150,000 × 1,390, rounded to 67. The site now collects two signals and produces half of this — see `pendingRevision`. Working this formula against current inputs gives 66.72 and is the wrong comparison; it reproduces the document, not the system."
     },
     "genesisApiKrwPerMonth": {
       "value": 33360,
       "section": "§7.2",
       "tolerance": 10,
-      "note": "The whitepaper states Genesis 500 costs KRW 33,360/month in API fees in total."
+      "note": "The whitepaper states Genesis 500 costs KRW 33,360/month in API fees in total, on the same four-signal basis. The site produces half — see `pendingRevision`."
     },
     "apiShareOfCashCost": {
       "value": 0.032,
       "section": "§7.3",
       "tolerance": 0.01,
       "note": "API is 3.2% of net cash cost under the base redemption mix. This is the whole argument of the /model page: the binding constraint is redemption, not telemetry."
+    }
+  },
+  "pendingRevision": {
+    "_why": "This file transcribes the whitepaper and the whitepaper has not been revised, so `params` and `derived` still say what Draft v0.1 says. But the site has legitimately moved past it, and a fixture that quietly adopted the new numbers would be the very drift tests/whitepaper-parity.test.ts exists to catch, running backwards. So the disagreement is recorded here and enforced: the parity test holds the site to these values instead, and fails if this block is ever wrong. It is not a to-do list. It is the difference between two documents, in a form that cannot rot unnoticed.",
+    "_action": "Revise the whitepaper, bump `_source.version`, fold these into `params`/`derived`, and delete this block.",
+    "signalCount": {
+      "documentSays": 4,
+      "siteUses": 2,
+      "tolerance": 0,
+      "why": "Tesla categorises Odometer as `Vehicle State` and VehicleSpeed as `Driving`; neither needs the vehicle_location scope, separated out of vehicle_device_data in late 2024. Latitude and longitude were in the list because the older API delivered them whether or not you wanted them. See docs/reference/tesla-fleet-api/."
+    },
+    "apiKrwPerVehicleMonth": {
+      "documentSays": 67,
+      "siteUses": 33.36,
+      "tolerance": 1,
+      "why": "Half the signals, half the cost."
+    },
+    "genesisApiKrwPerMonth": {
+      "documentSays": 33360,
+      "siteUses": 16680,
+      "tolerance": 10,
+      "why": "Half the signals, half the cost."
+    },
+    "apiShareOfCashCost": {
+      "documentSays": 0.032,
+      "siteUses": 0.0161,
+      "tolerance": 0.002,
+      "why": "Half the signals, half the cost; the reward side is unchanged."
     }
   }
 }

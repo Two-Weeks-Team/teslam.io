@@ -32,7 +32,7 @@ export const model: ModelContent = {
       { value: "500", label: "Genesis seats" },
     ],
     vizLegend:
-      "Signals flow only while the car is moving. Four every minute — latitude, longitude, speed, odometer. DRV accrues strictly against the odometer delta.",
+      "Signals flow only while the car is moving. Two every minute — speed and odometer. No coordinate is requested. DRV accrues strictly against the odometer delta.",
     vizHint: "illustrative",
     live: "receiving",
     idle: "parked · no telemetry",
@@ -63,12 +63,10 @@ export const model: ModelContent = {
 
   telemetry: {
     eyebrow: "02 — What is collected",
-    h2: "Four signals. Nothing beyond them is requested.",
+    h2: "Two signals. Nothing beyond them is requested.",
     lede: "Collection scope is a trust question before it is a cost question. The spec is the minimum that can prove a drive, and permissions outside that list are never requested at all.",
     signalsTitle: "Collected",
     signals: [
-      { code: "LAT", t: "Latitude", d: "route-continuity cross-check" },
-      { code: "LNG", t: "Longitude", d: "route-continuity cross-check" },
       { code: "SPD", t: "Vehicle speed", d: "physical-plausibility check" },
       { code: "ODO", t: "Odometer", d: "the sole basis for reward" },
     ],
@@ -168,7 +166,7 @@ export const model: ModelContent = {
     lede: "The constraint on this business is not what Tesla charges. It is what the driver is paid. The two figures below come out of the same model; one of them is quoted often and the other is not.",
     ledgerTitle: "per vehicle · month",
     rows: {
-      api: { k: "Tesla Fleet API", d: "240 signals/day × 30 days" },
+      api: { k: "Tesla Fleet API", d: "120 signals/day × 30 days" },
       issued: { k: "DRV issued, at face value", d: "at average monthly distance" },
       burned: { k: "Burned in-app", d: "digital goods · no cost of service" },
       deferred: { k: "Staked, deferred", d: "not cash this month" },

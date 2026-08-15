@@ -1,0 +1,11 @@
+{
+  // Captured documentation is somebody else's prose, reproduced verbatim.
+  // `docs/reference/**` is told not to be edited by hand, so it cannot also be
+  // held to our formatting rules — asterisks in Tesla's footnotes read as
+  // emphasis and there is no correct fix that does not involve editing a
+  // capture, which is the one thing that file forbids.
+  "ignores": ["docs/reference/**", "node_modules/**", "scripts/chain/node_modules/**"],
+  "config": {
+    "MD013": { "line_length": 80, "code_blocks": false, "tables": false }
+  }
+}

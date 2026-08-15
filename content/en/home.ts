@@ -114,22 +114,18 @@ export const home: HomeContent = {
 
   signals: {
     eyebrow: "What travels",
-    title: "Four, and only while it moves.",
-    sub: "A parked car sends nothing. While the wheels turn, four signals go up once a minute — and exactly one of them decides what is earned.",
+    title: "Two, and only while it moves.",
+    sub: "A parked car sends nothing. While the wheels turn, two signals go up once a minute — and exactly one of them decides what is earned. Neither is a coordinate.",
     car: "Your car",
     moving: "only while moving",
     everySeconds: "s apart",
     pays: "sets the accrual",
     checks: "cross-check only",
     codes: {
-      latitude: "LAT",
-      longitude: "LNG",
       vehicleSpeed: "SPD",
       odometer: "ODO",
     },
     names: {
-      latitude: "Latitude",
-      longitude: "Longitude",
       vehicleSpeed: "Vehicle speed",
       odometer: "Odometer",
     },
@@ -169,11 +165,14 @@ export const home: HomeContent = {
         "The odometer difference alone sets what is earned",
       ],
     },
-    // Do not write that coordinates are never collected. The operating model
-    // reads latitude and longitude once a minute and /model says so. What this
-    // section can claim is only that coordinates are not what the score is
-    // computed from.
-    foot: "Four signals once a minute. Latitude, longitude and speed are cross-checks; the odometer alone sets what is earned. The costs are worked through in",
+    // It can now be written that coordinates are never collected — a sentence
+    // that was unavailable for a long time, because while the operating model
+    // read latitude and longitude once a minute it was simply false. Tesla
+    // separated `vehicle_location` out of `vehicle_device_data` in late 2024
+    // and the odometer sits in `Vehicle State`, so the site can decline
+    // location outright and still earn. The sentence did not get stronger; the
+    // system did, which is the only order in which that is honest.
+    foot: "Two signals once a minute. No coordinate is requested and none is received — the odometer difference alone sets what is earned. The costs are worked through in",
     footLink: "the operating model",
   },
 

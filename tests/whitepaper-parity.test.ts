@@ -21,7 +21,59 @@ import wp from "@/data/whitepaper-params.json";
 
 const P = wp.params;
 
+/**
+ * Where the site has legitimately moved past the document.
+ *
+ * `whitepaper-params.json` transcribes the whitepaper, and the whitepaper has
+ * not been revised — so `params` and `derived` still say what Draft v0.1 says,
+ * and must. When the site changes for a good reason before the document
+ * catches up, quietly editing the fixture to match would be exactly the drift
+ * this file exists to catch, only running backwards.
+ *
+ * So the disagreement lives in `pendingRevision`, and these helpers make the
+ * tests below hold the site to *that* value instead. The entry is not a note
+ * somebody can leave stale: if the site stops matching it, this fails.
+ */
+type Divergence = { documentSays: number; siteUses: number; tolerance: number; why: string };
+// The two `_`-prefixed keys are prose for whoever reads the file; everything
+// else is a divergence. Narrow on shape rather than on the key name, so a typo
+// in a prefix cannot smuggle a row past the checks below.
+const pending: Record<string, Divergence> = Object.fromEntries(
+  Object.entries(wp.pendingRevision as Record<string, unknown>).filter(
+    (entry): entry is [string, Divergence] =>
+      typeof entry[1] === "object" && entry[1] !== null && "siteUses" in entry[1],
+  ),
+);
+
+/**
+ * The value the site should currently produce — the document's, unless a
+ * divergence is recorded, in which case that one.
+ *
+ * `params` entries carry no tolerance and are matched exactly; only `derived`
+ * publishes one, because those are rounded figures in prose.
+ */
+const target = (key: string, fromDocument: { value: number; tolerance?: number }) =>
+  key in pending
+    ? { value: pending[key].siteUses, tolerance: pending[key].tolerance }
+    : { value: fromDocument.value, tolerance: fromDocument.tolerance ?? 0 };
+
 describe("inputs match the whitepaper", () => {
+  it("records every pending revision against what the document still says", () => {
+    expect(Object.keys(pending).length, "no divergences recorded — has the whitepaper been revised?")
+      .toBeGreaterThan(0);
+    for (const [key, row] of Object.entries(pending)) {
+      // `redemptionMix` holds an object rather than a number, so the lookup is
+      // widened through `unknown` and narrowed back here.
+      const lookup = (o: unknown) =>
+        (o as Record<string, { value: unknown } | undefined>)[key]?.value;
+      const documented = lookup(P) ?? lookup(wp.derived);
+      expect(row.documentSays, `${key}: pendingRevision disagrees with the transcription`)
+        .toBe(documented);
+      expect(row.why.length, `${key}: a divergence without a reason is a mistake`)
+        .toBeGreaterThan(20);
+    }
+  });
+
   it("prices telemetry at the revised tariff, not the 2024 proposal", () => {
     expect(model.given.signalsPerUsd).toBe(P.signalsPerUsd.value);
     // The specific mistake this guards: 1/10,000 instead of 1/150,000.
@@ -29,7 +81,7 @@ describe("inputs match the whitepaper", () => {
   });
 
   it("samples the four signals once a minute", () => {
-    expect(model.given.signals.length).toBe(P.signalCount.value);
+    expect(model.given.signals.length).toBe(target("signalCount", P.signalCount).value);
     expect(model.given.samplingIntervalSeconds).toBe(
       P.samplingIntervalSeconds.value,
     );
@@ -68,16 +120,16 @@ describe("derivations reproduce the whitepaper's published figures", () => {
   const near = (actual: number, d: { value: number; tolerance: number }) =>
     expect(Math.abs(actual - d.value)).toBeLessThanOrEqual(d.tolerance);
 
-  it("lands on ₩67 per vehicle per month", () => {
-    near(e.apiKrwPerMonth, wp.derived.apiKrwPerVehicleMonth);
+  it("lands on the per-vehicle API cost the site should currently produce", () => {
+    near(e.apiKrwPerMonth, target("apiKrwPerVehicleMonth", wp.derived.apiKrwPerVehicleMonth));
   });
 
-  it("lands on ₩33,360 for the whole Genesis 500 cohort", () => {
-    near(e.genesisApiKrwPerMonth, wp.derived.genesisApiKrwPerMonth);
+  it("lands on the cohort API cost the site should currently produce", () => {
+    near(e.genesisApiKrwPerMonth, target("genesisApiKrwPerMonth", wp.derived.genesisApiKrwPerMonth));
   });
 
   it("leaves the API at roughly 3% of cash cost, which is the argument", () => {
-    near(e.apiShareOfCashCost, wp.derived.apiShareOfCashCost);
+    near(e.apiShareOfCashCost, target("apiShareOfCashCost", wp.derived.apiShareOfCashCost));
   });
 });
 
