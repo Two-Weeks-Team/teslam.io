@@ -1,0 +1,75 @@
+# The Fleet Telemetry receiver.
+#
+# Vehicles connect *inward* to this, over mTLS, and Tesla's documentation is
+# explicit that "mTLS connections are terminated on the Fleet Telemetry
+# service". That single line decides the shape of everything here: the receiver
+# cannot sit behind the nginx already on 443, because a reverse proxy
+# terminating TLS is exactly what must not happen. So it takes its own port and
+# its own certificate, and the eleven domains nginx serves are left alone.
+#
+# Everything else about teslam.io stays serverless. This box receives, hands
+# the signals to Redis, and a consumer forwards them to D1 — the receiving edge
+# is the only part that has to be a long-lived host.
+
+name: teslam-fleet-telemetry
+
+services:
+  fleet-telemetry:
+    image: tesla/fleet-telemetry:v0.9.4
+    container_name: teslam-fleet-telemetry
+    restart: unless-stopped
+    # No `command` override. The image's default Cmd is already
+    # `/fleet-telemetry -config /etc/fleet-telemetry/config.json`, and passing
+    # only the flags replaces the whole of it — Docker then treats `-config` as
+    # the executable and fails with "executable file not found in $PATH",
+    # which reads like a missing binary rather than a mangled argv.
+    ports:
+      # Bound on all interfaces on purpose: the clients are cars on the public
+      # internet, not something proxied from localhost.
+      - "4443:4443"
+      # Metrics stay local. Prometheus can be pointed at it over the host, but
+      # nothing about vehicle traffic should be reachable without TLS.
+      - "127.0.0.1:9273:9273"
+    volumes:
+      - ./config.json:/etc/fleet-telemetry/config.json:ro
+      # The image runs as UID 65532 (distroless nonroot), so the private key
+      # has to be owned by it — `chown 65532:65532 tls/privkey.pem`, keeping
+      # 0600. Widening the mode instead would work and would mean any account
+      # on the host can read the key, which is a poor trade for saving one
+      # chown.
+      - ./tls:/etc/fleet-telemetry/tls:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks: [telemetry]
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  redis:
+    # Its own Redis rather than one of the five already on this host. They
+    # belong to other projects, and a telemetry backlog filling somebody else's
+    # instance is the kind of coupling that is only discovered during an
+    # incident.
+    image: redis:7-alpine
+    container_name: teslam-telemetry-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks: [telemetry]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+volumes:
+  redis-data:
+
+networks:
+  telemetry:
+    name: teslam-telemetry
