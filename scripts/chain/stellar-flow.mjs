@@ -65,9 +65,15 @@ const drvPerMonth = Math.min(
   given.dailyCapDrv,
 ) * given.daysPerMonth;
 /** One Genesis seat, one month. */
-const EARNED = String(drvPerMonth * given.genesisRewardMultiplier);
+/*
+ * Seven places, fixed. These come out of a division and Stellar rejects an
+ * amount with more precision than the asset has — a failure that arrives as a
+ * transaction error rather than a wrong number, which is the good version, but
+ * only if you never send it.
+ */
+const EARNED = (drvPerMonth * given.genesisRewardMultiplier).toFixed(7);
 /** Every Genesis seat, one month — the float a distributor would actually hold. */
-const SUPPLY = String(Number(EARNED) * given.genesisSeats);
+const SUPPLY = (Number(EARNED) * given.genesisSeats).toFixed(7);
 
 const HORIZON = "https://horizon-testnet.stellar.org";
 const FRIENDBOT = "https://friendbot.stellar.org";
