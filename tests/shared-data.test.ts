@@ -118,6 +118,15 @@ describe("the coordinate claim matches what the model collects", () => {
    * Phrasings that assert coordinates are absent rather than merely unused for
    * scoring. Kept blunt on purpose: a false positive costs one rewritten line,
    * a miss tells every reader something untrue about location data.
+   *
+   * The direction of this guard has now flipped, which it always anticipated.
+   * While the model read latitude and longitude every sixty seconds, the copy
+   * was allowed to say only that coordinates were not the *basis* of the score
+   * — saying they were absent would have been false. Tesla separated
+   * `vehicle_location` out of `vehicle_device_data` in late 2024, and the
+   * odometer sits in `Vehicle State`, so the site can now decline location
+   * outright. It does. The stronger sentence became available by changing what
+   * the system does, which is the only honest way to earn one.
    */
   const DENIES_COLLECTION = [
     /좌표가 아니라 숫자 하나만/,
@@ -130,17 +139,22 @@ describe("the coordinate claim matches what the model collects", () => {
   it.each([
     ["ko", koHome.proof],
     ["en", enHome.proof],
-  ])("%s: says coordinates are not the basis of the score, not that they are absent", (name, proof) => {
-    expect(
-      collectsCoordinates,
-      "model.json no longer collects coordinates — this guard and the copy can both be relaxed",
-    ).toBe(true);
-
+  ])("%s: may only claim coordinates are absent while the model actually declines them", (name, proof) => {
     const body = JSON.stringify(proof);
-    for (const rule of DENIES_COLLECTION) {
+    const denies = DENIES_COLLECTION.some((rule) => rule.test(body));
+
+    if (collectsCoordinates) {
       expect(
-        rule.test(body),
-        `${name} proof section matches ${rule}, but data/model.json collects ${model.given.signals.join(", ")} every ${model.given.samplingIntervalSeconds}s`,
+        denies,
+        `${name} proof section says coordinates are not collected, but data/model.json collects ${model.given.signals.join(", ")} every ${model.given.samplingIntervalSeconds}s`,
+      ).toBe(false);
+    } else {
+      // Not required to make the claim — but if the model declines location and
+      // the copy still hedges, the site is underselling something true, and a
+      // later reader has no way to tell the hedge from a limitation.
+      expect(
+        model.given.signals.some((s) => /lat|lon|gps|location/i.test(s)),
+        "no signal may name a coordinate while the copy claims none are collected",
       ).toBe(false);
     }
   });

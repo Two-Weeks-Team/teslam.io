@@ -4,7 +4,7 @@
   "_note": "Inputs only. Every figure shown on the site is computed from this file by lib/economics.ts, so a number on the page can never drift from the number in the model. `given` is the operator's specification. `assumed` has not been validated against a real fleet yet and is labelled as such wherever it is rendered. `monthlyAccountCreditUsd` is a published Tesla figure that is deliberately NOT applied to any calculation — it is carried here only so the page can name it in a footnote from a single source rather than typing it into prose.",
 
   "given": {
-    "signals": ["latitude", "longitude", "vehicleSpeed", "odometer"],
+    "signals": ["vehicleSpeed", "odometer"],
     "samplingIntervalSeconds": 60,
     "assumedDriveHoursPerDay": 1,
     "signalsPerUsd": 150000,

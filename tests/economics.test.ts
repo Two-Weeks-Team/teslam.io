@@ -14,23 +14,33 @@ import { readoutAt, DAILY_CAP_DRV } from "@/lib/drive/readout";
  * only catch a change, while that one catches a number that was wrong from the
  * day it was written.
  */
+/*
+ * These halved when the model stopped asking for coordinates.
+ *
+ * Two signals, not four: Tesla categorises `Odometer` as `Vehicle State` and
+ * `VehicleSpeed` as `Driving`, and neither needs the `vehicle_location` scope
+ * that was separated out of `vehicle_device_data` in late 2024. Latitude and
+ * longitude were in the list because the older API handed them over whether
+ * you wanted them or not — asking for them today is a deliberate act, and this
+ * site has no reason to perform one.
+ */
 describe("telemetry cost, as specified", () => {
-  it("is 240 signals a day", () => {
-    expect(e.signalsPerDay).toBe(240);
+  it("is 120 signals a day", () => {
+    expect(e.signalsPerDay).toBe(120);
   });
 
-  it("is $0.0016 a day and $0.048 a month", () => {
-    expect(e.apiUsdPerDay).toBeCloseTo(0.0016, 8);
-    expect(e.apiUsdPerMonth).toBeCloseTo(0.048, 8);
+  it("is $0.0008 a day and $0.024 a month", () => {
+    expect(e.apiUsdPerDay).toBeCloseTo(0.0008, 8);
+    expect(e.apiUsdPerMonth).toBeCloseTo(0.024, 8);
   });
 
-  it("is about ₩67 a month per vehicle", () => {
-    expect(Math.round(e.apiKrwPerMonth)).toBe(67);
+  it("is about ₩33 a month per vehicle", () => {
+    expect(Math.round(e.apiKrwPerMonth)).toBe(33);
   });
 
-  it("puts Genesis 500 API fees near ₩33,000", () => {
-    expect(e.genesisApiKrwPerMonth).toBeGreaterThan(32_000);
-    expect(e.genesisApiKrwPerMonth).toBeLessThan(35_000);
+  it("puts Genesis 500 API fees near ₩16,700", () => {
+    expect(e.genesisApiKrwPerMonth).toBeGreaterThan(16_000);
+    expect(e.genesisApiKrwPerMonth).toBeLessThan(17_500);
   });
 });
 

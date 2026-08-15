@@ -62,6 +62,32 @@ One operational hazard from the same page: exceeding the billing limit
 **removes Fleet Telemetry configurations and does not restore them**. At five
 hundred seats that is five hundred configurations to push again.
 
+## What was decided from reading this
+
+**The receiver runs on the 193 server, in Docker.** Fleet Telemetry is vehicles
+connecting outward to a host you operate, over TLS, with a CA they can check —
+the docs are explicit that the server "must be running on a server exposed to
+the public internet". This site is otherwise Vercel and Cloudflare Workers, and
+neither can be that host. Tesla publishes the receiver as open source
+(`teslamotors/fleet-telemetry`); it takes the signals and hands them on to D1,
+so the serverless half of the architecture is unchanged and only the receiving
+edge is new.
+
+**Coordinates are not requested.** `Odometer` is `Vehicle State` and
+`VehicleSpeed` is `Driving`; the four-signal list in `data/model.json` existed
+because the older API delivered latitude and longitude whether you wanted them
+or not. Asking for them today is a deliberate act and there is no reason to
+perform one — the odometer alone decides accrual. The list is now two signals,
+which halves the telemetry cost and lets the proof section say plainly that no
+coordinate is ever received. That sentence was unavailable for a long time
+because it was false.
+
+**The whitepaper is now behind the code.** Halving the signals halves the
+published API figures — ₩67 to ₩33 per vehicle-month, ₩33,360 to ₩16,680 for
+the cohort. `data/whitepaper-params.json` carries a `documentStatus` block
+recording exactly that, because the alternative was editing the numbers quietly
+and leaving the PDF saying something else.
+
 ## Re-capturing
 
 ```bash
