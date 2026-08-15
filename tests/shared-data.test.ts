@@ -3,6 +3,8 @@ import cm from "@/data/community.json";
 import model from "@/data/model.json";
 import { home as koHome } from "@/content/ko/home";
 import { home as enHome } from "@/content/en/home";
+import { model as koModel } from "@/content/ko/model";
+import { model as enModel } from "@/content/en/model";
 import { REGION_IDS } from "@/lib/genesis";
 
 /**
@@ -157,5 +159,53 @@ describe("the coordinate claim matches what the model collects", () => {
         "no signal may name a coordinate while the copy claims none are collected",
       ).toBe(false);
     }
+  });
+});
+
+/* ── The copy may not describe a signal the model does not collect ─────── */
+
+/**
+ * The signal list is published in four places and derived in none of them.
+ *
+ * `data/model.json` decides what is collected; the home page names each signal,
+ * the `/model` page lists them again with descriptions, and both do it twice
+ * over for two locales. Dropping latitude and longitude from the model left
+ * every one of those still saying "four" — the site went on describing
+ * coordinate collection to readers for as long as it took a reviewer to notice.
+ * Copy that outruns the model is the same class of defect as a cost figure that
+ * outruns the tariff, and it deserves the same kind of guard.
+ */
+describe("published signal lists match the model", () => {
+  const collected = new Set(model.given.signals);
+  const CODES: Record<string, string> = {
+    latitude: "LAT", longitude: "LNG", vehicleSpeed: "SPD", odometer: "ODO",
+  };
+
+  it.each([
+    ["ko", koHome.signals],
+    ["en", enHome.signals],
+  ])("%s home: names exactly the signals the model collects", (_name, signals) => {
+    expect(new Set(Object.keys(signals.codes))).toEqual(collected);
+    expect(new Set(Object.keys(signals.names))).toEqual(collected);
+  });
+
+  it.each([
+    ["ko", koModel.telemetry],
+    ["en", enModel.telemetry],
+  ])("%s /model: lists exactly the signals the model collects", (_name, telemetry) => {
+    const listed = telemetry.signals.map((s: { code: string }) => s.code);
+    const expected = model.given.signals.map((id) => CODES[id]);
+    expect(listed).toEqual(expected);
+  });
+
+  it.each([
+    ["ko", koModel],
+    ["en", enModel],
+  ])("%s /model: quotes the daily signal count the model implies", (_name, content) => {
+    const perDay =
+      (3600 / model.given.samplingIntervalSeconds) *
+      model.given.assumedDriveHoursPerDay *
+      model.given.signals.length;
+    expect(JSON.stringify(content)).toContain(String(perDay));
   });
 });

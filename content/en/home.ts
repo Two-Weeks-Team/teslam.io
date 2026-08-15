@@ -114,22 +114,18 @@ export const home: HomeContent = {
 
   signals: {
     eyebrow: "What travels",
-    title: "Four, and only while it moves.",
-    sub: "A parked car sends nothing. While the wheels turn, four signals go up once a minute — and exactly one of them decides what is earned.",
+    title: "Two, and only while it moves.",
+    sub: "A parked car sends nothing. While the wheels turn, two signals go up once a minute — and exactly one of them decides what is earned. Neither is a coordinate.",
     car: "Your car",
     moving: "only while moving",
     everySeconds: "s apart",
     pays: "sets the accrual",
     checks: "cross-check only",
     codes: {
-      latitude: "LAT",
-      longitude: "LNG",
       vehicleSpeed: "SPD",
       odometer: "ODO",
     },
     names: {
-      latitude: "Latitude",
-      longitude: "Longitude",
       vehicleSpeed: "Vehicle speed",
       odometer: "Odometer",
     },

@@ -125,22 +125,18 @@ export const home = {
 
   signals: {
     eyebrow: "무엇이 오가나",
-    title: "달릴 때만, 네 개.",
-    sub: "주차하면 아무것도 전송되지 않습니다. 바퀴가 구를 때만 60초마다 신호 네 개가 올라오고, 그중 적립을 정하는 것은 하나입니다.",
+    title: "달릴 때만, 두 개.",
+    sub: "주차하면 아무것도 전송되지 않습니다. 바퀴가 구를 때만 60초마다 신호 두 개가 올라오고, 그중 적립을 정하는 것은 하나입니다. 좌표는 둘 다 아닙니다.",
     car: "내 차",
     moving: "주행 중에만",
     everySeconds: "초마다",
     pays: "적립 기준",
     checks: "정합성 교차검증",
     codes: {
-      latitude: "LAT",
-      longitude: "LNG",
       vehicleSpeed: "SPD",
       odometer: "ODO",
     },
     names: {
-      latitude: "위도",
-      longitude: "경도",
       vehicleSpeed: "차량 속도",
       odometer: "누적 주행거리",
     },

@@ -16,8 +16,8 @@
  * Needs a Chrome on the machine and nothing else. No key, no account.
  */
 
-import { writeFileSync, mkdirSync } from "node:fs";
-import { spawn } from "node:child_process";
+import { writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { mkdtempSync } from "node:fs";
@@ -42,18 +42,35 @@ const PAGES = {
   "/announcements": "fleet-api-announcements",
 };
 
-const CHROME = [
+/*
+ * A list is only a list if something reads it. The first version built these
+ * candidates and then always spawned the first one, so on Linux it produced
+ * ENOENT while claiming to support four browsers.
+ */
+const CANDIDATES = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
   "/Applications/Chromium.app/Contents/MacOS/Chromium",
-  "google-chrome",
-  "chromium",
+  "/usr/bin/google-chrome",
+  "/usr/bin/chromium",
+  "/usr/bin/chromium-browser",
 ];
+
+const chromePath = (() => {
+  for (const c of CANDIDATES) if (existsSync(c)) return c;
+  // Fall back to whatever is on PATH; spawn resolves a bare name itself.
+  for (const c of ["google-chrome", "chromium", "chromium-browser"]) {
+    const hit = spawnSync("which", [c], { encoding: "utf8" });
+    if (hit.status === 0) return hit.stdout.trim();
+  }
+  console.error("No Chrome or Chromium found. Tried:\n  " + CANDIDATES.join("\n  "));
+  process.exit(1);
+})();
 
 const PORT = 9333; // Not 9222 — leave the usual debugging port alone.
 const profile = mkdtempSync(resolve(tmpdir(), "tesla-docs-"));
 
 const chrome = spawn(
-  CHROME[0],
+  chromePath,
   [
     "--headless=new",
     `--remote-debugging-port=${PORT}`,

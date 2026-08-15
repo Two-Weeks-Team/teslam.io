@@ -44,11 +44,10 @@
       "note": "Base signal set S0 is received once per 60 seconds, while driving only. Nothing is received while parked."
     },
     "signalCount": {
-      "value": 2,
+      "value": 4,
       "section": "§3.2",
       "tag": "확정",
-      "note": "latitude, longitude, vehicle speed, odometer — the minimal set that proves a drive.",
-      "basis": "Two, not four. Tesla categorises Odometer as `Vehicle State` and VehicleSpeed as `Driving`; neither needs the vehicle_location scope, which was separated out of vehicle_device_data in late 2024. Latitude and longitude were in the list because the older API handed them over whether or not you wanted them. Asking for them now is a deliberate act, and this site has no reason to perform it — accrual is decided by the odometer alone. See docs/reference/tesla-fleet-api/."
+      "note": "latitude, longitude, vehicle speed, odometer — the minimal set that proves a drive."
     },
     "drvPerKm": {
       "value": 10,
@@ -121,34 +120,50 @@
   },
   "derived": {
     "apiKrwPerVehicleMonth": {
-      "value": 33.36,
+      "value": 67,
       "section": "§7.2 eq. (4)",
       "tolerance": 1,
       "note": "4 signals × 60/hr × 1 hr/day × 30 days ÷ 150,000 × 1,390. The whitepaper rounds to 67."
     },
     "genesisApiKrwPerMonth": {
-      "value": 16680,
+      "value": 33360,
       "section": "§7.2",
       "tolerance": 10,
       "note": "The whitepaper states Genesis 500 costs KRW 33,360/month in API fees in total."
     },
     "apiShareOfCashCost": {
-      "value": 0.0161,
+      "value": 0.032,
       "section": "§7.3",
       "tolerance": 0.01,
       "note": "API is 3.2% of net cash cost under the base redemption mix. This is the whole argument of the /model page: the binding constraint is redemption, not telemetry."
     }
   },
-  "documentStatus": {
-    "transcribedFrom": "teslam-whitepaper-v0.1-draft",
-    "aheadOfDocument": true,
-    "why": "Tesla categorises Odometer as `Vehicle State` and VehicleSpeed as `Driving`; neither requires the vehicle_location scope, which was separated out of vehicle_device_data in late 2024. The whitepaper's four-signal figure assumed the older behaviour, where latitude and longitude arrived whether you asked for them or not. Halving the signals halves the API cost.",
-    "documentStillPublishes": {
-      "apiKrwPerVehicleMonth": 67,
-      "genesisApiKrwPerMonth": 33360,
-      "apiShareOfCashCost": 0.032
+  "pendingRevision": {
+    "_why": "This file transcribes the whitepaper and the whitepaper has not been revised, so `params` and `derived` still say what Draft v0.1 says. But the site has legitimately moved past it, and a fixture that quietly adopted the new numbers would be the very drift tests/whitepaper-parity.test.ts exists to catch, running backwards. So the disagreement is recorded here and enforced: the parity test holds the site to these values instead, and fails if this block is ever wrong. It is not a to-do list. It is the difference between two documents, in a form that cannot rot unnoticed.",
+    "_action": "Revise the whitepaper, bump `_source.version`, fold these into `params`/`derived`, and delete this block.",
+    "signalCount": {
+      "documentSays": 4,
+      "siteUses": 2,
+      "tolerance": 0,
+      "why": "Tesla categorises Odometer as `Vehicle State` and VehicleSpeed as `Driving`; neither needs the vehicle_location scope, separated out of vehicle_device_data in late 2024. Latitude and longitude were in the list because the older API delivered them whether or not you wanted them. See docs/reference/tesla-fleet-api/."
     },
-    "supersededBy": "docs/reference/tesla-fleet-api/fleet-telemetry-available-data.md",
-    "action": "Revise the whitepaper. Until that happens this fixture is a transcription of what the document should say, not of what it says — which is the one thing it is not supposed to be, and is why this block exists rather than a quiet edit."
+    "apiKrwPerVehicleMonth": {
+      "documentSays": 67,
+      "siteUses": 33.36,
+      "tolerance": 1,
+      "why": "Half the signals, half the cost."
+    },
+    "genesisApiKrwPerMonth": {
+      "documentSays": 33360,
+      "siteUses": 16680,
+      "tolerance": 10,
+      "why": "Half the signals, half the cost."
+    },
+    "apiShareOfCashCost": {
+      "documentSays": 0.032,
+      "siteUses": 0.0161,
+      "tolerance": 0.002,
+      "why": "Half the signals, half the cost; the reward side is unchanged."
+    }
   }
 }
