@@ -1,0 +1,8 @@
+{
+  "name": "teslam-chain-spike",
+  "private": true,
+  "type": "module",
+  "description": "Kept out of the root package.json on purpose: this is a spike, and the SDK is heavy. Nobody building the site should pay to install it.",
+  "scripts": { "flow": "node stellar-flow.mjs" },
+  "dependencies": { "@stellar/stellar-sdk": "^14" }
+}

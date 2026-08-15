@@ -35,3 +35,11 @@ public/maplibre/
 # public/car/model3.bin, which is small enough to commit and is committed
 # deliberately — see the README. This entry keeps the source out.
 /assets/
+
+# Testnet keys from scripts/chain. Worthless by construction — they hold play
+# money on a network that resets — but a private key that reaches a working
+# tree once will reach one again when it is not worthless, so the habit is the
+# point.
+scripts/chain/keys*.json
+scripts/chain/*-result.json
+scripts/chain/node_modules/
