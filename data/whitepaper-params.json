@@ -47,7 +47,7 @@
       "value": 4,
       "section": "§3.2",
       "tag": "확정",
-      "note": "latitude, longitude, vehicle speed, odometer — the minimal set that proves a drive."
+      "note": "latitude, longitude, vehicle speed, odometer — the minimal set that proved a drive when the whitepaper was written, and the set the older Fleet API delivered whether or not you asked. The site now collects two; see `pendingRevision` and docs/reference/tesla-fleet-api/fleet-telemetry-available-data.md."
     },
     "drvPerKm": {
       "value": 10,
@@ -123,13 +123,13 @@
       "value": 67,
       "section": "§7.2 eq. (4)",
       "tolerance": 1,
-      "note": "4 signals × 60/hr × 1 hr/day × 30 days ÷ 150,000 × 1,390. The whitepaper rounds to 67."
+      "note": "The whitepaper's arithmetic: 4 signals × 60/hr × 1 hr/day × 30 days ÷ 150,000 × 1,390, rounded to 67. The site now collects two signals and produces half of this — see `pendingRevision`. Working this formula against current inputs gives 66.72 and is the wrong comparison; it reproduces the document, not the system."
     },
     "genesisApiKrwPerMonth": {
       "value": 33360,
       "section": "§7.2",
       "tolerance": 10,
-      "note": "The whitepaper states Genesis 500 costs KRW 33,360/month in API fees in total."
+      "note": "The whitepaper states Genesis 500 costs KRW 33,360/month in API fees in total, on the same four-signal basis. The site produces half — see `pendingRevision`."
     },
     "apiShareOfCashCost": {
       "value": 0.032,
