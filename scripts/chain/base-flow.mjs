@@ -9,11 +9,12 @@
  *     cd scripts/chain && npm install
  *     node base-flow.mjs
  *
- * Needs a funded key in `.dev.vars` as `BASE_SEPOLIA_KEY`, because unlike
- * Stellar's Friendbot every route to Base Sepolia ETH is gated behind a
- * CAPTCHA or an API key. That difference is a fact about developer experience
- * and not a reason to choose a chain, but it is why this file cannot fund
- * itself and the other one can.
+ * Needs a funded key in `scripts/chain/.env.local` as `BASE_SEPOLIA_KEY`,
+ * because unlike Stellar's Friendbot every route to Base Sepolia ETH is gated
+ * behind a CAPTCHA or a credential — `cdp-fund.mjs` walks the credential one.
+ * That difference is a fact about developer experience rather than a reason to
+ * choose a chain, but it is why this file cannot fund itself and the other one
+ * can.
  */
 
 import { readFileSync } from "node:fs";
@@ -124,17 +125,17 @@ function tree(leaves) {
 
 const raw = (() => {
   try {
-    const vars = readFileSync(resolve(HERE, "../../.dev.vars"), "utf8");
-    return vars.match(/^BASE_SEPOLIA_KEY\s*=\s*"?([0-9a-fA-Fx]+)"?/m)?.[1];
+    const vars = readFileSync(resolve(HERE, ".env.local"), "utf8");
+    return vars.match(/^BASE_SEPOLIA_KEY\s*=\s*"?(0x[0-9a-fA-F]{64})"?/m)?.[1];
   } catch {
     return undefined;
   }
 })();
 if (!raw) {
-  console.error("No BASE_SEPOLIA_KEY in .dev.vars — see scripts/chain/README.md");
+  console.error("No BASE_SEPOLIA_KEY in scripts/chain/.env.local — copy .env.local.example");
   process.exit(1);
 }
-const key = raw.startsWith("0x") ? raw : `0x${raw}`;
+const key = raw;
 
 const operator = privateKeyToAccount(key);
 // A reader who has never touched this chain and has no ETH. Generated fresh so

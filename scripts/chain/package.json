@@ -7,7 +7,9 @@
     "flow": "node stellar-flow.mjs"
   },
   "dependencies": {
+    "@coinbase/cdp-sdk": "^1.55.0",
     "@stellar/stellar-sdk": "^14",
+    "dotenv": "^17.4.2",
     "solc": "^0.8.36",
     "viem": "^2.55.16"
   }

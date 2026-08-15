@@ -119,11 +119,43 @@ The proof check there is a second implementation of the loop inside
 forgery rows matter more than the passing ones: a Merkle scheme that accepts a
 proof for the wrong address is not a weaker scheme, it is no scheme.
 
-To run it, put a funded key in `.dev.vars` (gitignored):
+### Funding it
+
+Coinbase publishes the intended programmatic route, which is what
+`cdp-fund.mjs` uses — an API key rather than a browser, so no bot check is
+involved and nothing has to be worked around.
 
 ```
-BASE_SEPOLIA_KEY="0x…"
+cp .env.local.example .env.local     # gitignored
+# fill in CDP_API_KEY_ID and CDP_API_KEY_SECRET
+node cdp-fund.mjs                    # faucet → the deploy account
+node base-flow.mjs                   # deploy, settle, claim, verify
 ```
+
+Credentials go in the file, never into a chat window — a secret that reaches a
+conversation history has been disclosed, and rotating it is the only remedy.
+`BASE_SEPOLIA_KEY` is a throwaway that holds testnet ETH and nothing else.
+
+`cdp-fund.mjs` tries to have the faucet pay the deploy account directly, and if
+CDP will only fund accounts it holds, it creates one, funds that, and forwards
+— which needs `CDP_WALLET_SECRET` as well, because forwarding means signing. It
+polls the chain for the balance rather than sleeping, because the chain is the
+authority on whether the money arrived and the API's own view of it lags.
+
+### Borrowing a logged-in browser does not work
+
+Worth writing down so nobody spends the afternoon on it again. Copying a Chrome
+profile to drive an authenticated session fails on macOS: cookie values are
+encrypted with a Keychain key that a Chrome launched from a shell cannot reach,
+so it generates a fresh one and decrypts nothing. A profile with 3,652 cookie
+rows yielded 9 usable ones, and both `portal.cdp.coinbase.com` and Google
+Cloud's faucet reported signed-out — the latter in as many words: *"You are
+signed out. Sign in to your Google Account to receive tokens."*
+
+`login.coinbase.com` additionally sits behind Cloudflare bot management, which
+held the automated browser indefinitely at "verification succeeded, waiting for
+response". That is the control doing its job. The API key exists precisely so
+that a program does not have to pretend to be a person.
 
 ## What the EVM side needs that Stellar did not
 
