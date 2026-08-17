@@ -41,15 +41,44 @@ echo
 echo "── the certificate ──"
 CHAIN="$(mktemp)"
 trap 'rm -f "$CHAIN"' EXIT
-if ! echo | openssl s_client -connect "$HOST:$PORT" -servername "$HOST" -showcerts 2>/dev/null > "$CHAIN"; then
-  fail "no TLS handshake at $HOST:$PORT"
+#
+# `openssl s_client` exits non-zero here even when everything is right, and the
+# first version of this script read that as failure.
+#
+# A Fleet Telemetry server does mTLS. Connecting without a client certificate
+# gets the server's certificate, completes verification, and is then refused
+# with `tlsv13 alert certificate required` — which is the server working
+# exactly as it must. Treating a non-zero exit as "no handshake" reported a
+# correctly configured receiver as broken.
+#
+# So the exit code is ignored and the output is read instead. What matters is
+# whether a certificate came back and whether the chain verified.
+echo | openssl s_client -connect "$HOST:$PORT" -servername "$HOST" -showcerts >"$CHAIN" 2>&1 || true
+if ! grep -q "BEGIN CERTIFICATE" "$CHAIN"; then
+  fail "no certificate offered at $HOST:$PORT — is anything listening?"
 fi
+VERIFY="$(grep -o 'Verify return code: .*' "$CHAIN" | head -1)"
 SUBJECT="$(openssl x509 -in "$CHAIN" -noout -subject 2>/dev/null | sed 's/^subject=//')"
 ISSUER="$(openssl x509 -in "$CHAIN" -noout -issuer 2>/dev/null | sed 's/^issuer=//')"
 EXPIRY="$(openssl x509 -in "$CHAIN" -noout -enddate 2>/dev/null | cut -d= -f2)"
 say "subject" "$SUBJECT"
 say "issuer" "$ISSUER"
 say "expires" "$EXPIRY"
+say "chain" "${VERIFY:-not reported}"
+
+# The one line that decides whether a car gets this far.
+case "$VERIFY" in
+  *"code: 0 (ok)"*) ;;
+  *) fail "the chain did not verify — $VERIFY" ;;
+esac
+
+# And the refusal that proves the server is doing mTLS rather than serving
+# anyone who asks. Its absence would be the real problem.
+if grep -q "certificate required" "$CHAIN"; then
+  say "mTLS" "enforced — refused us for having no client certificate"
+else
+  say "mTLS" "NOT enforced — the server accepted a connection with no client certificate"
+fi
 
 # Self-signed is the failure that looks like success in every other check: the
 # server is up, the port answers, the handshake completes — and no car will

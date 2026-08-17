@@ -111,6 +111,47 @@ widening the mode.
 After those, the server started, registered Redis, and terminated TLS on 4443
 with the certificate presented as `CN=telemetry.teslam.io`.
 
+## Live
+
+| | |
+| --- | --- |
+| `telemetry.teslam.io` | A → `49.247.9.193`, DNS only |
+| Certificate | Let's Encrypt, expires 2026-11-15 |
+| Renewal | `ops/certbot-deploy-hook.sh`, dry-run passes |
+| Tesla's check | `The server certificate is valid.` |
+
+Two things the deployment had to get right on a box running fifteen containers
+and eleven other people's domains.
+
+**The certificate is obtained without touching any existing nginx config.**
+`ops/nginx-acme.conf` is a new file serving nothing but the ACME challenge path
+for this one hostname; the eleven live vhosts were not edited. It sorts after
+`api.*` in `sites-enabled`, so it does not become the implicit default server.
+Two domains on that host return 502 — `api.fairthon.com` and `kbeauty.market`,
+whose upstreams on 2618 and 10004 are down. Checked rather than assumed: the
+receiver's block names only `telemetry.teslam.io`, and those ports were already
+refusing connections.
+
+**A renewal that does not reach the container is a silent expiry.** The deploy
+hook copies the new pair in, fixes ownership for UID 65532 and restarts. Without
+it the certificate lapses in ninety days, vehicles stop connecting, and the
+container goes on reporting itself healthy — which is exactly what it would be,
+from the inside.
+
+## `verify.sh` read a success as a failure
+
+Worth recording, because the mistake is a good one. `openssl s_client` exits
+non-zero against a correctly configured Fleet Telemetry server: it receives the
+certificate, verifies the chain, and is then refused with `tlsv13 alert
+certificate required` — because the server does mTLS and we brought no client
+certificate. The first version treated that exit code as "no TLS handshake" and
+reported a working receiver as broken.
+
+The script now ignores the exit code and reads the output. `Verify return code:
+0 (ok)` is the line that decides whether a car gets this far, and the refusal is
+checked *for* rather than against — a server that accepted us would be the real
+problem.
+
 ## Operational notes worth knowing before an incident
 
 **Exceeding the Fleet API billing limit removes every vehicle's telemetry
