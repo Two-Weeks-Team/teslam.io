@@ -10,8 +10,8 @@ precisely what must not happen, so the receiver takes its own port and its own
 certificate and leaves nginx alone.
 
 It also means this is the only part of teslam.io that has to be a long-lived
-host. Everything else stays serverless: the receiver hands signals to Redis and
-a consumer forwards them to D1.
+host. Everything else stays serverless: the receiver publishes signals to Redis
+and a consumer forwards them to D1. Both run here, in the same compose project.
 
 | | |
 | --- | --- |
@@ -169,9 +169,77 @@ has elapsed *and* the value changed. This is what makes "a parked car sends
 nothing" true rather than aspirational, and it is why the cost model works out
 at streaming rates rather than polling rates.
 
+## The consumer
+
+`services/telemetry-consumer/` forwards records from Redis to
+`api.teslam.io/v1/telemetry/ingest`, which parses them and writes the ledger. It
+runs as a third container in this same project.
+
+### Redis pub/sub is not a queue
+
+This README used to say the receiver "fills a queue". It does not, and the
+difference decides how the consumer has to be operated.
+
+`datastore/redis/redis.go` calls `client.Publish`. A publish with no subscriber
+**succeeds**, returns zero, and the record is gone — there is no backlog to
+catch up from. `reliable_ack: true` makes it worse in one specific way: the
+receiver acks the vehicle as soon as the publish returns, so the car believes
+the record was delivered and will never send it again.
+
+**Anything published while the consumer is not subscribed is lost permanently.**
+
+It is survivable, but because of the ledger rather than the transport. Accrual
+measures the difference between two readings, so a missed frame is absorbed by
+the next one's delta and costs nobody anything. Two exceptions:
+
+- a gap beyond seven days is refused as `gap-too-long` and that distance is
+  never credited;
+- a missed **coordinate** is simply gone. A position has no delta to hide in.
+
+So restarts must be short and rare, and `docker compose down` for longer than a
+moment is a decision about data, not a maintenance step.
+
+### Deploying it
+
+The build context has to sit inside the compose project directory, and the
+repository is not checked out on 193:
+
+```bash
+rsync -a --delete services/telemetry-consumer/ \
+  49.247.9.193:~/teslam-fleet-telemetry/consumer/
+```
+
+Then, on the host, an `.env` beside `docker-compose.yml`:
+
+```bash
+INGEST_URL=https://api.teslam.io/v1/telemetry/ingest
+TELEMETRY_TOKEN=…      # the value given to `wrangler secret put TELEMETRY_TOKEN`
+```
+
+```bash
+docker compose up -d --build consumer
+curl -s localhost:9274/healthz | jq
+```
+
+`ok` is true only when the process is both connected and subscribed. That is the
+state worth alerting on: a consumer that is running but unsubscribed looks
+perfectly healthy from the outside and is discarding every record a car sends.
+
+### What it deliberately does not do
+
+It never parses a record. Bytes arrive from Redis and leave for the Worker
+unchanged, because everything that understands the format — miles, the odometer,
+the daily cap, coordinates — lives in `cloudflare/lib/` under vitest, against
+the same D1 the ledger uses. A second implementation on a shared host would be
+one nobody tests.
+
+It never logs a payload, only counts. A record carries a VIN and, once
+collection is switched on, a coordinate; a log file on a box shared with eleven
+other domains has none of the retention the database has.
+
 ## What this does not do yet
 
-Nothing forwards Redis to D1. The receiver fills a queue and that is the whole
-of its job; the consumer is the next piece, and it belongs with the accrual
-ledger — which does not exist either. `data/model.json` describes an odometer
-delta becoming DRV, and no table in D1 holds one yet.
+**No vehicle is connected.** The pipe is complete from a car's TLS handshake to
+a row in `drv_ledger`, and nothing is streaming into it, because a vehicle can
+only be configured by an application registered at developer.tesla.com. See
+`docs/tesla-app-registration.md` — steps 1–6 above are that work.

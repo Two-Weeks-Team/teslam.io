@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
       { source: "/model.md", destination: "/api/md/ko" },
       { source: "/en/model.md", destination: "/api/md/en" },
 
+      // Tesla polls this exact path to decide whether the application is still
+      // registered, and its documentation says the key "must be and remain
+      // hosted" there. A rewrite rather than a dot-prefixed directory in
+      // `public/`, because the cost of a framework quietly ceasing to serve one
+      // is vehicles declining to stream, reported as "not registered".
+      {
+        source: "/.well-known/appspecific/com.tesla.3p.public-key.pem",
+        destination: "/api/tesla-public-key",
+      },
+
       // Design directions under review. Each is a single self-contained file in
       // `public/`, deliberately outside the app so an experiment cannot reach
       // the shipped page's stylesheet — or be reached by it. `/alt` is the

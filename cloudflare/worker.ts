@@ -52,6 +52,7 @@ import {
   LIMITS,
   type BoardId,
 } from "../lib/board";
+import { ingest, purgeLocations } from "./lib/ingest";
 
 export { LiveBoard } from "./live";
 
@@ -83,6 +84,26 @@ export type Env = {
    * Flip to `"true"` in the same change that makes mail live, not before.
    */
   REGISTRATION_OPEN?: string;
+  /**
+   * The secret the telemetry consumer on the receiving host presents.
+   *
+   * Deliberately not `EXPORT_TOKEN`. That token reads the registration table,
+   * addresses and all; this one appends readings. They live on different
+   * machines and are worth different amounts to somebody who takes one, so
+   * sharing a value would mean a compromise of the shared host handed over the
+   * mailing list as well.
+   */
+  TELEMETRY_TOKEN?: string;
+  /**
+   * Whether streamed coordinates are stored. `"true"` collects.
+   *
+   * Off in production until the 위치정보법 filing is made and the privacy
+   * policy is revised — the policy currently tells readers location is not
+   * received at any stage, and this switch is what keeps that sentence true.
+   * On in preview and in the suite, so the path is exercised rather than
+   * merely present.
+   */
+  COLLECT_LOCATION?: string;
 };
 
 /** Registration is closed unless the config says otherwise. */
@@ -505,9 +526,9 @@ async function confirmHandler(url: URL, env: Env): Promise<Response> {
  * leaks its length and its matching prefix through response timing; the work
  * to avoid that is four lines.
  */
-function authorised(req: Request, env: Env): boolean {
+function bearerMatches(req: Request, secret: string | undefined): boolean {
   const presented = (req.headers.get("authorization") ?? "").replace(/^Bearer /, "");
-  const expected = env.EXPORT_TOKEN ?? "";
+  const expected = secret ?? "";
   if (!expected || presented.length !== expected.length) return false;
   let diff = 0;
   for (let i = 0; i < expected.length; i += 1) {
@@ -515,6 +536,9 @@ function authorised(req: Request, env: Env): boolean {
   }
   return diff === 0;
 }
+
+/** The operator token, which reads registrations. */
+const authorised = (req: Request, env: Env): boolean => bearerMatches(req, env.EXPORT_TOKEN);
 
 /**
  * Mint a confirmation link and return it instead of mailing it.
@@ -770,6 +794,56 @@ async function capabilities(env: Env, headers: Record<string, string>): Promise<
   );
 }
 
+/* ── telemetry ────────────────────────────────────────────────────────── */
+
+/**
+ * How many records one request may carry.
+ *
+ * The consumer batches whatever accumulated since its last send, and a
+ * reconnecting fleet can produce a burst. A ceiling here means a burst becomes
+ * several requests instead of one that runs out of CPU halfway through and is
+ * retried from the start — which, with idempotent writes, would otherwise be
+ * correct but wasteful forever.
+ */
+const MAX_BATCH = 500;
+
+/**
+ * Accept a batch of records from the receiving host.
+ *
+ * The body is an array of the exact strings Fleet Telemetry published to Redis.
+ * The consumer does not parse them and neither does this function: everything
+ * that understands the format lives in `lib/telemetry.ts`, where it runs under
+ * vitest against the same D1 as the ledger. A consumer on a shared host that
+ * knew how to read an odometer would be a second implementation nobody tests.
+ *
+ * No CORS headers, on purpose. This is machine-to-machine and a browser has no
+ * business reading the response, so the absence of the header is the policy.
+ */
+async function telemetryIngest(req: Request, env: Env): Promise<Response> {
+  if (!bearerMatches(req, env.TELEMETRY_TOKEN)) {
+    return json({ error: "unauthorized" }, 401);
+  }
+
+  const body = await readJson(req);
+  if (!body) return json({ error: "bad_json" }, 400);
+
+  const records = body.records;
+  if (!Array.isArray(records)) return json({ error: "invalid", field: "records" }, 400);
+  if (records.length > MAX_BATCH) {
+    return json({ error: "batch_too_large", max: MAX_BATCH }, 413);
+  }
+
+  // A non-string entry becomes an empty one rather than being dropped. Dropping
+  // it would make `received` disagree with what the consumer sent, and the
+  // consumer uses that number to decide whether its batch was taken.
+  const raw = records.map((r) => (typeof r === "string" ? r : ""));
+
+  const report = await ingest(env.DB, raw, {
+    collectLocation: env.COLLECT_LOCATION === "true",
+  });
+  return json(report, 200);
+}
+
 /* ── entry ────────────────────────────────────────────────────────────── */
 
 export function createWorker(deps: Deps = {}) {
@@ -833,6 +907,10 @@ export function createWorker(deps: Deps = {}) {
         });
       }
 
+      if (url.pathname === "/v1/telemetry/ingest" && req.method === "POST") {
+        return telemetryIngest(req, env);
+      }
+
       const boardResponse = await boardRoutes(req, url, env, headers);
       if (boardResponse) return boardResponse;
 
@@ -862,6 +940,11 @@ export function createWorker(deps: Deps = {}) {
       // can no longer authenticate anybody is a row nobody has a reason to
       // keep, and the privacy policy says so.
       await purgeSessions(env.DB);
+      // A retention period nothing enforces is a sentence in a document. This
+      // is what makes the expiry stamped on each coordinate mean something,
+      // and it runs whether or not collection is currently switched on —
+      // rows written during a trial must still age out after it.
+      await purgeLocations(env.DB);
     },
   };
 }
