@@ -1,0 +1,17 @@
+{
+  "name": "teslam-telemetry-consumer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Forwards Fleet Telemetry records from Redis pub/sub to the teslam.io ingest endpoint.",
+  "main": "consumer.mjs",
+  "scripts": {
+    "start": "node consumer.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "redis": "^5.9.0"
+  }
+}

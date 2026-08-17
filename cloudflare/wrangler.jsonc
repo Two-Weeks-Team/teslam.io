@@ -27,12 +27,27 @@
     // was "false" on purpose — an open form in that state takes an address
     // and promises a link that never arrives. Keep the two in step: if the
     // mail path ever goes down, close this in the same change.
-    "REGISTRATION_OPEN": "true"
+    "REGISTRATION_OPEN": "true",
+
+    // Coordinates arrive in the same record as the odometer and are dropped
+    // before the write unless this says otherwise. It stays "false" until two
+    // things are true: the 위치정보법 filing is made, and the privacy policy
+    // stops telling readers that location is not received at any stage.
+    //
+    // The code path is not deleted — cloudflare/lib/ingest.ts writes
+    // reading_locations and the suite exercises it — so switching collection on
+    // is a change to this line rather than a first run in production.
+    "COLLECT_LOCATION": "false"
   },
 
-  // RESEND_API_KEY, MAIL_FROM and EXPORT_TOKEN are secrets, set with
-  // `wrangler secret put`. They are absent here on purpose — a key in a
-  // committed config is a leaked key.
+  // TELEMETRY_TOKEN is held by the consumer on the receiving host and by
+  // nothing else. It is deliberately not EXPORT_TOKEN: that one reads the
+  // registration table, addresses and all, and a compromise of a box shared
+  // with eleven other domains should not also hand over the mailing list.
+
+  // RESEND_API_KEY, GMAIL_*, MAIL_FROM, EXPORT_TOKEN and TELEMETRY_TOKEN are
+  // secrets, set with `wrangler secret put`. They are absent here on purpose —
+  // a key in a committed config is a leaked key.
 
   // Cloudflare Email Sending. No API key: the binding is the credential.
   // The account must have Email Sending enabled and teslam.io onboarded
@@ -71,7 +86,11 @@
         // Open here on purpose. Preview is where the form is developed and the
         // tests run; closing it would mean the public path shipped to
         // production having only ever been exercised through its refusal.
-        "REGISTRATION_OPEN": "true"
+        "REGISTRATION_OPEN": "true",
+        // On here for the same reason. Preview holds no member's car, so the
+        // only coordinates it can ever store are ones a developer published to
+        // it on purpose.
+        "COLLECT_LOCATION": "true"
       },
       // Named environments do not inherit bindings, so these are repeated
       // rather than omitted. A missing binding here fails at request time, not

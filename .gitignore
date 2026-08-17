@@ -43,3 +43,8 @@ public/maplibre/
 scripts/chain/keys*.json
 scripts/chain/*-result.json
 scripts/chain/node_modules/
+
+# The receiver's TLS material. The certificate is public but the key is not,
+# and keeping the pair together is what makes it easy to place and hard to
+# leak by halves.
+deploy/fleet-telemetry/tls/
