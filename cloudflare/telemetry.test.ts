@@ -355,24 +355,75 @@ describe("writing to the ledger", () => {
   });
 
   /**
-   * The reading survives the refusal. It is a fact the car reported, and the
-   * next interval may well measure from it — refusing to accrue is not refusing
-   * to record.
+   * Found live, on the first end-to-end run through the real receiver, and it
+   * is the worst kind of bug: silent, permanent, and invisible from the outside.
+   *
+   * A corrupt frame reported 1320 miles on a car that had done 1010. The
+   * interval was correctly refused as `implausible-speed` — and the reading was
+   * stored anyway, on the reasoning that a refusal to accrue is not a refusal to
+   * record. It then became the baseline. Every subsequent genuine reading was
+   * lower than it, so every one was refused as `not-increasing`. The vehicle
+   * went on streaming, the consumer went on reporting success, and the member
+   * never earned another DRV.
    */
-  it("keeps a reading whose interval was refused", async () => {
-    const report = await run([
+  it("does not let a corrupt frame become the baseline", async () => {
+    const corrupt = await run([
       record("VIN1", BASE, [odometer(1000)]),
       // 500 km in an hour: no car did that.
       record("VIN1", BASE + 60 * 60_000, [odometer(1000 + 500 / 1.609344)]),
     ]);
-    expect(report.readings).toBe(2);
-    expect(report.accruals).toBe(0);
-    expect(report.skipped["implausible-speed"]).toBe(1);
+    expect(corrupt.readings).toBe(1);
+    expect(corrupt.skipped["implausible-speed"]).toBe(1);
 
-    const readings = await E.DB.prepare(`SELECT COUNT(*) AS n FROM odometer_readings`).first<{
+    // The reading that matters: an ordinary drive after the bad frame.
+    const after = await run([record("VIN1", BASE + 90 * 60_000, [odometer(1010)])]);
+    expect(after.accruals, "a genuine drive was refused after a corrupt frame").toBe(1);
+    expect(after.drv).toBe(Math.floor(10 * 1.609344 * given.drvPerKm));
+  });
+
+  it("drops a reading that went backwards rather than recording it", async () => {
+    await run([record("VIN1", BASE, [odometer(1000)])]);
+    const back = await run([record("VIN1", BASE + 30 * 60_000, [odometer(990)])]);
+    expect(back.readings).toBe(0);
+    expect(back.skipped["not-increasing"]).toBe(1);
+
+    const n = await E.DB.prepare(`SELECT COUNT(*) AS n FROM odometer_readings`).first<{
       n: number;
     }>();
-    expect(readings!.n).toBe(2);
+    expect(n!.n).toBe(1);
+  });
+
+  /**
+   * The other half of the same rule. These two refusals are about the interval,
+   * not about the reading — the car barely moved, or it was away too long for
+   * the distance between to be one trip — so the measurement is sound and has to
+   * be kept, or the next genuine interval measures from a stale baseline and
+   * pays for distance already counted.
+   */
+  it("keeps a reading refused for being below the odometer's resolution", async () => {
+    const report = await run([
+      record("VIN1", BASE, [odometer(1000)]),
+      record("VIN1", BASE + 5 * 60_000, [odometer(1000.01)]),
+    ]);
+    expect(report.skipped["below-resolution"]).toBe(1);
+    expect(report.readings).toBe(2);
+  });
+
+  it("keeps a reading refused for closing too long a silence", async () => {
+    const report = await run([
+      record("VIN1", BASE, [odometer(1000)]),
+      record("VIN1", BASE + 30 * 24 * 60 * 60_000, [odometer(2000)]),
+    ]);
+    expect(report.skipped["gap-too-long"]).toBe(1);
+    expect(report.readings).toBe(2);
+
+    // And it is a usable baseline: the next drive accrues from it rather than
+    // from the reading a month earlier.
+    const next = await run([
+      record("VIN1", BASE + 30 * 24 * 60 * 60_000 + 30 * 60_000, [odometer(2010)]),
+    ]);
+    expect(next.accruals).toBe(1);
+    expect(next.drv).toBe(Math.floor(10 * 1.609344 * given.drvPerKm));
   });
 
   it("holds the daily cap across records in one batch", async () => {

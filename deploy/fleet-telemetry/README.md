@@ -209,12 +209,17 @@ rsync -a --delete services/telemetry-consumer/ \
   49.247.9.193:~/teslam-fleet-telemetry/consumer/
 ```
 
-Then, on the host, an `.env` beside `docker-compose.yml`:
+Then, on the host, `consumer.env` beside `docker-compose.yml` — mode 0600, and
+deliberately not named `.env`:
 
 ```bash
 INGEST_URL=https://api.teslam.io/v1/telemetry/ingest
 TELEMETRY_TOKEN=…      # the value given to `wrangler secret put TELEMETRY_TOKEN`
 ```
+
+Read by `env_file:` rather than interpolated with `${VAR}`. An interpolated
+value shows up in `docker compose config` and in the container's inspect output;
+one read through `env_file` does not.
 
 ```bash
 docker compose up -d --build consumer

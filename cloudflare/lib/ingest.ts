@@ -176,45 +176,13 @@ export async function ingest(
     }
 
     const id = readingId(vehicle.id, signal.recordedAt);
-    const inserted = await db
-      .prepare(
-        `INSERT INTO odometer_readings
-           (id, vehicle_id, recorded_at, odometer_km, source, received_at)
-         VALUES (?1, ?2, ?3, ?4, 'stream', ?5)
-         ON CONFLICT DO NOTHING`,
-      )
-      .bind(id, vehicle.id, signal.recordedAt, signal.odometerKm, now)
-      .run();
-
-    // `changes` is 0 when the conflict clause fired. That is the replay guard
-    // doing its job, and it is the expected outcome for every record Tesla
-    // resends after an unacknowledged disconnect.
-    if ((inserted.meta?.changes ?? 0) === 0) {
-      note("duplicate");
-      continue;
-    }
-    report.readings += 1;
-
-    if (options.collectLocation && signal.latitude !== undefined && signal.longitude !== undefined) {
-      await db
-        .prepare(
-          `INSERT INTO reading_locations (reading_id, latitude, longitude, expires_at)
-           VALUES (?1, ?2, ?3, ?4)
-           ON CONFLICT DO NOTHING`,
-        )
-        .bind(
-          id,
-          signal.latitude,
-          signal.longitude,
-          now + LOCATION_RETENTION_DAYS * 24 * 60 * 60 * 1000,
-        )
-        .run();
-      report.locations += 1;
-    }
 
     // The interval starts at the newest reading *before* this one, which is not
-    // necessarily the one written just now: a late frame arriving after a gap
-    // has been filled must measure from its true predecessor.
+    // necessarily the one written last: a late frame arriving after a gap has
+    // been filled must measure from its true predecessor.
+    //
+    // Looked up *before* the insert, and that ordering is the whole point. See
+    // `storable` below.
     const previous = await db
       .prepare(
         `SELECT id, recorded_at, odometer_km FROM odometer_readings
@@ -224,11 +192,53 @@ export async function ingest(
       .bind(vehicle.id, signal.recordedAt)
       .first<{ id: string; recorded_at: number; odometer_km: number }>();
 
+    /** Write the reading down. Returns false when the replay guard refused it. */
+    const store = async () => {
+      const inserted = await db
+        .prepare(
+          `INSERT INTO odometer_readings
+             (id, vehicle_id, recorded_at, odometer_km, source, received_at)
+           VALUES (?1, ?2, ?3, ?4, 'stream', ?5)
+           ON CONFLICT DO NOTHING`,
+        )
+        .bind(id, vehicle.id, signal.recordedAt, signal.odometerKm, now)
+        .run();
+
+      // `changes` is 0 when the conflict clause fired. That is the replay guard
+      // doing its job, and it is the expected outcome for every record Tesla
+      // resends after an unacknowledged disconnect.
+      if ((inserted.meta?.changes ?? 0) === 0) return false;
+      report.readings += 1;
+
+      if (
+        options.collectLocation &&
+        signal.latitude !== undefined &&
+        signal.longitude !== undefined
+      ) {
+        await db
+          .prepare(
+            `INSERT INTO reading_locations (reading_id, latitude, longitude, expires_at)
+             VALUES (?1, ?2, ?3, ?4)
+             ON CONFLICT DO NOTHING`,
+          )
+          .bind(
+            id,
+            signal.latitude,
+            signal.longitude,
+            now + LOCATION_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+          )
+          .run();
+        report.locations += 1;
+      }
+      return true;
+    };
+
     // A car's first reading establishes a position and earns nothing. There is
     // no interval yet, and crediting distance from zero would pay a member for
     // every kilometre driven before they joined.
     if (!previous) {
-      note("first-reading");
+      if (!(await store())) note("duplicate");
+      else note("first-reading");
       continue;
     }
 
@@ -258,9 +268,36 @@ export async function ingest(
 
     const result = accrue(from, to, earned.get(key) ?? 0);
     if (wasRejected(result)) {
-      // The reading stays. It is a fact the car reported and the next interval
-      // may well measure from it — refusing to accrue is not refusing to record.
-      note(result.rejected);
+      // Whether the reading is kept depends on *why* it earned nothing, and
+      // getting this wrong froze a vehicle's earnings permanently in the first
+      // live test of this path.
+      //
+      // `below-resolution` and `gap-too-long` are refusals about the interval.
+      // The reading itself is a sound measurement — the car had simply barely
+      // moved, or had been away too long for the distance between to be one
+      // trip — and it must be kept, because it is the baseline the next genuine
+      // interval measures from.
+      //
+      // `not-increasing` and `implausible-speed` are refusals about the reading.
+      // It contradicts the record: an odometer cannot go backwards and no car
+      // covered five hundred kilometres in an hour, so the frame is corrupt, or
+      // the instrument cluster was replaced. Storing it anyway made it the
+      // baseline, and every subsequent genuine reading was then lower than it —
+      // rejected as `not-increasing`, forever. One bad frame ended a member's
+      // accrual permanently, silently, with the vehicle still streaming.
+      //
+      // So a contradicting frame is dropped. It is not a fact about distance,
+      // it is a fault report, and the count in `skipped` is where it belongs.
+      if (result.rejected === "not-increasing" || result.rejected === "implausible-speed") {
+        note(result.rejected);
+        continue;
+      }
+      note((await store()) ? result.rejected : "duplicate");
+      continue;
+    }
+
+    if (!(await store())) {
+      note("duplicate");
       continue;
     }
 

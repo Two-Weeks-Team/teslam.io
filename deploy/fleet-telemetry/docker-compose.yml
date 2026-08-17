@@ -53,13 +53,21 @@ services:
     build: ./consumer
     container_name: teslam-telemetry-consumer
     restart: unless-stopped
+    # INGEST_URL and TELEMETRY_TOKEN live here, beside this file, and are read
+    # into the container rather than substituted into it. Two reasons to prefer
+    # `env_file` over `${VAR}` interpolation: a substituted value is visible in
+    # `docker compose config` and in the container's inspect output as part of
+    # the command, and the compose default for interpolation is a file named
+    # `.env`, which is reserved for production secrets by policy here.
+    #
+    # There is no `:?required` guard because the guard belongs in the program:
+    # consumer.mjs exits 1 with `missing_config` naming the variable, which is a
+    # better failure than compose refusing to render a file.
+    env_file:
+      - ./consumer.env
     environment:
       REDIS_URL: redis://redis:6379
       CHANNEL_PATTERN: teslam_V_*
-      # Set in .env beside this file. INGEST_URL points at the Worker;
-      # TELEMETRY_TOKEN is the secret set with `wrangler secret put`.
-      INGEST_URL: ${INGEST_URL:?INGEST_URL is required}
-      TELEMETRY_TOKEN: ${TELEMETRY_TOKEN:?TELEMETRY_TOKEN is required}
     ports:
       # Loopback only. The counts alone would tell a stranger how many cars are
       # connected, and nothing here should be reachable from the internet.
