@@ -1,0 +1,49 @@
+-- The VIN, which 0003 said would never be stored.
+--
+-- This migration reverses that. It is worth saying plainly rather than burying
+-- in a column definition, because the earlier claim is still sitting in
+-- `0003_accrual.sql` where somebody will read it and believe it.
+--
+-- What forced it: Fleet Telemetry identifies a car by VIN and by nothing else.
+-- The receiver publishes to `teslam_V_{VIN}` and the record body carries
+-- `"vin"`. There is no vehicle id, no account, no token in the stream — Tesla's
+-- own datastore interface passes `entry.Vin` and stops there. So a reading
+-- arriving from a car can be attributed to an account only through the VIN, and
+-- something has to hold the correspondence.
+--
+-- The alternatives were considered and rejected by the account owner on
+-- 2026-08-17:
+--
+--   A keyed hash (`HMAC(vin, secret)`) would have kept the plaintext out of
+--   every store while still allowing lookup. Rejected in favour of the simpler
+--   column.
+--
+--   Keeping the mapping on the receiving host would have kept D1 clean and put
+--   the plaintext on a box shared with eleven other domains, moving the backup
+--   and encryption duty onto a server rather than removing it.
+--
+-- What this obliges, and what has not been done yet:
+--
+--   `content/ko/legal.ts` still tells readers that a VIN "어느 단계에서도 …
+--   받지 않기 때문입니다". That sentence becomes untrue the moment a car is
+--   linked. It is legal text and is being revised by its owner, not here.
+--
+--   A VIN is personal data under 개인정보보호법: it identifies one car and,
+--   through registration, one person. Unlike an email it cannot be rotated
+--   after a breach. The retention and deletion path is `ON DELETE CASCADE`
+--   from `accounts`, which is inherited, not added here.
+--
+-- Nothing in the accrual path reads this column except the lookup that turns a
+-- streamed record into a `vehicle_id`.
+
+-- SQLite cannot add a UNIQUE column in place, so the constraint arrives as its
+-- own index. This is not a downgrade: a unique index is the same guarantee, and
+-- it permits the NULLs that every row written before this migration has.
+ALTER TABLE vehicles ADD COLUMN vin TEXT;
+
+-- One car, one row. A second account claiming a VIN that is already linked is
+-- refused by the database rather than by whichever code path happens to run —
+-- which is the same argument 0003 makes for every other constraint in the
+-- ledger, and the reason `content/ko/model.ts` can say "VIN 단일 결속" and mean
+-- it.
+CREATE UNIQUE INDEX idx_vehicles_vin ON vehicles(vin) WHERE vin IS NOT NULL;

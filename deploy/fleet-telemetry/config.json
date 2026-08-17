@@ -1,0 +1,40 @@
+{
+  "host": "0.0.0.0",
+  "port": 4443,
+  "log_level": "info",
+  "json_log_enable": true,
+  "namespace": "teslam",
+  "reliable_ack": true,
+  "transmit_decoded_records": true,
+  "redis": {
+    "addrs": [
+      "redis:6379"
+    ],
+    "publish_vin_topics": true
+  },
+  "rate_limit": {
+    "enabled": true,
+    "message_limit": 1000
+  },
+  "records": {
+    "alerts": [
+      "logger"
+    ],
+    "errors": [
+      "logger"
+    ],
+    "V": [
+      "redis"
+    ]
+  },
+  "tls": {
+    "server_cert": "/etc/fleet-telemetry/tls/fullchain.pem",
+    "server_key": "/etc/fleet-telemetry/tls/privkey.pem"
+  },
+  "monitoring": {
+    "prometheus_metrics_port": 9273
+  },
+  "logger": {
+    "verbose": false
+  }
+}

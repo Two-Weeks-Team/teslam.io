@@ -29,6 +29,14 @@ export default defineConfig({
           ALLOWED_ORIGINS: "https://teslam.io",
           SITE_ORIGIN: "https://teslam.io",
           EXPORT_TOKEN: "test-export-token",
+          // A different value from EXPORT_TOKEN on purpose: the suite asserts
+          // that the operator token cannot write readings, and two names bound
+          // to one string would make that assertion pass for the wrong reason.
+          TELEMETRY_TOKEN: "test-telemetry-token",
+          // On here so the coordinate path is exercised rather than merely
+          // present. Production keeps it off until the filing is made; the
+          // refusal is covered by overriding this per request.
+          COLLECT_LOCATION: "true",
           // Open by default here so the suite exercises the working path. The
           // refusal is tested by overriding this per request, which is also the
           // only way production's value ever gets covered.

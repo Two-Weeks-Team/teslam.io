@@ -61,7 +61,7 @@ export const home: HomeContent = {
     ctaClosed: "What Genesis 500 is",
     empty: "All 500 seats are empty",
     emptyFirst: "the first is #001",
-    note: "500 vehicles, first come. We keep an email, a car, the region you pick and a record of your consent. Never a coordinate, never a VIN.",
+    note: "500 vehicles, first come. We keep an email, a car, the region you pick and a record of your consent. Pre-registration takes no coordinate and no VIN.",
   },
 
   demo: {
@@ -182,7 +182,7 @@ export const home: HomeContent = {
     sub: "No developer account, no API bill, no hardware to fit.",
     steps: [
       { title: "Link a Tesla account", body: "One official sign-in. Your password never reaches us." },
-      { title: "Pick the car", body: "Choose one of the cars on the account. We never take a VIN." },
+      { title: "Pick the car", body: "Choose one of the cars on the account. You never type a VIN — it arrives with the sign-in." },
       { title: "Just drive", body: "While the car moves the odometer reports every 60 seconds. Up to {km}km a day, which is at most {drv} DRV." },
     ],
     cta: "What Genesis 500 is",
