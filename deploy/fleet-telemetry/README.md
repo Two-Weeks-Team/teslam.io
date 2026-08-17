@@ -119,6 +119,8 @@ with the certificate presented as `CN=telemetry.teslam.io`.
 | Certificate | Let's Encrypt, expires 2026-11-15 |
 | Renewal | `ops/certbot-deploy-hook.sh`, dry-run passes |
 | Tesla's check | `The server certificate is valid.` |
+| Consumer | running, subscribed, sending to `api.teslam.io` |
+| Production D1 | `0003` and `0004` applied 2026-08-17 |
 
 Two things the deployment had to get right on a box running fifteen containers
 and eleven other people's domains.
@@ -127,10 +129,23 @@ and eleven other people's domains.
 `ops/nginx-acme.conf` is a new file serving nothing but the ACME challenge path
 for this one hostname; the eleven live vhosts were not edited. It sorts after
 `api.*` in `sites-enabled`, so it does not become the implicit default server.
-Two domains on that host return 502 — `api.fairthon.com` and `kbeauty.market`,
-whose upstreams on 2618 and 10004 are down. Checked rather than assumed: the
-receiver's block names only `telemetry.teslam.io`, and those ports were already
-refusing connections.
+
+**Measure a neighbouring site from outside the host, never from inside it.**
+This README used to say two domains on that box returned 502, and named
+`kbeauty.market` as one of them. That was wrong, and the way it was wrong is
+worth keeping: the check was run *on 193*, where `/etc/hosts` pins
+`kbeauty.market` to `127.0.0.1`. The request came back to the local nginx, whose
+vhost proxies to a port nothing listens on, and returned 502. From the public
+internet the domain resolves to Vercel and answers 200. A live site was reported
+as broken because the measurement was taken from the wrong place.
+
+Measured from outside on 2026-08-17, three vhosts on that host genuinely fail —
+`api.fairthon.com` (2618), `api.somm.dev` (2621) and `toolpilot.agit101.com`
+(3000), each proxying to a port with no listener. None is ours, none is affected
+by the receiver, and each costs one log line per request: a closed loopback port
+refuses instantly, so there is no held worker and no timeout. Three more vhosts
+are leftovers of domains that have moved away (`kbeauty.market` → Vercel,
+`vibework.ing` → AWS, `mcp.socialseed.ing` → another host).
 
 **A renewal that does not reach the container is a silent expiry.** The deploy
 hook copies the new pair in, fixes ownership for UID 65532 and restarts. Without
@@ -244,7 +259,19 @@ other domains has none of the retention the database has.
 
 ## What this does not do yet
 
-**No vehicle is connected.** The pipe is complete from a car's TLS handshake to
-a row in `drv_ledger`, and nothing is streaming into it, because a vehicle can
-only be configured by an application registered at developer.tesla.com. See
-`docs/tesla-app-registration.md` — steps 1–6 above are that work.
+**No vehicle is connected.** The pipe is complete and live from a car's TLS
+handshake to a row in `drv_ledger` — proved on 2026-08-17 by publishing to the
+receiver's own Redis channel and watching production answer:
+
+```json
+{"records":1,"received":1,"readings":0,"accruals":0,
+ "skipped":{"unknown-vehicle":1}}
+```
+
+A VIN nothing had linked, so the Worker looked it up, refused it, and wrote no
+row — which is the whole chain exercised without leaving fake data in a database
+that holds real registrations.
+
+What is missing is a car. A vehicle can only be configured to stream by an
+application registered at developer.tesla.com, and that registration has not
+been made. See `docs/tesla-app-registration.md`; steps 1–6 above are that work.

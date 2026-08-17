@@ -193,7 +193,7 @@ ssh 49.247.9.193 'curl -s localhost:9274/healthz | jq'
 
 ## 8. When a VIN is refused
 
-```
+```text
 GET /api/1/vehicles/{vin}/fleet_telemetry_config      # synced true/false
 GET /api/1/vehicles/{vin}/fleet_telemetry_errors
 GET /api/1/partner_accounts/fleet_telemetry_error_vins
@@ -218,13 +218,23 @@ rather than after.
 
 ## What is already true, and what this changes
 
-| | Now | After |
+Everything below the line is live in production as of 2026-08-17. The pipe was
+proved end to end by publishing to the receiver's own Redis channel with a VIN
+nothing had linked — the record reached the Worker, was refused as
+`unknown-vehicle`, and wrote no row.
+
+| | Now | After registration |
 | --- | --- | --- |
 | `telemetry.teslam.io:4443` | up, mTLS, Tesla's check passes | unchanged |
-| Consumer | subscribed, `receivedTotal: 0` | records arriving |
-| `odometer_readings` | empty | filling |
-| `.well-known` key | 404 | the key |
+| Consumer on 193 | subscribed, sending to `api.teslam.io` | unchanged |
+| `POST /v1/telemetry/ingest` | live, token-authenticated | unchanged |
+| Production D1 | `0003`, `0004` applied; ledger empty | filling |
+| `.well-known` key | **404 — no pair generated** | the key |
+| Vehicles linked | 0 | the members' cars |
 | A member's DRV | 0 | earned by driving |
+
+The only row that has to change before a car can stream is the key. Steps 3–5
+are that.
 
 ## The one thing that is not on this page
 

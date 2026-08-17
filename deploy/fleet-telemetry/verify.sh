@@ -108,8 +108,48 @@ json.dump({"hostname": host, "port": int(port), "ca": open(ca).read()}, open(out
 PY
 
 if "$TOOLS/check_server_cert.sh" "$TOOLS/validate_server.json"; then
-  echo
-  echo "✓ a vehicle would trust $HOST:$PORT"
+  say "certificate" "Tesla's own check passes"
 else
   fail "check_server_cert.sh rejected the configuration"
 fi
+
+echo
+echo "── the consumer ──"
+#
+# The receiver is only half the pipe, and the other half fails in a way nothing
+# else here would notice.
+#
+# Fleet Telemetry publishes to Redis pub/sub. A publish with no subscriber
+# succeeds and the record is gone — and `reliable_ack: true` means the car was
+# already told it was delivered. A consumer that is running but not subscribed
+# therefore looks perfectly healthy from every angle except this one, while
+# every signal a member's car sends is discarded.
+#
+# So "is the container up" is not the question. "Is it subscribed" is.
+HEALTH="${FT_HEALTH:-http://127.0.0.1:9274/healthz}"
+if ! docker compose -f "$HERE/docker-compose.yml" ps --status running --quiet consumer | grep -q .; then
+  fail "the consumer is not running — records published now are lost, not queued"
+fi
+say "container" "running"
+
+BODY="$(curl -fsS --max-time 8 "$HEALTH" 2>/dev/null || true)"
+[ -n "$BODY" ] || fail "no answer from $HEALTH — is the health port bound?"
+
+read_field() { printf '%s' "$BODY" | python3 -c "import json,sys;print(json.load(sys.stdin).get('$1'))"; }
+
+[ "$(read_field ok)" = "True" ] || fail "consumer reports not ok: $BODY"
+say "subscribed" "$(read_field subscribed)"
+say "received" "$(read_field receivedTotal)"
+say "sent" "$(read_field sentTotal)"
+say "dropped" "$(read_field droppedTotal)"
+say "pending" "$(read_field pending)"
+
+# Dropped records are the number worth an alert. Everything else here can be
+# zero for an innocent reason — no car is connected yet — but a record that
+# arrived and did not reach D1 is distance somebody drove and was not paid for.
+if [ "$(read_field droppedTotal)" != "0" ]; then
+  fail "the consumer has dropped $(read_field droppedTotal) records — check its logs"
+fi
+
+echo
+echo "✓ a vehicle would trust $HOST:$PORT, and what it sends would be kept"
