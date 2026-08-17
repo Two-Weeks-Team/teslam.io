@@ -457,6 +457,68 @@ describe("writing to the ledger", () => {
     expect(row!.accrual_day).toBe("2026-08-18");
   });
 
+  /**
+   * Raised in review, and real. Tesla's documentation says a vehicle buffers
+   * five thousand messages across a disconnect and delivers them on reconnect,
+   * so a frame that belongs between two already-recorded readings arrives in a
+   * later batch — where sorting within the batch cannot help it.
+   *
+   * The interval it falls inside has already been paid. Crediting it again is
+   * not a rounding error: it is the ledger paying twice for one kilometre, which
+   * `UNIQUE (vehicle_id, to_reading_id)` cannot catch because the destination
+   * reading is a different one.
+   */
+  it("does not pay twice when a delayed frame lands inside a settled interval", async () => {
+    const settled = await run([
+      record("VIN1", BASE, [odometer(1000)]),
+      record("VIN1", BASE + 60 * 60_000, [odometer(1020)]),
+    ]);
+    expect(settled.accruals).toBe(1);
+    const paid = settled.drv;
+
+    // The frame that was stuck in the car's buffer, for the midpoint.
+    const late = await run([record("VIN1", BASE + 30 * 60_000, [odometer(1010)])]);
+    expect(late.accruals, "a settled interval was credited a second time").toBe(0);
+    expect(late.skipped["late-frame"]).toBe(1);
+    // It is still recorded — it is a fact the car reported.
+    expect(late.readings).toBe(1);
+
+    const total = await E.DB.prepare(`SELECT COALESCE(SUM(drv),0) AS t FROM drv_ledger`).first<{
+      t: number;
+    }>();
+    expect(total!.t).toBe(paid);
+  });
+
+  /**
+   * Also from review. D1 has no interactive transactions, so the reading and the
+   * ledger row used to be two awaits — and a Worker that died between them left
+   * the reading committed with no interval. The retry saw the reading, called it
+   * a duplicate, and that interval's DRV was gone permanently while every log
+   * line said success.
+   *
+   * The orphan is created directly here because that is exactly the state the
+   * failure leaves behind, and no sequence of records can produce it now.
+   */
+  it("repairs a reading whose ledger row never got written", async () => {
+    await run([record("VIN1", BASE, [odometer(1000)])]);
+
+    const at = BASE + 30 * 60_000;
+    await E.DB.prepare(
+      `INSERT INTO odometer_readings (id, vehicle_id, recorded_at, odometer_km, source, received_at)
+       VALUES (?1, 'veh_VIN1', ?2, ?3, 'stream', ?2)`,
+    )
+      .bind(`veh_VIN1:${at}`, at, 1010 * 1.609344)
+      .run();
+
+    const orphaned = await E.DB.prepare(`SELECT COUNT(*) AS n FROM drv_ledger`).first<{ n: number }>();
+    expect(orphaned!.n, "fixture did not create the orphan it is testing").toBe(0);
+
+    const retry = await run([record("VIN1", at, [odometer(1010)])]);
+    expect(retry.readings, "the reading was already there").toBe(0);
+    expect(retry.accruals, "the lost interval was not repaired").toBe(1);
+    expect(retry.drv).toBe(Math.floor(10 * 1.609344 * given.drvPerKm));
+  });
+
   it("keeps two cars' odometers apart", async () => {
     await vehicle(acc, "VIN2");
     const report = await run([

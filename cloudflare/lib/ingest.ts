@@ -52,6 +52,8 @@ export type SkipReason =
   | "no-odometer"
   | "duplicate"
   | "first-reading"
+  /** Arrived after a later reading was already recorded; its interval is settled. */
+  | "late-frame"
   | Rejection;
 
 export type IngestReport = {
@@ -192,53 +194,110 @@ export async function ingest(
       .bind(vehicle.id, signal.recordedAt)
       .first<{ id: string; recorded_at: number; odometer_km: number }>();
 
-    /** Write the reading down. Returns false when the replay guard refused it. */
-    const store = async () => {
-      const inserted = await db
-        .prepare(
-          `INSERT INTO odometer_readings
-             (id, vehicle_id, recorded_at, odometer_km, source, received_at)
-           VALUES (?1, ?2, ?3, ?4, 'stream', ?5)
-           ON CONFLICT DO NOTHING`,
-        )
-        .bind(id, vehicle.id, signal.recordedAt, signal.odometerKm, now)
-        .run();
+    const readingInsert = db
+      .prepare(
+        `INSERT INTO odometer_readings
+           (id, vehicle_id, recorded_at, odometer_km, source, received_at)
+         VALUES (?1, ?2, ?3, ?4, 'stream', ?5)
+         ON CONFLICT DO NOTHING`,
+      )
+      .bind(id, vehicle.id, signal.recordedAt, signal.odometerKm, now);
 
-      // `changes` is 0 when the conflict clause fired. That is the replay guard
-      // doing its job, and it is the expected outcome for every record Tesla
-      // resends after an unacknowledged disconnect.
-      if ((inserted.meta?.changes ?? 0) === 0) return false;
-      report.readings += 1;
+    const locationInsert =
+      options.collectLocation && signal.latitude !== undefined && signal.longitude !== undefined
+        ? db
+            .prepare(
+              `INSERT INTO reading_locations (reading_id, latitude, longitude, expires_at)
+               VALUES (?1, ?2, ?3, ?4)
+               ON CONFLICT DO NOTHING`,
+            )
+            .bind(
+              id,
+              signal.latitude,
+              signal.longitude,
+              now + LOCATION_RETENTION_DAYS * 24 * 60 * 60 * 1000,
+            )
+        : null;
 
-      if (
-        options.collectLocation &&
-        signal.latitude !== undefined &&
-        signal.longitude !== undefined
-      ) {
-        await db
-          .prepare(
-            `INSERT INTO reading_locations (reading_id, latitude, longitude, expires_at)
-             VALUES (?1, ?2, ?3, ?4)
-             ON CONFLICT DO NOTHING`,
-          )
-          .bind(
-            id,
-            signal.latitude,
-            signal.longitude,
-            now + LOCATION_RETENTION_DAYS * 24 * 60 * 60 * 1000,
-          )
-          .run();
-        report.locations += 1;
+    /**
+     * Write the reading, its coordinate and the interval it closes — together.
+     *
+     * `db.batch` is one transaction, and that is the only reason this is a
+     * function rather than three awaits. Written separately, a Worker that hit
+     * its CPU limit between the reading and the ledger left the reading
+     * committed and the ledger row missing. The retry then found the reading,
+     * called it a duplicate, and skipped it; the next reading measured from the
+     * orphan, and that interval's DRV was gone for good. Nothing anywhere
+     * reported an error.
+     *
+     * D1 has no interactive transactions, so every statement has to be prepared
+     * before the batch runs. That is workable here because the decisions — which
+     * reading precedes this one, what it earns — are made from reads taken
+     * beforehand, and the constraints refuse anything those reads got wrong.
+     *
+     * The conflict clauses make a retry a repair rather than a duplicate: the
+     * reading conflicts and changes nothing, the missing ledger row inserts, and
+     * the interval that was lost is credited on the second attempt.
+     */
+    const commit = async (ledgerInsert: D1PreparedStatement | null = null) => {
+      const statements = [readingInsert];
+      if (locationInsert) statements.push(locationInsert);
+      if (ledgerInsert) statements.push(ledgerInsert);
+
+      const results = await db.batch(statements);
+      const wrote = (i: number) => ((results[i]?.meta?.changes ?? 0) as number) > 0;
+
+      // `changes` of 0 means the conflict clause fired — the replay guard doing
+      // its job, and the expected outcome for every frame Tesla resends after an
+      // unacknowledged disconnect.
+      const wroteReading = wrote(0);
+      if (wroteReading) report.readings += 1;
+
+      let next = 1;
+      if (locationInsert) {
+        if (wrote(next)) report.locations += 1;
+        next += 1;
       }
-      return true;
+      return { wroteReading, wroteLedger: ledgerInsert ? wrote(next) : false };
     };
 
     // A car's first reading establishes a position and earns nothing. There is
     // no interval yet, and crediting distance from zero would pay a member for
     // every kilometre driven before they joined.
     if (!previous) {
-      if (!(await store())) note("duplicate");
-      else note("first-reading");
+      note((await commit()).wroteReading ? "first-reading" : "duplicate");
+      continue;
+    }
+
+    /**
+     * A frame that arrives after a later one was already recorded.
+     *
+     * The interval it would close has been paid for. Given readings at t0 and
+     * t2 already credited as t0→t2, a delayed t1 frame finds t0 as its
+     * predecessor and closes t0→t1 — a different `to_reading_id`, so
+     * `UNIQUE (vehicle_id, to_reading_id)` does not object, and the distance
+     * from t0 to t1 is credited a second time.
+     *
+     * This is not hypothetical: Tesla's documentation says a vehicle buffers
+     * five thousand messages across a disconnect and delivers them on reconnect.
+     * Sorting within a batch does not help, because the late frame arrives in a
+     * later batch than the readings it falls between.
+     *
+     * So it is recorded and earns nothing. That errs toward under-crediting in
+     * one uncommon case — when the successor itself never accrued, the distance
+     * across it goes unpaid — and under-crediting is the direction to err in for
+     * a ledger that promises it cannot be rewound.
+     */
+    const successor = await db
+      .prepare(
+        `SELECT 1 AS present FROM odometer_readings
+          WHERE vehicle_id = ?1 AND recorded_at > ?2 LIMIT 1`,
+      )
+      .bind(vehicle.id, signal.recordedAt)
+      .first<{ present: number }>();
+
+    if (successor) {
+      note((await commit()).wroteReading ? "late-frame" : "duplicate");
       continue;
     }
 
@@ -292,16 +351,11 @@ export async function ingest(
         note(result.rejected);
         continue;
       }
-      note((await store()) ? result.rejected : "duplicate");
+      note((await commit()).wroteReading ? result.rejected : "duplicate");
       continue;
     }
 
-    if (!(await store())) {
-      note("duplicate");
-      continue;
-    }
-
-    const ledger = await db
+    const ledgerInsert = db
       .prepare(
         `INSERT INTO drv_ledger
            (id, vehicle_id, account_id, from_reading_id, to_reading_id,
@@ -320,10 +374,12 @@ export async function ingest(
         result.drvUncapped,
         result.accrualDay,
         now,
-      )
-      .run();
+      );
 
-    if ((ledger.meta?.changes ?? 0) === 0) {
+    // The ledger row decides, not the reading. A retry after a partial failure
+    // finds the reading already present and writes only the missing interval —
+    // which is the repair this batch exists to make possible.
+    if (!(await commit(ledgerInsert)).wroteLedger) {
       note("duplicate");
       continue;
     }

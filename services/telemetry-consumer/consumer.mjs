@@ -92,7 +92,8 @@ const state = {
 
 /** @type {string[]} */
 let buffer = [];
-let flushing = false;
+/** The in-flight drain, so a second caller joins it instead of starting a rival. */
+let draining = null;
 let stopping = false;
 
 /* ── sending ──────────────────────────────────────────────────────────── */
@@ -129,67 +130,85 @@ async function send(records) {
 /**
  * Drain the buffer.
  *
- * Records are taken out before the send and put back at the front on a
- * retryable failure, so ordering survives a retry. Order is not required for
- * correctness — the Worker sorts by the vehicle's own clock before writing —
- * but a buffer that shuffles under load makes every later log harder to read.
+ * The batch is **spliced out** of the buffer rather than copied from it, and
+ * that detail is load-bearing. Copying left the same records in two places for
+ * the duration of a send; if the buffer hit `BUFFER_MAX` during that window,
+ * `accept` evicted from the front, and the `slice` that followed a successful
+ * send then removed that many records again — silently discarding newer records
+ * that had never been sent, and not counting them as dropped. Detached, the
+ * in-flight batch is nobody else's to touch.
  */
-async function flush() {
-  if (flushing || buffer.length === 0) return;
-  flushing = true;
+async function drain() {
+  while (buffer.length > 0) {
+    const batch = buffer.splice(0, BATCH_MAX);
+    state.pending = buffer.length;
 
-  try {
-    while (buffer.length > 0) {
-      const batch = buffer.slice(0, BATCH_MAX);
-
-      let attempt = 0;
-      for (;;) {
-        let outcome;
-        try {
-          outcome = await send(batch);
-        } catch (err) {
-          outcome = { ok: false, retryable: true, status: 0, body: String(err) };
-        }
-
-        if (outcome.ok) {
-          buffer = buffer.slice(batch.length);
-          state.sentTotal += batch.length;
-          state.lastFlushAt = new Date().toISOString();
-          state.lastError = null;
-          log("info", "flushed", { records: batch.length, ...outcome.report });
-          break;
-        }
-
-        if (!outcome.retryable) {
-          buffer = buffer.slice(batch.length);
-          state.droppedTotal += batch.length;
-          state.lastError = `${outcome.status} ${outcome.body}`;
-          log("error", "batch_refused_and_dropped", {
-            records: batch.length,
-            status: outcome.status,
-            body: outcome.body,
-          });
-          break;
-        }
-
-        attempt += 1;
-        state.failedFlushes += 1;
-        state.lastError = `${outcome.status} ${outcome.body}`;
-        // Capped exponential backoff. Beyond a minute there is no value in
-        // waiting longer: the records keep arriving at a fixed rate whatever
-        // this process does, so a longer sleep only makes the buffer deeper.
-        const wait = Math.min(60_000, 1000 * 2 ** Math.min(attempt, 6));
-        log("warn", "flush_failed", { attempt, waitMs: wait, status: outcome.status });
-        if (stopping) return;
-        await sleep(wait);
+    let attempt = 0;
+    for (;;) {
+      let outcome;
+      try {
+        outcome = await send(batch);
+      } catch (err) {
+        outcome = { ok: false, retryable: true, status: 0, body: String(err) };
       }
 
-      state.pending = buffer.length;
+      if (outcome.ok) {
+        state.sentTotal += batch.length;
+        state.lastFlushAt = new Date().toISOString();
+        state.lastError = null;
+        log("info", "flushed", { records: batch.length, ...outcome.report });
+        break;
+      }
+
+      if (!outcome.retryable) {
+        state.droppedTotal += batch.length;
+        state.lastError = `${outcome.status} ${outcome.body}`;
+        log("error", "batch_refused_and_dropped", {
+          records: batch.length,
+          status: outcome.status,
+          body: outcome.body,
+        });
+        break;
+      }
+
+      attempt += 1;
+      state.failedFlushes += 1;
+      state.lastError = `${outcome.status} ${outcome.body}`;
+      // Capped exponential backoff. Beyond a minute there is no value in
+      // waiting longer: the records keep arriving at a fixed rate whatever
+      // this process does, so a longer sleep only makes the buffer deeper.
+      const wait = Math.min(60_000, 1000 * 2 ** Math.min(attempt, 6));
+      log("warn", "flush_failed", { attempt, waitMs: wait, status: outcome.status });
+      if (stopping) {
+        // Held records go down with the process. Counted rather than vanishing,
+        // because the difference between "sent" and "we do not know" is the
+        // whole value of these numbers.
+        state.droppedTotal += batch.length;
+        log("error", "abandoned_on_shutdown", { records: batch.length });
+        return;
+      }
+      await sleep(wait);
     }
-  } finally {
-    flushing = false;
-    state.pending = buffer.length;
   }
+}
+
+/**
+ * Start a drain, or join the one already running.
+ *
+ * Returning the promise is what makes shutdown correct. The previous version
+ * used a boolean and returned immediately when a drain was in progress, so
+ * `await flush()` during SIGTERM resolved instantly while a send was still in
+ * the air — and the process then called `process.exit(0)` on top of it. Routine
+ * container replacement could lose a batch that way.
+ */
+function flush() {
+  if (!draining) {
+    draining = drain().finally(() => {
+      draining = null;
+      state.pending = buffer.length;
+    });
+  }
+  return draining;
 }
 
 /* ── receiving ────────────────────────────────────────────────────────── */
@@ -291,6 +310,11 @@ async function main() {
     try {
       await client.pUnsubscribe(PATTERN);
       state.subscribed = false;
+      // Twice on purpose. The first await joins whatever send was already in
+      // flight; the second drains anything that arrived while it finished.
+      // After the unsubscribe nothing more can arrive, so the second one
+      // terminates.
+      await flush();
       await flush();
     } catch (err) {
       log("error", "shutdown_flush_failed", { error: String(err) });
