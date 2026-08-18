@@ -55,7 +55,7 @@ Go는 **백서 1단계에서 제 역할을 합니다** — 텔레메트리 수�
 
 ## 3. 아키텍처
 
-```
+```text
 브라우저
   │
   ├── Vercel ─ Next.js (App Router)                    teslam.io
@@ -137,7 +137,7 @@ prepared statement를 직접 씁니다. 조인이 생기면 그때 다시 봅니
 기존 4구분은 수도권이 지도를 삼켜 밀도 차이가 안 보입니다. 7구분이 백서 §10.1의
 "생활권" 단위에 더 가깝고, TopoJSON 시도 경계와도 맞습니다.
 
-```
+```text
 model    Model 3 | Model Y | Model S | Model X | Cybertruck
 km_band  under_500 | 500_1000 | 1000_2000 | over_2000   (월 km)
 ```

@@ -152,10 +152,10 @@ What the switch does **not** decide is which sections are real. The API answers
 that at `/v1/capabilities`, and the site renders from it:
 
 | API has the source | `SHOWCASE` | The section draws |
-|---|---|---|
+| --- | --- | --- |
 | yes | either | real data |
-| no  | on  | sample content, marked |
-| no  | off | nothing |
+| no | on | sample content, marked |
+| no | off | nothing |
 
 So shipping a backend is what promotes a section. Flip its line in
 `capabilities()` in `cloudflare/worker.ts` and the site follows without being
