@@ -55,8 +55,23 @@ Redis → 소비자 → HTTPS → `api.teslam.io` → D1 조회까지 동작하�
 공백은 거부되고 좌표는 숨을 델타가 없다.**
 
 **GitHub 부분 장애를 만나면 REST로 우회한다.** `gh pr create`는 GraphQL을 쓰고,
-2026-08-18 00시경 그것만 503이었다. `gh api --method POST repos/.../pulls --input`은
-REST라서 통과했다. 다섯 번 재시도하는 대신 어느 계층이 죽었는지 먼저 보는 게 빠르다.
+2026-08-18 00시경 그 계층만 503이었다. 같은 요청을 REST로 보내면 통과한다 — 다섯 번
+재시도하는 대신 어느 계층이 죽었는지 먼저 확인하는 게 빠르다.
+
+```sh
+# pr.json — title · head · base · body 네 개가 있어야 한다
+{"title":"제목","head":"chore/my-branch","base":"main","body":"본문"}
+
+gh api --method POST repos/Two-Weeks-Team/teslam.io/pulls --input pr.json
+```
+
+어느 계층이 죽었는지 보는 법:
+
+```sh
+curl -s https://www.githubstatus.com/api/v2/components.json \
+  | python3 -c "import json,sys; [print(c['name'], c['status']) \
+      for c in json.load(sys.stdin)['components'] if c['status']!='operational']"
+```
 
 **`verify.sh`가 양쪽을 본다.** 인증서만 보던 것에 소비자 검사를 붙였다. "떠 있는가"가
 아니라 "구독 중인가"를 묻는다 — 구독하지 않은 소비자는 모든 각도에서 건강해 보이면서
