@@ -20,6 +20,7 @@
 | Genesis 가입 개방 | #17 | 병합 (충돌 해결 후) |
 | 193 서버 502 진단 | — | 진단만, 미수정 |
 | Tesla 등록 절차 문서 | #18 | `docs/tesla-app-registration.md` |
+| 정정 · 정리 | #19 | 병합 · `verify.sh`가 소비자까지 검사 |
 
 ### 프로덕션 전환 순서 (재현용)
 
@@ -52,6 +53,10 @@ Redis → 소비자 → HTTPS → `api.teslam.io` → D1 조회까지 동작하�
 없으면 메시지는 사라지고, `reliable_ack: true`라 차량은 이미 전달됐다고 통보받은
 뒤다. 오도미터는 *차이*로 적립하니 놓친 프레임은 다음 델타가 흡수하지만, **7일 초과
 공백은 거부되고 좌표는 숨을 델타가 없다.**
+
+**GitHub 부분 장애를 만나면 REST로 우회한다.** `gh pr create`는 GraphQL을 쓰고,
+2026-08-18 00시경 그것만 503이었다. `gh api --method POST repos/.../pulls --input`은
+REST라서 통과했다. 다섯 번 재시도하는 대신 어느 계층이 죽었는지 먼저 보는 게 빠르다.
 
 **`verify.sh`가 양쪽을 본다.** 인증서만 보던 것에 소비자 검사를 붙였다. "떠 있는가"가
 아니라 "구독 중인가"를 묻는다 — 구독하지 않은 소비자는 모든 각도에서 건강해 보이면서
@@ -114,12 +119,30 @@ Redis → 소비자 → HTTPS → `api.teslam.io` → D1 조회까지 동작하�
 | 프로덕션 D1 | `0001`–`0004` · registrations 1 · 원장 0 |
 | 프리뷰 D1 | `0001`–`0004` · 픽스처 정리됨 |
 
+### Git
+
+| | |
+| --- | --- |
+| `main` | `718bd86` |
+| 열린 PR | **0** |
+| 오늘 병합 | #18 (파이프) · #17 (가입 개방) · #19 (정정·정리) |
+| 작업 트리 | clean |
+
 ### 메트릭
 
 ```text
 사이트   20 files · 300 passed
-워커     5 files · 98 passed
-게이트   pass
+워커      5 files ·  98 passed   (telemetry.test.ts 39개)
+lint     0 errors · 0 warnings
+게이트    pass
+```
+
+### 환경
+
+```text
+node v24.15.0 · pnpm 11.9.0 · wrangler 4.121.0
+193  ssh 49.247.9.193 (Port 17141, user barahime, ~/.ssh/config에 등록)
+     Ubuntu 20.04.6 · Docker 28.1.1 · 16코어 · load 3/16 · 디스크 58%
 ```
 
 ### 복원 지점
@@ -165,7 +188,7 @@ Cloudflare와 193의 `consumer.env`(0600) 두 곳에만 있다. 대화에는 들
 | `cloudflare/lib/telemetry.ts` | protojson 파서. 문자열 숫자·NaN·null 처리 |
 | `cloudflare/lib/accrual.ts` | 산술 · 마일→km · 서울 자정 상한 |
 | `cloudflare/migrations/0003·0004` | 원장 스키마 · VIN 컬럼 |
-| `cloudflare/telemetry.test.ts` | 36개, 실제 D1 대상 |
+| `cloudflare/telemetry.test.ts` | 39개, 실제 D1 대상 |
 | `services/telemetry-consumer/` | 소비자 · Dockerfile |
 | `deploy/fleet-telemetry/` | 수신기 · `verify.sh`(양쪽 검사) |
 | `docs/tesla-app-registration.md` | 등록 절차, 공식 문서 기준 |
