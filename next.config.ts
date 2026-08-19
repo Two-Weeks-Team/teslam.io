@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   // workspace root. Pin it.
   turbopack: { root: import.meta.dirname },
 
+  // PostHog posts to `/e/` and `/flags/` — with the default redirect every
+  // event pays for a 308 before it lands. Pinned by
+  // tests/analytics-proxy.test.ts.
+  skipTrailingSlashRedirect: true,
+
   // The `.md` mirrors render from the same content modules as the HTML, so a
   // crawler, an LLM and a person cannot be shown different numbers.
   async rewrites() {
@@ -36,6 +41,18 @@ const nextConfig: NextConfig = {
         source: `/alt${i + 1}`,
         destination: `/alt${i + 1}.html`,
       })),
+
+      // PostHog, same-origin. Every posthog.com host is on every ad-block
+      // list, and the proxy is what keeps an extension from deciding whether
+      // this site may count its own visitors. The static rule must sit above
+      // the catch-all — reversed, posthog-js loads from the ingestion host
+      // and never boots, with nothing on screen to say so. Both pinned by
+      // tests/analytics-proxy.test.ts.
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://us-assets.i.posthog.com/static/:path*",
+      },
+      { source: "/ingest/:path*", destination: "https://us.i.posthog.com/:path*" },
     ];
   },
 
