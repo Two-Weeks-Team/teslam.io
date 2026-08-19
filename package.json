@@ -28,6 +28,7 @@
   "dependencies": {
     "maplibre-gl": "^6.3.0",
     "next": "16.2.12",
+    "posthog-js": "^1.417.4",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },

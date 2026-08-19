@@ -13,6 +13,7 @@ minimumReleaseAge: 1440
 # Postinstall scripts are denied by default; each one here is an explicit,
 # reviewed exception. Both ship prebuilt native binaries.
 allowBuilds:
+  core-js: false # only a funding banner; denied, matching the default posture
   esbuild: true # bundler behind vite
   sharp: true # next/image optimisation
   unrs-resolver: true # eslint module resolution
